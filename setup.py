@@ -1,0 +1,21 @@
+from distutils.core import setup
+from distutils.extension import Extension
+from Cython.Distutils import build_ext
+from Cython.Build import cythonize
+
+ext_modules = [Extension("disvis/libdisvis",
+        ["scripts/libdisvis.pyx"])]
+
+package_data = {'disvis': ['data/*.npy']}
+
+setup(name="disvis",
+      version='1.0.0',
+      description='Quantifying and visualizing the interaction space of distance-constrainted macromolecular complexes',
+      author='Gydo C.P. van Zundert',
+      author_email='g.c.p.vanzundert@uu.nl',
+      packages=['disvis'],
+      cmdclass = {'build_ext': build_ext},
+      ext_modules = cythonize(ext_modules),
+      package_data = package_data,
+      requires=['numpy', 'scipy', 'cython'],
+    )

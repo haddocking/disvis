@@ -1,0 +1,6 @@
+build/
+dependencies/
+env/
+
+*.c
+*.pyc
