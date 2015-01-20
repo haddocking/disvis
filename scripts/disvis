@@ -1,0 +1,59 @@
+#! usr/bin/python
+from __future__ import print_function
+import sys
+import multiprocessing as mp
+from time import time
+
+from disvis import DisVis, PDB 
+from disvis.rotations import proportional_orientations, quat_to_rotmat
+
+pdb1 = PDB.fromfile(sys.argv[1])
+pdb2 = PDB.fromfile(sys.argv[2])
+angle = float(sys.argv[3])
+nproc = int(sys.argv[4])
+
+q, w, a = proportional_orientations(angle)
+rotmat = quat_to_rotmat(q, invert=True)
+print('Number of rotations: ', rotmat.shape[0])
+
+def run_disvis_instance(r, l, rotmat, weights):
+    dv = DisVis()
+    dv.receptor = r
+    dv.ligand = l
+    dv.rotations = rotmat
+    dv.weights = weights
+    ais, complexes = dv.search()
+
+    return ais, complexes
+
+
+time0 = time()
+max_cpu  = mp.cpu_count()
+p = {}
+nrot = rotmat.shape[0]
+for n in range(min(nproc, max_cpu)):
+
+
+    nr = nrot//min(nproc, max_cpu)
+
+    p[n] = {}
+    rots = rotmat
+    p[n]['process'] = mp.Process(target=run_disvis_instance, args=(pdb1.duplicate(), pdb2.duplicate(), rotmat[nr*n:nr*(n+1)].copy(), w[nr*n:nr*(n+1)].copy()))
+    p[n]['process'].start()
+
+
+for n in range(min(nproc, max_cpu)):
+    #p[n]['ais'], p[n]['complexes']  = p[n]['process'].join()
+    p[n]['process'].join()
+print('Total time: ', time() - time0)
+#for n in range(min(nproc, max_cpu)):
+#    print(p[n]['ais'], p[n]['complexes']) 
+
+#dv = DisVis()
+#dv.receptor = pdb1
+#dv.ligand = pdb2
+#dv.rotations = quat_to_rotmat(proportional_orientations(angle), inverse=True)
+#interaction_space, complexes = dv.search()
+#interaction_space.tofile('test.mrc')
+#for i in complexes:
+#    print(complexes)
