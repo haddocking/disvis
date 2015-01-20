@@ -1,8 +1,12 @@
 from __future__ import print_function, absolute_import, division
 
 import numpy as np
-from numpy.fft import rfftn, irfftn
-from pyfftw.interfaces.numpy_fft import rfftn, irfftn
+
+try:
+    from pyfftw.interfaces.numpy_fft import rfftn, irfftn
+except ImportError:
+    from numpy.fft import rfftn, irfftn
+
 
 from math import floor
 
@@ -23,9 +27,9 @@ class DisVis(object):
         self.rotations = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]]
         self.voxelspacing = 1.0
         self.erosion_iterations = 2
-        self.surface_radius = 2.5
-        self.max_clash = 25
-        self.min_interaction = 100
+        self.interaction_radius = 2.5
+        self.max_clash = 100
+        self.min_interaction = 300
         self.distance_restraints = []
 
         # unchangeable
@@ -55,11 +59,13 @@ class DisVis(object):
         self._rotations = rotations
 
     @property
-    def surface_radius(self):
-        return self._surface_radius
-    @surface_radius.setter
-    def surface_radius(self, radius):
-        self._surface_radius = radius
+    def interaction_radius(self):
+        return self._interaction_radius
+    @interaction_radius.setter
+    def interaction_radius(self, radius):
+        if radius <= 0:
+            raise ValueError("Interaction radius should be bigger than zero")
+        self._interaction_radius = radius
 
     @property
     def voxelspacing(self):
@@ -72,8 +78,11 @@ class DisVis(object):
     @property
     def max_clash(self):
         return self._max_clash
+
     @max_clash.setter
     def max_clash(self, max_clash):
+        if max_clash < 0:
+            raise ValueError("Maximum allowed clashing volume cannot be negative")
         self._max_clash = max_clash
 
     @property
@@ -81,6 +90,8 @@ class DisVis(object):
         return self._min_interaction
     @min_interaction.setter
     def min_interaction(self, min_interaction):
+        if min_interaction < 1:
+            raise ValueError("Minimum required interaction volume cannot be smaller than 1")
         self._min_interaction = min_interaction
         
     @property
@@ -103,6 +114,8 @@ class DisVis(object):
         # check if requirements are set
         if any(x is None for x in (self.receptor, self.ligand)):
             raise ValueError("Not all requirements are met for a search")
+        if len(self.weights) != len(self.rotations):
+            raise ValueError("")
 
         d = self.data
 
@@ -110,9 +123,8 @@ class DisVis(object):
         shape = grid_shape(self.receptor.coor, self.ligand.coor, self.voxelspacing)
         # calculate the interaction surface and core of the receptor
         radii = np.zeros(self.receptor.coor.shape[0], dtype=np.float64)
-        radii.fill(self.surface_radius)
+        radii.fill(1.5 + self.interaction_radius)
         d['rsurf'] = rsurface(self.receptor.coor, radii, shape, self.voxelspacing)
-        d['rsurf'].tofile('rsurf.mrc')
         d['rcore'] = volume.erode(d['rsurf'], self.erosion_iterations)
 
         # keep track of some data for later calculations
@@ -126,7 +138,7 @@ class DisVis(object):
         # set ligand center to the origin of the receptor map
         # and make a grid of the ligand
         radii = np.zeros(self.ligand.coor.shape[0], dtype=np.float64)
-        radii.fill(self.surface_radius)
+        radii.fill(1.5)
         d['lsurf'] = dilate_points((self.ligand.coor - self.ligand.center + d['rcore'].origin), radii, volume.zeros_like(d['rcore']))
 
         # setup the distance restraints
@@ -156,9 +168,9 @@ class DisVis(object):
         c['lsurf'] = np.zeros_like(c['rcore'])
         c['clashvol'] = np.zeros_like(c['rcore'])
         c['intervol'] = np.zeros_like(c['rcore'])
-        c['interspace'] = np.zeros_like(c['rcore'])
-        c['access_interspace'] = np.zeros_like(c['rcore'])
-        c['restspace'] = np.zeros_like(c['rcore'])
+        c['interspace'] = np.zeros_like(c['rcore'], dtype=np.int32)
+        c['access_interspace'] = np.zeros_like(c['rcore'], dtype=np.int32)
+        c['restspace'] = np.zeros_like(c['rcore'], dtype=np.int32)
 
         # complex arrays
         c['ft_shape'] = list(d['shape'])
@@ -168,8 +180,8 @@ class DisVis(object):
         c['ft_rsurf'] = np.zeros(c['ft_shape'], dtype=np.complex128)
 
         # initial calculations
-        c['ft_rcore'][:] = rfftn(c['rcore'])
-        c['ft_rsurf'][:] = rfftn(c['rsurf'])
+        c['ft_rcore'] = rfftn(c['rcore'])
+        c['ft_rsurf'] = rfftn(c['rsurf'])
         c['rotmat'] = np.asarray(self.rotations, dtype=np.float64)
         c['weights'] = np.asarray(self.weights, dtype=np.float64)
 
@@ -178,7 +190,7 @@ class DisVis(object):
         d = self.data
         c = self.cpu_data
 
-        c['vlength'] = int(np.linalg.norm(self.ligand.coor - self.ligand.center, axis=1).max() + self.surface_radius + 1)/self.voxelspacing
+        c['vlength'] = int(np.linalg.norm(self.ligand.coor - self.ligand.center, axis=1).max() + self.interaction_radius + 1.5)/self.voxelspacing
         tot_complex = 0
         list_total_allowed = np.zeros(max(2, d['nrestraints'] + 1), dtype=np.float64)
 
@@ -187,12 +199,12 @@ class DisVis(object):
             print(n)
             rotate_image3d(c['im_lsurf'], c['vlength'], c['rotmat'][n], c['lsurf'])
 
-            c['ft_lsurf'][:] = rfftn(c['lsurf']).conj()
-            c['clashvol'][:] = irfftn(c['ft_lsurf'] * c['ft_rcore'])
-            c['intervol'][:] = irfftn(c['ft_lsurf'] * c['ft_rsurf'])
+            c['ft_lsurf'] = rfftn(c['lsurf']).conj()
+            c['clashvol'] = irfftn(c['ft_lsurf'] * c['ft_rcore'])
+            c['intervol'] = irfftn(c['ft_lsurf'] * c['ft_rsurf'])
 
-            c['interspace'][:] = np.logical_and(c['clashvol'] < self.max_clash,
-                                        c['intervol'] > self.min_interaction)
+            c['interspace'][:] = np.logical_and(c['clashvol'] < (self.max_clash + 0.1),
+                                        c['intervol'] > (self.min_interaction - 0.1))
 
             tot_complex += c['weights'][n] * c['interspace'].sum()
 
@@ -209,7 +221,7 @@ class DisVis(object):
                        c['access_interspace'])
 
             list_total_allowed += c['weights'][n] *\
-                        np.bincount(c['interspace'].astype(np.int32).flatten(),
+                        np.bincount(c['interspace'].flatten(),
                         minlength=(max(2, d['nrestraints']+1)))
 
         d['accessible_interaction_space'] = c['access_interspace']

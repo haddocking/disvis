@@ -138,7 +138,7 @@ def dilate_points(np.ndarray[np.float64_t, ndim=2] points,
 @cython.boundscheck(False)
 def dilate_points_add(np.ndarray[np.float64_t, ndim=2] points,
                   np.ndarray[np.float64_t, ndim=1] radius,
-                  np.ndarray[np.float64_t, ndim=3] out,
+                  np.ndarray[np.int32_t, ndim=3] out,
                   ):
     """Creates a mask from the points into the volume
 
@@ -180,6 +180,6 @@ def dilate_points_add(np.ndarray[np.float64_t, ndim=2] points,
                     dz = z - points[n, 2]
                     distance2 = x2y2 + dz**2
                     if distance2 <= radius2:
-                        out[z,y,x] += 1.0
+                        out[z,y,x] += 1
 
     return out

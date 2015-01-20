@@ -113,6 +113,10 @@ def proportional_orientations(angle):
 
     # read file
     infile = os.path.join(os.path.dirname(__file__), 'data', fname)
-    rotset = np.load(infile)
+    quat_weights = np.load(infile)
 
-    return rotset, rot_sets[fname][1]
+    quat = quat_weights[:, :4]
+    weights = quat_weights[:, -1]
+    alpha = rot_sets[fname][1]
+
+    return quat, weights, alpha
