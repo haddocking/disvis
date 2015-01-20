@@ -3,7 +3,12 @@ from __future__ import print_function, absolute_import, division
 import numpy as np
 
 try:
-    from pyfftw.interfaces.numpy_fft import rfftn, irfftn
+    import pyfftw
+    pyfftw.interfaces.cache.enable()
+    pyfftw.interfaces.cache.set_keepalive_time(10)
+    rfftn = pyfftw.interfaces.numpy_fft.rfftn
+    irfftn = pyfftw.interfaces.numpy_fft.irfftn
+
 except ImportError:
     from numpy.fft import rfftn, irfftn
 

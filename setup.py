@@ -7,6 +7,7 @@ ext_modules = [Extension("disvis/libdisvis",
         ["src/libdisvis.pyx"])]
 
 package_data = {'disvis': ['data/*.npy', 'IO/*']}
+scripts = ['scripts/disvis']
 
 setup(name="disvis",
       version='1.0.0',
@@ -17,5 +18,6 @@ setup(name="disvis",
       cmdclass = {'build_ext': build_ext},
       ext_modules = cythonize(ext_modules),
       package_data = package_data,
-      requires=['numpy', 'scipy', 'cython'],
+      scripts=scripts,
+      requires=['numpy', 'cython'],
     )
