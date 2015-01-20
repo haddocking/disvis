@@ -183,3 +183,49 @@ def dilate_points_add(np.ndarray[np.float64_t, ndim=2] points,
                         out[z,y,x] += 1
 
     return out
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def binary_erosion(np.ndarray[np.float64_t, ndim=3] image,
+                   np.ndarray[np.float64_t, ndim=3] out,
+                   ):
+
+    cdef int nz, ny, nx, x, y, z
+    nz = <int> image.shape[0]
+    ny = <int> image.shape[1]
+    nx = <int> image.shape[2]
+
+    for z in range(nz):
+        for y in range(ny):
+            for x in range(nx):
+                if image[z, y, x] > 0:
+                    if x > 0:
+                        if image[z, y, x - 1] == 0: 
+                            out[z, y, x] = 0
+                            continue
+                    if x < nx - 1:
+                        if image[z, y, x + 1] == 0:
+                            out[z, y, x] = 0
+                            continue
+                        
+                    if y > 0:
+                        if image[z, y - 1, x] == 0:
+                            out[z, y, x] = 0
+                            continue
+                    if y < ny - 1:
+                        if image[z, y+1, x] == 0:
+                            out[z, y, x] = 0
+                            continue
+                    if z > 0:
+                        if image[z - 1, y, x] == 0:
+                            out[z, y, x] = 0
+                            continue
+                    if z < nz - 1:
+                        if image[z+1, y, x] == 0:
+                            out[z, y, x] = 0
+                            continue
+                    out[z, y, x] = image[z, y, x]
+                else:
+                    out[z, y, x] = 0
+
+    return out

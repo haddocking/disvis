@@ -25,6 +25,7 @@ class DisVis(object):
 
         # parameters with standard values
         self.rotations = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]]
+        self.weights = None
         self.voxelspacing = 1.0
         self.erosion_iterations = 2
         self.interaction_radius = 2.5
@@ -56,7 +57,19 @@ class DisVis(object):
         return self._rotations
     @rotations.setter
     def rotations(self, rotations):
-        self._rotations = rotations
+        rotmat = np.asarray(rotations, dtype=np.float64)
+
+        if rotmat.ndim != 3:
+            raise ValueError("Input should be a list of rotation matrices.")
+
+        self._rotations = rotmat
+
+    @property
+    def weights(self):
+        return self._weights
+    @weights.setter
+    def weights(self, weights):
+        self._weights = weights
 
     @property
     def interaction_radius(self):
@@ -114,6 +127,10 @@ class DisVis(object):
         # check if requirements are set
         if any(x is None for x in (self.receptor, self.ligand)):
             raise ValueError("Not all requirements are met for a search")
+
+        if self.weights is None:
+            self.weights = np.ones(self.rotations.shape[0], dtype=np.float64)
+
         if len(self.weights) != len(self.rotations):
             raise ValueError("")
 
