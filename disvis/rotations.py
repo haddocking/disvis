@@ -16,12 +16,17 @@ def Rz(theta):
                        [sin(theta),  cos(theta), 0],
                        [         0,           0, 1]], dtype=np.float64)
 
-def quat_to_rotmat(quaternions):
+def quat_to_rotmat(quaternions, invert=False):
 
     w = quaternions[:, 0]
     x = quaternions[:, 1]
     y = quaternions[:, 2]
     z = quaternions[:, 3]
+
+    if invert:
+        x *= -1
+        y *= -1
+        z *= -1
 
     Nq = w**2 + x**2 + y**2 + z**2
     s = np.zeros(Nq.shape, dtype=np.float64)
@@ -31,6 +36,7 @@ def quat_to_rotmat(quaternions):
     X = x*s
     Y = y*s
     Z = z*s
+        
 
     rotmat = np.zeros((quaternions.shape[0],3,3), dtype=np.float64)
     rotmat[:,0,0] = 1.0 - (y*Y + z*Z)

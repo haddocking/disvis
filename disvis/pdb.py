@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import operator
 import numpy as np
-from .IO.pdb import parse_pdb, write_pdb
+from disvis.IO.pdb import parse_pdb, write_pdb
 
 class PDB(object):
 

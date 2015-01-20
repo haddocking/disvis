@@ -1,6 +1,7 @@
 build/
 dependencies/
 env/
+test-cases/
 
 *.c
 *.pyc

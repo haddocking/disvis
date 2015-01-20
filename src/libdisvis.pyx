@@ -3,11 +3,12 @@ import numpy as np
 cimport numpy as np
 from libc.math cimport ceil, exp
 
+@cython.boundscheck(False)
 def rotate_image3d(np.ndarray[np.float64_t, ndim=3] image,
-                   unsigned int vlength,
+                   int vlength,
                    np.ndarray[np.float64_t, ndim=2] rotmat,
                    np.ndarray[np.float64_t, ndim=3] out,
-                   )
+                   ):
     """Rotate an array around the origin using trilinear interpolation
 
     Parameters
@@ -37,19 +38,19 @@ def rotate_image3d(np.ndarray[np.float64_t, ndim=3] image,
     cdef double c00, c01, c10, c11
     cdef double c0, c1, c
 
-    for z in range(-vlength, vlength):
+    for z in range(-vlength, vlength+1):
         
         xcoor_z = rotmat[0, 2]*z
         ycoor_z = rotmat[1, 2]*z
         zcoor_z = rotmat[2, 2]*z
 
-        for y in range(-vlength, vlength):
+        for y in range(-vlength, vlength+1):
 
             xcoor_yz = rotmat[0, 1]*y + xcoor_z
             ycoor_yz = rotmat[1, 1]*y + ycoor_z
             zcoor_yz = rotmat[2, 1]*y + zcoor_z
 
-            for x in range(-vlength, vlength):
+            for x in range(-vlength, vlength+1):
 
                 xcoor_xyz = rotmat[0, 0]*x + xcoor_yz 
                 ycoor_xyz = rotmat[1, 0]*x + ycoor_yz
@@ -60,9 +61,9 @@ def rotate_image3d(np.ndarray[np.float64_t, ndim=3] image,
                 y0 = int(ycoor_xyz)
                 z0 = int(zcoor_xyz)
 
-                x1 = x0+1
-                y1 = y0+1
-                z1 = z0+1
+                x1 = x0 + 1
+                y1 = y0 + 1
+                z1 = z0 + 1
 
                 dx = xcoor_xyz - x0
                 dy = ycoor_xyz - y0
@@ -83,6 +84,7 @@ def rotate_image3d(np.ndarray[np.float64_t, ndim=3] image,
 
                 out[z, y, x] = c
 
+@cython.boundscheck(False)
 def dilate_points(np.ndarray[np.float64_t, ndim=2] points,
                   np.ndarray[np.float64_t, ndim=1] radius,
                   np.ndarray[np.float64_t, ndim=3] out,
@@ -130,10 +132,10 @@ def dilate_points(np.ndarray[np.float64_t, ndim=2] points,
                     dz = z - points[n, 2]
                     distance2 = x2y2 + dz**2
                     if distance2 <= radius2:
-
                         out[z,y,x] = 1.0
-     return out
+    return out
 
+@cython.boundscheck(False)
 def dilate_points_add(np.ndarray[np.float64_t, ndim=2] points,
                   np.ndarray[np.float64_t, ndim=1] radius,
                   np.ndarray[np.float64_t, ndim=3] out,

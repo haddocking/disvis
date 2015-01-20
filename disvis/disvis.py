@@ -2,11 +2,15 @@ from __future__ import print_function, absolute_import, division
 
 import numpy as np
 from numpy.fft import rfftn, irfftn
+from pyfftw.interfaces.numpy_fft import rfftn, irfftn
+
 from math import floor
 
+from disvis import volume
 from .volume import radix235
-from .points import dilate_points, dilate_points_add
-from .libdisvis import rotate_image3d
+from .points import dilate_points
+from .libdisvis import rotate_image3d, dilate_points_add
+
 
 class DisVis(object):
 
@@ -16,7 +20,7 @@ class DisVis(object):
         self._ligand = None
 
         # parameters with standard values
-        self.rotations = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+        self.rotations = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]]
         self.voxelspacing = 1.0
         self.erosion_iterations = 2
         self.surface_radius = 2.5
@@ -103,9 +107,12 @@ class DisVis(object):
         d = self.data
 
         # determine size for grid
-        shape = grid_shape(self.receptor, self.ligand, self.voxelspacing)
+        shape = grid_shape(self.receptor.coor, self.ligand.coor, self.voxelspacing)
         # calculate the interaction surface and core of the receptor
-        d['rsurf'] = rsurface(self.receptor.coor, self.surface_radius, shape, self.voxelspacing)
+        radii = np.zeros(self.receptor.coor.shape[0], dtype=np.float64)
+        radii.fill(self.surface_radius)
+        d['rsurf'] = rsurface(self.receptor.coor, radii, shape, self.voxelspacing)
+        d['rsurf'].tofile('rsurf.mrc')
         d['rcore'] = volume.erode(d['rsurf'], self.erosion_iterations)
 
         # keep track of some data for later calculations
@@ -118,8 +125,9 @@ class DisVis(object):
 
         # set ligand center to the origin of the receptor map
         # and make a grid of the ligand
-        self.ligand.coor -= (self.ligand.center - np.asarray(d['rsurf'].origin))
-        d['lsurf'] = dilate_points(self.ligand.coor, radius, out=volume.zeros_like(d['rcore']))
+        radii = np.zeros(self.ligand.coor.shape[0], dtype=np.float64)
+        radii.fill(self.surface_radius)
+        d['lsurf'] = dilate_points((self.ligand.coor - self.ligand.center + d['rcore'].origin), radii, volume.zeros_like(d['rcore']))
 
         # setup the distance restraints
         d['nrestraints'] = len(self.distance_restraints)
@@ -131,19 +139,26 @@ class DisVis(object):
         self._cpu_init()
         self._cpu_search()
 
+        accessible_interaction_space = volume.Volume(self.data['accessible_interaction_space'], self.voxelspacing, self.data['origin'])
+
+        return accessible_interaction_space, self.data['accessible_complexes']
+
     def _cpu_init(self):
 
         self.cpu_data = {}
         c = self.cpu_data
         d = self.data
 
-        c['im_lsurf'] = d['lsurf']
-        c['lsurf'] = np.zeros_like(d['rcore'])
-        c['clashvol'] = np.zeros_like(d['rcore'])
-        c['intervol'] = np.zeros_like(d['rcore'])
-        c['interspace'] = np.zeros_like(d['rcore'])
-        c['access_interspace'] = np.zeros_like(d['rcore'])
-        c['restspace'] = np.zeros_like(d['rcore'])
+        c['rcore'] = d['rcore'].array
+        c['rsurf'] = d['rsurf'].array
+        c['im_lsurf'] = d['lsurf'].array
+
+        c['lsurf'] = np.zeros_like(c['rcore'])
+        c['clashvol'] = np.zeros_like(c['rcore'])
+        c['intervol'] = np.zeros_like(c['rcore'])
+        c['interspace'] = np.zeros_like(c['rcore'])
+        c['access_interspace'] = np.zeros_like(c['rcore'])
+        c['restspace'] = np.zeros_like(c['rcore'])
 
         # complex arrays
         c['ft_shape'] = list(d['shape'])
@@ -153,8 +168,8 @@ class DisVis(object):
         c['ft_rsurf'] = np.zeros(c['ft_shape'], dtype=np.complex128)
 
         # initial calculations
-        c['ft_rcore'][:] = rfftn(d['rcore'])
-        c['ft_rsurf'][:] = rfftn(d['rsurf'])
+        c['ft_rcore'][:] = rfftn(c['rcore'])
+        c['ft_rsurf'][:] = rfftn(c['rsurf'])
         c['rotmat'] = np.asarray(self.rotations, dtype=np.float64)
         c['weights'] = np.asarray(self.weights, dtype=np.float64)
 
@@ -163,13 +178,14 @@ class DisVis(object):
         d = self.data
         c = self.cpu_data
 
-        c['vlength'] = int(np.linalg.norm(self.ligand.coor - self.ligand.center).max() + self.surface_radius + 1)
+        c['vlength'] = int(np.linalg.norm(self.ligand.coor - self.ligand.center, axis=1).max() + self.surface_radius + 1)/self.voxelspacing
         tot_complex = 0
-        list_total_allowed = np.asarray([0]*(d['nrestraints'] + 1), dtype=np.float64)
-        for n in xrange(d['rotmat'].shape[0]):
+        list_total_allowed = np.zeros(max(2, d['nrestraints'] + 1), dtype=np.float64)
+
+        for n in xrange(c['rotmat'].shape[0]):
             # rotate ligand image
             print(n)
-            rotate_image3d(c['im_lsurf'], c['vlenght'], c['rotmat'][n], c['lsurf'])
+            rotate_image3d(c['im_lsurf'], c['vlength'], c['rotmat'][n], c['lsurf'])
 
             c['ft_lsurf'][:] = rfftn(c['lsurf']).conj()
             c['clashvol'][:] = irfftn(c['ft_lsurf'] * c['ft_rcore'])
@@ -180,22 +196,21 @@ class DisVis(object):
 
             tot_complex += c['weights'][n] * c['interspace'].sum()
 
-            time0 = time()
             if self.distance_restraints:
                 c['restspace'].fill(0)
 
-                rest_center = d['restraints'][:, :3] - np.mat(c['rotmat'][n]) * np.mat(d['restraints'][:,3:6])
-                radii = d['restraints'][:,-1]
-                dilate_points_add(rest_center, radii, d['restspace'])
+                rest_center = d['restraints'][:, :3] - (np.mat(c['rotmat'][n]) * np.mat(d['restraints'][:,3:6]).T).T
+                radii = d['restraints'][:,6]
+                dilate_points_add(rest_center, radii, c['restspace'])
 
                 c['interspace'] *= c['restspace']
 
             np.maximum(c['interspace'], c['access_interspace'], \
                        c['access_interspace'])
 
-            list_total_allowed += d['weights'][n] *\
+            list_total_allowed += c['weights'][n] *\
                         np.bincount(c['interspace'].astype(np.int32).flatten(),
-                        minlength=(d['nrestraints']+1))
+                        minlength=(max(2, d['nrestraints']+1)))
 
         d['accessible_interaction_space'] = c['access_interspace']
         d['accessible_complexes'] = [tot_complex] + list_total_allowed[1:].tolist()
@@ -204,21 +219,22 @@ class DisVis(object):
             d['accessible_complexes'][i] = sum(d['accessible_complexes'][i:])
         
 
-def rsurface(points, radius, shape, voxelspacing)
+def rsurface(points, radius, shape, voxelspacing):
 
     dimensions = [x*voxelspacing for x in shape]
     origin = volume_origin(points, dimensions)
-    rsurf = volume.zeros(shape, self.voxelspacing, origin)
-    dilate_points(points, radius, out=rsurf)
+    rsurf = volume.zeros(shape, voxelspacing, origin)
+
+    rsurf = dilate_points(points, radius, rsurf)
 
     return rsurf
 
-def volume_origin(points, dimensions)
+def volume_origin(points, dimensions):
     
     center = points.mean(axis=0)
     origin = [(c - d/2.0) for c, d in zip(center, dimensions)]
 
-    return volume_origin
+    return origin
     
 def grid_restraints(restraints, voxelspacing, origin, lcenter):
 
@@ -226,26 +242,26 @@ def grid_restraints(restraints, voxelspacing, origin, lcenter):
     g_restraints = np.zeros((nrestraints, 8), dtype=np.float64)
 
     for n in range(nrestraints):
-        r_sel, l_sel, distance = distance_restraints[n]
+        r_sel, l_sel, distance = restraints[n]
 
         r_pos = (r_sel.center - origin)/voxelspacing
         l_pos = (l_sel.center - lcenter)/voxelspacing
 
-        restraints[n, 0:3] = r_pos
-        restraints[n, 3:6] = l_pos
-        restraints[n, 6] = distance/voxelspacing
+        g_restraints[n, 0:3] = r_pos
+        g_restraints[n, 3:6] = l_pos
+        g_restraints[n, 6] = distance/voxelspacing
 
-    return restraints
+    return g_restraints
 
 
-def grid_shape(pdb1, pdb2, voxelspcing):
-    shape = min_grid_shape(pdb1, pdb2, voxelspacing)
-    shape = [radix235(x) for x in gridshape]
+def grid_shape(points1, points2, voxelspacing):
+    shape = min_grid_shape(points1, points2, voxelspacing)
+    shape = [radix235(x) for x in shape]
     return shape
 
-def min_grid_shape(pdb1, pdb2, voxelspacing):
-    maxdist1 = np.linalg.norm(pdb1.coor - pdb1.center).max()
-    maxdist2 = np.linalg.norm(pdb2.coor - pdb1.center).max()
+def min_grid_shape(points1, points2, voxelspacing):
+    maxdist1 = np.linalg.norm(points1 - points1.mean(axis=0), axis=1).max()
+    maxdist2 = np.linalg.norm(points2 - points2.mean(axis=0), axis=1).max()
 
     grid_length = int(2*(maxdist1 + maxdist2)/voxelspacing)
 

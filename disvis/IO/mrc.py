@@ -12,7 +12,7 @@ def to_mrc(fid, volume, labels=[]):
         out.write(pack('i', ny))
         out.write(pack('i', nz))
 
-        dtype = volume.data.dtype
+        dtype = volume.array.dtype
         if dtype == np.int8:
             mode = 0
         elif dtype in (np.int16, np.int32):
@@ -21,7 +21,7 @@ def to_mrc(fid, volume, labels=[]):
             mode = 2
         else:
             raise TypeError("Data type ({:})is not supported.".format(dtype))
-        out.write('i', mode)
+        out.write(pack('i', mode))
 
         nxstart, nystart, nzstart = [int(x) for x in volume.start]
         out.write(pack('i', nxstart))
@@ -47,9 +47,9 @@ def to_mrc(fid, volume, labels=[]):
         out.write(pack('i', mapr))
         out.write(pack('i', maps))
 
-        out.write(pack('f', volume.data.min()))
-        out.write(pack('f', volume.data.max()))
-        out.write(pack('f', volume.data.mean()))
+        out.write(pack('f', volume.array.min()))
+        out.write(pack('f', volume.array.max()))
+        out.write(pack('f', volume.array.mean()))
 
         ispg = 1
         out.write(pack('i', ispg))
@@ -86,7 +86,7 @@ def to_mrc(fid, volume, labels=[]):
         for c in machst:
             out.write(pack('c', c))
 
-        out.write(pack('f', volume.data.std()))
+        out.write(pack('f', volume.array.std()))
 
         # max 10 labels
         # nlabels = min(len(labels), 10)
@@ -109,8 +109,8 @@ def to_mrc(fid, volume, labels=[]):
 
         # write density
         if mode == 0:
-            volume.data.tofile(out)
+            volume.array.tofile(out)
         if mode == 1:
-            volume.data.astype(np.int16).tofile(out)
+            volume.array.astype(np.int16).tofile(out)
         if mode == 2:
-            volume.data.astype(np.float32).tofile(out)
+            volume.array.astype(np.float32).tofile(out)

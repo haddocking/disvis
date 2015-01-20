@@ -4,9 +4,9 @@ from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 
 ext_modules = [Extension("disvis/libdisvis",
-        ["scripts/libdisvis.pyx"])]
+        ["src/libdisvis.pyx"])]
 
-package_data = {'disvis': ['data/*.npy']}
+package_data = {'disvis': ['data/*.npy', 'IO/*']}
 
 setup(name="disvis",
       version='1.0.0',

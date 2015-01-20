@@ -1,24 +1,27 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import numpy as np
-from .libdisvis import diluate_points as _dilate_points, dilate_points_add as _dilate_points_add
+from .libdisvis import dilate_points as _dilate_points, dilate_points_add as _dilate_points_add
 
 def dilate_points(points, radii, volume):
         
-    ijkpoints = ((points - volume.origin)/volume.voxelspacing).astype(np.float64)
-    ijkradii = (radii/volume.voxelspacing).astype(np.float64)
+    ijkpoints = (float64_array(points) - float64_array(volume.origin))/volume.voxelspacing
+    ijkradii = float64_array(radii)/volume.voxelspacing
 
     _dilate_points(ijkpoints,
                    ijkradii,
-                   volume.data.astype(np.float64))
+                   volume.array)
     return volume
 
 def dilate_points_add(points, radii, volume):
     
-    ijkpoints = ((points - volume.origin)/volume.voxelspacing).astype(np.float64)
-    ijkradii = (radii/volume.voxelspacing).astype(np.float64)
+    ijkpoints = (float64_array(points) - float64_array(volume.origin))/volume.voxelspacing
+    ijkradii = float64_array(radii)/volume.voxelspacing
 
     _dilate_points_add(ijkpoints,
                        ijkradii,
-                       volume.data.astype(np.float64))
+                       volume.array)
     return volume
+
+def float64_array(array_like):
+    return np.asarray(array_like, dtype=np.float64)

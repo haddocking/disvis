@@ -2,18 +2,19 @@ from __future__ import division
 import numpy as np
 from scipy.ndimage import binary_erosion
 from .libdisvis import rotate_image3d
+from .IO.mrc import to_mrc
 
 class Volume(object):
 
-    def __init__(self, data, voxelspacing=1.0, origin=(0, 0, 0)):
+    def __init__(self, array, voxelspacing=1.0, origin=(0, 0, 0)):
 
-        self._data = data
+        self._array = array
         self._voxelspacing = voxelspacing
         self._origin = origin
 
     @property
-    def data(self):
-        return self._data
+    def array(self):
+        return self._array
 
     @property
     def voxelspacing(self):
@@ -24,18 +25,18 @@ class Volume(object):
 
     @property
     def origin(self):
-        return self._origin
+        return np.asarray(self._origin, dtype=np.float64)
     @origin.setter
     def origin(self, origin):
         self._origin = origin
 
     @property
     def shape(self):
-        return self.data.shape[::-1]
+        return self.array.shape
 
     @property
     def dimensions(self):
-        return [x*self.voxelspacing for x in self.shape]
+        return [x*self.voxelspacing for x in self.shape][::-1]
 
     @property
     def start(self):
@@ -45,18 +46,23 @@ class Volume(object):
         self._origin = [x*self.voxelspacing for x in start]
 
     def duplicate(self):
-        return Volume(self.data.copy(), voxelspacing=self.voxelspacing,
+        return Volume(self.array.copy(), voxelspacing=self.voxelspacing,
                       origin=self.origin)
+    def tofile(self, fid):
+        to_mrc(fid, self)
 
 # builders
+def zeros(shape, voxelspacing, origin):
+    return Volume(np.zeros(shape, dtype=np.float64), voxelspacing, origin)
+
 def zeros_like(volume):
-    return Volume(np.zeros_like(volume.data), volume.voxelspacing, volume.origin)
+    return Volume(np.zeros_like(volume.array), volume.voxelspacing, volume.origin)
 
 # functions
 def erode(volume, iterations, out=None):
     if out is None:
         out = zeros_like(volume)
-    binary_erosion(volume, iterations=iterations, output=out.data)
+    binary_erosion(volume.array, iterations=iterations, output=out.array)
     return out
 
 def radix235(ninit):
