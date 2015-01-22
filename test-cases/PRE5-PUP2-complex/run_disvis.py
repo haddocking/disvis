@@ -4,10 +4,10 @@ from disvis.rotations import proportional_orientations, quat_to_rotmat
 
 receptor = PDB.fromfile('O14250.pdb')
 ligand = PDB.fromfile('Q9UT97.pdb')
-angle = 90
+angle = 20
 
 quaternions, weights, angle = proportional_orientations(angle)
-rotations = quat_to_rotmat(quaternions, invert=True)
+rotations = quat_to_rotmat(quaternions)
 print('Number of rotations sampled: ', rotations.shape[0])
 
 
@@ -18,7 +18,7 @@ pd.voxelspacing = 1
 pd.weights = weights 
 pd.rotations = rotations
 pd.surface_radius = 2.5
-pd.erosion_iterations = 8
+pd.erosion_iterations = 7
 pd.max_clash = 1
 pd.min_interaction = 300
 
