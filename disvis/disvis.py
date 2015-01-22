@@ -219,7 +219,7 @@ class DisVis(object):
         for n in xrange(c['rotmat'].shape[0]):
             # rotate ligand image
             print(n)
-            rotate_image3d(c['im_lsurf'], c['vlength'], c['rotmat'][n], c['lsurf'])
+            rotate_image3d(c['im_lsurf'], c['vlength'], np.linalg.inv(c['rotmat'][n]), c['lsurf'])
 
             c['ft_lsurf'] = rfftn(c['lsurf']).conj()
             c['clashvol'] = irfftn(c['ft_lsurf'] * c['ft_rcore'])
