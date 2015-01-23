@@ -225,15 +225,19 @@ class DisVis(object):
             c['clashvol'] = irfftn(c['ft_lsurf'] * c['ft_rcore'])
             c['intervol'] = irfftn(c['ft_lsurf'] * c['ft_rsurf'])
 
-            c['interspace'][:] = np.logical_and(c['clashvol'] < (self.max_clash + 0.1),
-                                        c['intervol'] > (self.min_interaction - 0.1))
+            #c['interspace'][:] = np.logical_and(c['clashvol'] < (self.max_clash + 0.1),
+            #                            c['intervol'] > (self.min_interaction - 0.1))
+            np.logical_and(c['clashvol'] < (self.max_clash + 0.1),
+                           c['intervol'] > (self.min_interaction - 0.1),
+                           c['interspace'])
 
             tot_complex += c['weights'][n] * c['interspace'].sum()
 
             if self.distance_restraints:
                 c['restspace'].fill(0)
 
-                rest_center = d['restraints'][:, :3] - (np.mat(c['rotmat'][n]) * np.mat(d['restraints'][:,3:6]).T).T
+                rest_center = d['restraints'][:, :3] - \
+                        (np.mat(c['rotmat'][n]) * np.mat(d['restraints'][:,3:6]).T).T
                 radii = d['restraints'][:,6]
                 dilate_points_add(rest_center, radii, c['restspace'])
 
