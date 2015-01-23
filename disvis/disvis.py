@@ -1,4 +1,6 @@
 from __future__ import print_function, absolute_import, division
+from sys import stdout as _stdout
+from time import time as _time
 
 import numpy as np
 
@@ -216,17 +218,15 @@ class DisVis(object):
         tot_complex = 0
         list_total_allowed = np.zeros(max(2, d['nrestraints'] + 1), dtype=np.float64)
 
+        time0 = _time()
         for n in xrange(c['rotmat'].shape[0]):
             # rotate ligand image
-            print(n)
             rotate_image3d(c['im_lsurf'], c['vlength'], np.linalg.inv(c['rotmat'][n]), c['lsurf'])
 
             c['ft_lsurf'] = rfftn(c['lsurf']).conj()
             c['clashvol'] = irfftn(c['ft_lsurf'] * c['ft_rcore'])
             c['intervol'] = irfftn(c['ft_lsurf'] * c['ft_rsurf'])
 
-            #c['interspace'][:] = np.logical_and(c['clashvol'] < (self.max_clash + 0.1),
-            #                            c['intervol'] > (self.min_interaction - 0.1))
             np.logical_and(c['clashvol'] < (self.max_clash + 0.1),
                            c['intervol'] > (self.min_interaction - 0.1),
                            c['interspace'])
@@ -249,6 +249,13 @@ class DisVis(object):
             list_total_allowed += c['weights'][n] *\
                         np.bincount(c['interspace'].flatten(),
                         minlength=(max(2, d['nrestraints']+1)))
+
+            if _stdout.isatty():
+                pdone = n/c['rotmat'].shape[0]
+                t = _time() - time0
+                if n > 0:
+                    _stdout.write('{:d}/{:d} ({:.2%}, ETA: {:d}s)\r'.format(n, c['rotmat'].shape[0], pdone, int(t/pdone - t)))
+                    _stdout.flush()
 
         d['accessible_interaction_space'] = c['access_interspace']
         d['accessible_complexes'] = [tot_complex] + list_total_allowed[1:].tolist()
