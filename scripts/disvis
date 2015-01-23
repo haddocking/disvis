@@ -5,6 +5,8 @@ import multiprocessing as mp
 from time import time
 from argparse import ArgumentParser
 import logging
+logging.basicConfig(filename='disvis.log', 
+        level=logging.INFO, format='%(asctime)s %(message)s')
 
 import numpy as np
 from disvis import DisVis, PDB, Volume
@@ -67,6 +69,11 @@ def run_disvis_instance(queue, rotmat, weights, n, args):
     ais.tofile('accessible_interaction_space_{:d}.mrc.part'.format(n))
 
     queue.put(complexes)
+
+def write(line):
+    if sys.stdout.isatty():
+        print(line)
+    logging.info(line)
 
 if __name__=='__main__':
 
