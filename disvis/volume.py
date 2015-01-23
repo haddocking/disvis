@@ -7,9 +7,14 @@ except ImportError:
     from .libdisvis import binary_erosion
     SCIPY = False
 from .libdisvis import rotate_image3d
-from .IO.mrc import to_mrc
+from .IO.mrc import to_mrc, parse_mrc
 
 class Volume(object):
+
+    @classmethod
+    def fromfile(cls, fid):
+        array, voxelspacing, origin = parse_mrc(fid)
+        return cls(array, voxelspacing, origin)
 
     def __init__(self, array, voxelspacing=1.0, origin=(0, 0, 0)):
 

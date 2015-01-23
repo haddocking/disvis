@@ -21,6 +21,7 @@ def parse_pdb(pdbfile):
     charge = []
 
     model_number = 1
+
     for line in open(pdbfile):
 
         if line.startswith(MODEL):

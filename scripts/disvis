@@ -1,54 +1,134 @@
 #! usr/bin/python
 from __future__ import print_function
-import sys
+import os
 import multiprocessing as mp
 from time import time
+from argparse import ArgumentParser
+import logging
 
-from disvis import DisVis, PDB 
+import numpy as np
+from disvis import DisVis, PDB, Volume
 from disvis.rotations import proportional_orientations, quat_to_rotmat
 
-def run_disvis_instance(queue, r, l, rotmat, weights, n):
+def parse_args():
+    p = ArgumentParser()
+
+    p.add_argument('receptor', type=str, help='PDB-file containing fixed chain.')
+    p.add_argument('ligand', type=str, help='PDB-file containing scanning chain.')
+
+    p.add_argument('-a', '--angle', dest='angle', type=float, default=10,
+            help='Angular interval for rotational search in degrees')
+
+    p.add_argument('-np', '--nproc', dest='nproc', type=int, default=1,
+            help='Number of processors used duing search.')
+
+    p.add_argument('-vs', '--voxelspacing', dest='voxelspacing', 
+            type=float, default=1,
+            help='Voxel spacing of search grid in angstrom.')
+
+    p.add_argument('-ir', '--interaction-radius', 
+            dest='interaction_radius', type=float, default=3.0,
+            help='Radius of the spherical space filled by average atom in anstrom.')
+
+    p.add_argument('-ei', '--erosion_iterations', 
+            dest='erosion_iterations', type=int, default=2,
+            help='Number of erosion iterations to apply on the fixed ' +\
+                 'chain space. This determines the thickness of the ' + \
+                 'interacting shell.')
+
+    p.add_argument('-cv', '--max_clash', 
+            dest='max_clash', type=float, default=25,
+            help='Maximum allowed volume of clashes. Increasing this '+\
+                 'number results in more allowed complexes.')
+
+    p.add_argument('-iv', '--min-interaction', 
+            dest='min_interaction', type=float, default=100,
+            help='Minimal required interaction volume for a ' +\
+                 'conformation to be considered an accessible ' +\
+                 'complex. Increasing this number results in a '+\
+                 'stricter counting of accessible complexes.')
+
+    return p.parse_args()
+
+def run_disvis_instance(queue, rotmat, weights, n, args):
+
     dv = DisVis()
-    dv.receptor = r
-    dv.ligand = l
+
+    dv.receptor = PDB.fromfile(args.receptor)
+    dv.ligand = PDB.fromfile(args.ligand)
     dv.rotations = rotmat
     dv.weights = weights
+
+    dv.voxelspacing = args.voxelspacing
+    dv.interaction_radius = args.interaction_radius
+
     ais, complexes = dv.search()
-    ais.tofile('yep_{:d}'.format(n))
+
+    ais.tofile('accessible_interaction_space_{:d}.mrc.part'.format(n))
+
     queue.put(complexes)
 
 if __name__=='__main__':
 
-    pdb1 = PDB.fromfile(sys.argv[1])
-    pdb2 = PDB.fromfile(sys.argv[2])
-    angle = float(sys.argv[3])
-    nproc = int(sys.argv[4])
+    args = parse_args()
+    time0 = time()
 
-    q, w, a = proportional_orientations(angle)
-    rotmat = quat_to_rotmat(q, invert=True)
+    q, weights, a = proportional_orientations(args.angle)
+    rotmat = quat_to_rotmat(q)
+    nrot = rotmat.shape[0]
     print('Number of rotations: ', rotmat.shape[0])
 
-    time0 = time()
     max_cpu  = mp.cpu_count()
-    p = {}
-    nrot = rotmat.shape[0]
+    jobs = min(max_cpu, args.nproc)
+    # in case more processes are requiested than the number of rotations sampled
+    if jobs > nrot:
+        jobs = nrot
+    nrot_per_job = nrot//jobs
+    print('Number of processors used: ', jobs)
+
+    print('Creating jobs')
+
     queue = mp.Queue()
-    for n in range(min(nproc, max_cpu)):
+    processes = []
+    for n in range(jobs):
 
 
-        nr = nrot//min(nproc, max_cpu)
+        init_rot = n * nrot_per_job
+        end_rot = (n + 1) * nrot_per_job
 
-        p[n] = {}
-        rots = rotmat
-        p[n]['process'] = mp.Process(target=run_disvis_instance, args=(queue, pdb1.duplicate(), pdb2.duplicate(), rotmat[nr*n:nr*(n+1)].copy(), w[nr*n:nr*(n+1)].copy(), n))
-        p[n]['process'].start()
+        sub_rotmat = rotmat[init_rot: end_rot]
+        sub_weights = weights[init_rot: end_rot]
+        if n == (jobs - 1):
+            sub_rotmat = rotmat[init_rot:]
+            sub_weights = weights[init_rot:]
 
-    for n in range(min(nproc, max_cpu)):
-        p[n]['process'].join()
+        process = mp.Process(target=run_disvis_instance,
+            args=(queue, sub_rotmat, sub_weights, n, args))
 
-    #print(queue.get())
-    for n in range(min(nproc, max_cpu)):
-        complexes = queue.get()
-        print(complexes)
+        processes.append(process)
+
+
+    print('Starting jobs')
+    for n in range(jobs):
+        processes[n].start()
+    print('Waiting for jobs to finish')
+
+    for n in range(jobs):
+        processes[n].join()
+    print('Searching done. Combining results')
+
+    accessible_complexes = np.asarray(queue.get(), dtype=np.float64)
+    accessible_interaction_space = Volume.fromfile('accessible_interaction_space_0.mrc.part')
+    for n in range(1, jobs):
+        accessible_complexes += np.asarray(queue.get(), dtype=np.float64)
+        np.maximum(accessible_interaction_space.array, 
+                Volume.fromfile('accessible_interaction_space_{:d}.mrc.part'.format(n)).array, 
+                accessible_interaction_space.array)
+
+    print(accessible_complexes)
+    accessible_interaction_space.tofile('accessible_interaction_space.mrc'.format(n))
+    print('Cleaning')
+    for n in range(jobs):
+        os.remove('accessible_interaction_space_{:d}.mrc.part'.format(n))
 
     print('Total time: ', time() - time0)

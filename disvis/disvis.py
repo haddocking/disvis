@@ -86,6 +86,13 @@ class DisVis(object):
         self._interaction_radius = radius
 
     @property
+    def erosion_iterations(self):
+        return self._erosion_iterations
+    @erosion_iterations.setter
+    def erosion_iterations(self, erosion_iterations):
+        self._erosion_iterations = erosion_iterations
+
+    @property
     def voxelspacing(self):
         return self._voxelspacing
 
@@ -112,13 +119,6 @@ class DisVis(object):
             raise ValueError("Minimum required interaction volume cannot be smaller than 1")
         self._min_interaction = min_interaction
         
-    @property
-    def erosion_iterations(self):
-        return self._erosion_iterations
-    @erosion_iterations.setter
-    def erosion_iterations(self, erosion_iterations):
-        self._erosion_iterations = erosion_iterations
-
     @property
     def data(self):
         return self._data
