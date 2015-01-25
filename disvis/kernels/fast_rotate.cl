@@ -1,6 +1,6 @@
 __kernel
 void rotate_image3d(sampler_t sampler, read_only image3d_t im_map, 
-        __global float16 *rotmat, __global float *out, int4 shape)
+        float16 rotmat, __global float *out, int4 shape)
 {
     /*
      * 
@@ -20,7 +20,7 @@ void rotate_image3d(sampler_t sampler, read_only image3d_t im_map,
     float x, y, z;
     float xcoor_z, ycoor_z, zcoor_z, xcoor_yz, ycoor_yz, zcoor_yz;
     float xcoor_xyz, ycoor_xyz, zcoor_xyz;
-    float4 coor, mapvalue;
+    float4 coor, value;
 
     const float hzsize = 0.5f*shape.s0;
     const float hysize = 0.5f*shape.s1;
@@ -36,10 +36,10 @@ void rotate_image3d(sampler_t sampler, read_only image3d_t im_map,
         if (z >= hzsize)
             z -= shape.s0;
 
-        xcoor_z = rotmat[nrot].s2*z;
-        ycoor_z = rotmat[nrot].s5*z;
-        zcoor_z = rotmat[nrot].s8*z;
-        ind_z =  slice;
+        xcoor_z = rotmat.s2*z;
+        ycoor_z = rotmat.s5*z;
+        zcoor_z = rotmat.s8*z;
+        ind_z =  iz*slice;
 
         for (iy = yid; iy < shape.s1; iy += ystride){
 
@@ -48,9 +48,9 @@ void rotate_image3d(sampler_t sampler, read_only image3d_t im_map,
             if (y >= hysize)
                 y -= shape.s1;
 
-            xcoor_yz = rotmat[nrot].s1*y + xcoor_z; 
-            ycoor_yz = rotmat[nrot].s4*y + ycoor_z; 
-            zcoor_yz = rotmat[nrot].s7*y + zcoor_z; 
+            xcoor_yz = rotmat.s1*y + xcoor_z; 
+            ycoor_yz = rotmat.s4*y + ycoor_z; 
+            zcoor_yz = rotmat.s7*y + zcoor_z; 
             ind_yz = y*shape.s2 + ind_z;
 
             for (ix = xid; ix < shape.s2; ix += xstride){
@@ -60,9 +60,9 @@ void rotate_image3d(sampler_t sampler, read_only image3d_t im_map,
                 if (x >= hxsize)
                     x -= shape.s2;
 
-                xcoor_xyz = rotmat[nrot].s0*x + xcoor_yz;
-                ycoor_xyz = rotmat[nrot].s3*x + ycoor_yz;
-                zcoor_xyz = rotmat[nrot].s6*x + zcoor_yz;
+                xcoor_xyz = rotmat.s0*x + xcoor_yz;
+                ycoor_xyz = rotmat.s3*x + ycoor_yz;
+                zcoor_xyz = rotmat.s6*x + zcoor_yz;
                 ind_xyz = x + ind_yz;
 
                 // if rotated coordinate does not fall in the interval

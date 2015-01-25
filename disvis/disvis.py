@@ -19,14 +19,11 @@ from disvis import volume
 from .points import dilate_points
 from .libdisvis import rotate_image3d, dilate_points_add
 
-try:
-    import pyopencl as cl
-    import pyopencl.array as cl_array
-    import disvis.pyclfft
-    from disvis.kernels import Kernels
-    OPENCL = True
-except ImportError:
-    OPENCL = False
+import pyopencl as cl
+import pyopencl.array as cl_array
+import disvis.pyclfft
+from disvis.kernels import Kernels
+from disvis import pyclfft
 
 
 class DisVis(object):
@@ -197,6 +194,8 @@ class DisVis(object):
             self._cpu_init()
             self._cpu_search()
         else:
+            self._gpu_init()
+            self._gpu_search()
             pass
 
         accessible_interaction_space = \
@@ -300,29 +299,29 @@ class DisVis(object):
     def _gpu_init(self):
 
         self.gpu_data = {}
-        g = {}
+        g = self.gpu_data
         d = self.data
         q = self.queue
 
-        g['rcore'] = cl_array.to_device(q, float32array(d['rcore']))
-        g['rsurf'] = cl_array.to_device(q, float32array(d['rsurf']))
-        g['im_lsurf'] = cl.image_from_array(q, float32array(d['lsurf']))
+        g['rcore'] = cl_array.to_device(q, float32array(d['rcore'].array))
+        g['rsurf'] = cl_array.to_device(q, float32array(d['rsurf'].array))
+        g['im_lsurf'] = cl.image_from_array(q.context, float32array(d['lsurf'].array))
         g['sampler'] = cl.Sampler(q.context, False, cl.addressing_mode.CLAMP,
                                   cl.filter_mode.LINEAR)
 
         if self.distance_restraints:
-            cl_array.to_device(q, float32array(d['restraints']))
-
-        g['rotmat'] = cl_array.to_device(float32array(self.rotations))
+            g['restraints'] = cl_array.to_device(q, float32array(d['restraints']))
 
         g['lsurf'] = cl_array.zeros_like(g['rcore'])
         g['clashvol'] = cl_array.zeros_like(g['rcore'])
         g['intervol'] = cl_array.zeros_like(g['rcore'])
-        g['interspace'] = cl_array.zeros_like(g['rcore'], dtype=np.int32)
-        g['restspace'] = cl_array.zeros_like(g['rcore'], dtype=np.int32)
-        g['access_interspace'] = cl_array.zeros_like(g['rcore'], dtype=np.int16)
 
-        g['counts'] = cl_array.zeros(q, 
+
+        g['interspace'] = cl_array.zeros(q, d['shape'], dtype=np.int32)
+        g['restspace'] = cl_array.zeros_like(g['interspace'])
+        g['access_interspace'] = cl_array.zeros_like(g['interspace'])
+
+        g['counts'] = cl_array.zeros(q,
                 [d['nrestraints'] + 1] + list(d['shape']), dtype=np.float32)
 
         g['ft_shape'] = list(d['shape'])
@@ -342,37 +341,57 @@ class DisVis(object):
 
 
     def _gpu_search(self):
-        g = {}
         d = self.data
+        g = self.gpu_data
         q = self.queue
+        k = g['k']
 
+        time0 = _time()
         for n in xrange(d['nrot']):
 
-            k.rotate_image(q, g['im_lsurf'], g['sampler'],
-                    g['rotmat'][n], g['lsurf'])
+            k.rotate_image3d(q, g['sampler'], g['im_lsurf'],
+                    self.rotations[n], g['lsurf'])
 
             k.rfftn(q, g['lsurf'], g['ft_lsurf'])
-            k.c_conj_multiply(g['ft_lsurf'], g['ft_rcore'], g['ft_clasvol'])
+            k.c_conj_multiply(q, g['ft_lsurf'], g['ft_rcore'], g['ft_clashvol'])
             k.irfftn(q, g['ft_clashvol'], g['clashvol'])
 
-            k.c_conj_multiply(g['ft_lsurf'], g['ft_rsurf'], g['ft_intervol'])
+            k.c_conj_multiply(q, g['ft_lsurf'], g['ft_rsurf'], g['ft_intervol'])
             k.irfftn(q, g['ft_intervol'], g['intervol'])
 
-            k.touch(g['clashvol'], np.float32(self.max_clash), 
-                    g['intervol'], np.float32(self.min_inter),
+            k.touch(q, g['clashvol'], self.max_clash, 
+                    g['intervol'], self.min_interaction,
                     g['interspace'])
 
             if self.distance_restraints:
-                k.set_to(g['restspace'], np.float32(0))
+                k.fill(q, g['restspace'], 0)
                 k.dilate_points_add(q, g['restraints'],
-                        g['rotmat'][n], g['restspace'])
-                k.r_multiply(g['restspace'], g['interspace'], g['access_interspace'])
+                        self.rotations[n], g['restspace'])
+                k.multiply(q, g['restspace'], g['interspace'], g['access_interspace'])
 
-            k.count(g['interspace'], g['access_interspace'], 
-                    np.float32(self.weights[n]), g['access_interspace'])
+            k.count(q, g['interspace'], g['access_interspace'], 
+                    self.weights[n], g['counts'])
+            if _stdout.isatty():
+                pdone = n/d['nrot']
+                t = _time() - time0
+                if n > 0:
+                    _stdout.write('{:d}/{:d} ({:.2%}, ETA: {:d}s)\r'\
+                            .format(n, d['nrot'], pdone, 
+                                    int(t/pdone - t)))
+                    _stdout.flush()
 
-        count = g['access_interspace'].get()
-        access_complexes = np.sum(count, axis=0)
+        self.queue.finish()
+
+        count = g['counts'].get()
+
+        access_complexes = []
+        for i in range(d['nrestraints'] + 1):
+            access_complexes.append(np.sum(count[i]))
+        access_interaction_space = np.zeros(d['shape'], dtype=np.int32)
+        for i in xrange(1, d['nrestraints'] + 1):
+            access_interaction_space[count[i] > 0] = i
+        d['accessible_interaction_space'] =access_interaction_space 
+        d['accessible_complexes'] = access_complexes
 
 
 def rsurface(points, radius, shape, voxelspacing):
