@@ -4,8 +4,6 @@ from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 import numpy
 
-import numpy
-
 ext_modules = [Extension("disvis/libdisvis",
         ["src/libdisvis.pyx"])]
 

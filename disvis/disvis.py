@@ -15,12 +15,18 @@ except ImportError:
     from numpy.fft import rfftn, irfftn
 
 
-from math import floor
-
 from disvis import volume
-from .volume import radix235
 from .points import dilate_points
 from .libdisvis import rotate_image3d, dilate_points_add
+
+try:
+    import pyopencl as cl
+    import pyopencl.array as cl_array
+    import disvis.pyclfft
+    from disvis.kernels import Kernels
+    OPENCL = True
+except ImportError:
+    OPENCL = False
 
 
 class DisVis(object):
@@ -39,6 +45,9 @@ class DisVis(object):
         self.max_clash = 100
         self.min_interaction = 300
         self.distance_restraints = []
+
+        # CPU or GPU
+        self._queue = None
 
         # unchangeable
         self._data = {}
@@ -122,6 +131,13 @@ class DisVis(object):
         self._min_interaction = min_interaction
         
     @property
+    def queue(self):
+        return self._queue
+    @queue.setter
+    def queue(self, queue):
+        self._queue = queue
+
+    @property
     def data(self):
         return self._data
 
@@ -145,16 +161,19 @@ class DisVis(object):
 
         # determine size for grid
         shape = grid_shape(self.receptor.coor, self.ligand.coor, self.voxelspacing)
+
         # calculate the interaction surface and core of the receptor
         radii = np.zeros(self.receptor.coor.shape[0], dtype=np.float64)
         radii.fill(1.5 + self.interaction_radius)
-        d['rsurf'] = rsurface(self.receptor.coor, radii, shape, self.voxelspacing)
+        d['rsurf'] = rsurface(self.receptor.coor, radii, 
+                shape, self.voxelspacing)
         d['rcore'] = volume.erode(d['rsurf'], self.erosion_iterations)
 
         # keep track of some data for later calculations
         d['origin'] = d['rcore'].origin
         d['shape'] = d['rcore'].shape
         d['start'] = d['rcore'].start
+        d['nrot'] = self.rotations.shape[0]
 
         # ligand center is needed for distance calculations during search
         d['lcenter'] = self.ligand.center
@@ -163,19 +182,26 @@ class DisVis(object):
         # and make a grid of the ligand
         radii = np.zeros(self.ligand.coor.shape[0], dtype=np.float64)
         radii.fill(1.5)
-        d['lsurf'] = dilate_points((self.ligand.coor - self.ligand.center + d['rcore'].origin), radii, volume.zeros_like(d['rcore']))
+        d['lsurf'] = dilate_points((self.ligand.coor - self.ligand.center \
+                + d['rcore'].origin), radii, volume.zeros_like(d['rcore']))
 
         # setup the distance restraints
         d['nrestraints'] = len(self.distance_restraints)
         if self.distance_restraints:
-            d['restraints'] = grid_restraints(self.distance_restraints, self.voxelspacing, d['origin'], d['lcenter'])
+            d['restraints'] = grid_restraints(self.distance_restraints, 
+                    self.voxelspacing, d['origin'], d['lcenter'])
 
     def search(self):
         self._initialize()
-        self._cpu_init()
-        self._cpu_search()
+        if self.queue is None:
+            self._cpu_init()
+            self._cpu_search()
+        else:
+            pass
 
-        accessible_interaction_space = volume.Volume(self.data['accessible_interaction_space'], self.voxelspacing, self.data['origin'])
+        accessible_interaction_space = \
+                volume.Volume(self.data['accessible_interaction_space'], 
+                        self.voxelspacing, self.data['origin'])
 
         return accessible_interaction_space, self.data['accessible_complexes']
 
@@ -209,19 +235,22 @@ class DisVis(object):
         c['rotmat'] = np.asarray(self.rotations, dtype=np.float64)
         c['weights'] = np.asarray(self.weights, dtype=np.float64)
 
+        c['vlength'] = int(np.linalg.norm(self.ligand.coor - \
+                self.ligand.center, axis=1).max() + \
+                self.interaction_radius + 1.5)/self.voxelspacing
+
     def _cpu_search(self):
 
         d = self.data
         c = self.cpu_data
 
-        c['vlength'] = int(np.linalg.norm(self.ligand.coor - self.ligand.center, axis=1).max() + self.interaction_radius + 1.5)/self.voxelspacing
         tot_complex = 0
         list_total_allowed = np.zeros(max(2, d['nrestraints'] + 1), dtype=np.float64)
-
         time0 = _time()
         for n in xrange(c['rotmat'].shape[0]):
             # rotate ligand image
-            rotate_image3d(c['im_lsurf'], c['vlength'], np.linalg.inv(c['rotmat'][n]), c['lsurf'])
+            rotate_image3d(c['im_lsurf'], c['vlength'], 
+                    np.linalg.inv(c['rotmat'][n]), c['lsurf'])
 
             c['ft_lsurf'] = rfftn(c['lsurf']).conj()
             c['clashvol'] = irfftn(c['ft_lsurf'] * c['ft_rcore'])
@@ -237,7 +266,8 @@ class DisVis(object):
                 c['restspace'].fill(0)
 
                 rest_center = d['restraints'][:, :3] - \
-                        (np.mat(c['rotmat'][n]) * np.mat(d['restraints'][:,3:6]).T).T
+                        (np.mat(c['rotmat'][n]) * \
+                        np.mat(d['restraints'][:,3:6]).T).T
                 radii = d['restraints'][:,6]
                 dilate_points_add(rest_center, radii, c['restspace'])
 
@@ -254,15 +284,96 @@ class DisVis(object):
                 pdone = n/c['rotmat'].shape[0]
                 t = _time() - time0
                 if n > 0:
-                    _stdout.write('{:d}/{:d} ({:.2%}, ETA: {:d}s)\r'.format(n, c['rotmat'].shape[0], pdone, int(t/pdone - t)))
+                    _stdout.write('{:d}/{:d} ({:.2%}, ETA: {:d}s)\r'\
+                            .format(n, c['rotmat'].shape[0], pdone, 
+                                    int(t/pdone - t)))
                     _stdout.flush()
 
         d['accessible_interaction_space'] = c['access_interspace']
-        d['accessible_complexes'] = [tot_complex] + list_total_allowed[1:].tolist()
+        d['accessible_complexes'] = [tot_complex] + \
+                list_total_allowed[1:].tolist()
         d['accessible_complexes'] = [int(x) for x in d['accessible_complexes']]
+
         for i in range(1, len(d['accessible_complexes'])):
             d['accessible_complexes'][i] = sum(d['accessible_complexes'][i:])
         
+    def _gpu_init(self):
+
+        self.gpu_data = {}
+        g = {}
+        d = self.data
+        q = self.queue
+
+        g['rcore'] = cl_array.to_device(q, float32array(d['rcore']))
+        g['rsurf'] = cl_array.to_device(q, float32array(d['rsurf']))
+        g['im_lsurf'] = cl.image_from_array(q, float32array(d['lsurf']))
+        g['sampler'] = cl.Sampler(q.context, False, cl.addressing_mode.CLAMP,
+                                  cl.filter_mode.LINEAR)
+
+        if self.distance_restraints:
+            cl_array.to_device(q, float32array(d['restraints']))
+
+        g['rotmat'] = cl_array.to_device(float32array(self.rotations))
+
+        g['lsurf'] = cl_array.zeros_like(g['rcore'])
+        g['clashvol'] = cl_array.zeros_like(g['rcore'])
+        g['intervol'] = cl_array.zeros_like(g['rcore'])
+        g['interspace'] = cl_array.zeros_like(g['rcore'], dtype=np.int32)
+        g['restspace'] = cl_array.zeros_like(g['rcore'], dtype=np.int32)
+        g['access_interspace'] = cl_array.zeros_like(g['rcore'], dtype=np.int16)
+
+        g['counts'] = cl_array.zeros(q, 
+                [d['nrestraints'] + 1] + list(d['shape']), dtype=np.float32)
+
+        g['ft_shape'] = list(d['shape'])
+        g['ft_shape'][0] = d['shape'][0]//2 + 1
+        g['ft_rcore'] = cl_array.zeros(q, g['ft_shape'], dtype=np.complex64)
+        g['ft_rsurf'] = cl_array.zeros_like(g['ft_rcore'])
+        g['ft_lsurf'] = cl_array.zeros_like(g['ft_rcore'])
+        g['ft_clashvol'] = cl_array.zeros_like(g['ft_rcore'])
+        g['ft_intervol'] = cl_array.zeros_like(g['ft_rcore'])
+
+        g['k'] = Kernels(q.context)
+        g['k'].rfftn = pyclfft.RFFTn(q.context, g['ft_shape'])
+        g['k'].irfftn = pyclfft.iRFFTn(q.context, g['ft_shape'])
+
+        g['k'].rfftn(q, g['rcore'], g['ft_rcore'])
+        g['k'].rfftn(q, g['rsurf'], g['ft_rsurf'])
+
+
+    def _gpu_search(self):
+        g = {}
+        d = self.data
+        q = self.queue
+
+        for n in xrange(d['nrot']):
+
+            k.rotate_image(q, g['im_lsurf'], g['sampler'],
+                    g['rotmat'][n], g['lsurf'])
+
+            k.rfftn(q, g['lsurf'], g['ft_lsurf'])
+            k.c_conj_multiply(g['ft_lsurf'], g['ft_rcore'], g['ft_clasvol'])
+            k.irfftn(q, g['ft_clashvol'], g['clashvol'])
+
+            k.c_conj_multiply(g['ft_lsurf'], g['ft_rsurf'], g['ft_intervol'])
+            k.irfftn(q, g['ft_intervol'], g['intervol'])
+
+            k.touch(g['clashvol'], np.float32(self.max_clash), 
+                    g['intervol'], np.float32(self.min_inter),
+                    g['interspace'])
+
+            if self.distance_restraints:
+                k.set_to(g['restspace'], np.float32(0))
+                k.dilate_points_add(q, g['restraints'],
+                        g['rotmat'][n], g['restspace'])
+                k.r_multiply(g['restspace'], g['interspace'], g['access_interspace'])
+
+            k.count(g['interspace'], g['access_interspace'], 
+                    np.float32(self.weights[n]), g['access_interspace'])
+
+        count = g['access_interspace'].get()
+        access_complexes = np.sum(count, axis=0)
+
 
 def rsurface(points, radius, shape, voxelspacing):
 
@@ -301,7 +412,7 @@ def grid_restraints(restraints, voxelspacing, origin, lcenter):
 
 def grid_shape(points1, points2, voxelspacing):
     shape = min_grid_shape(points1, points2, voxelspacing)
-    shape = [radix235(x) for x in shape]
+    shape = [volume.radix235(x) for x in shape]
     return shape
 
 def min_grid_shape(points1, points2, voxelspacing):
@@ -312,3 +423,6 @@ def min_grid_shape(points1, points2, voxelspacing):
 
     grid_shape = [grid_length]*3
     return grid_shape
+
+def float32array(array_like):
+    return np.asarray(array_like, dtype=np.float32)
