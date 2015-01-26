@@ -1,26 +1,29 @@
 from __future__ import print_function, division
 from disvis import PDB, DisVis
 from disvis.rotations import proportional_orientations, quat_to_rotmat
+from disvis.helpers import get_queue
 
 receptor = PDB.fromfile('O14250.pdb')
 ligand = PDB.fromfile('Q9UT97.pdb')
-angle = 20
+angle = 40
 
 quaternions, weights, angle = proportional_orientations(angle)
 rotations = quat_to_rotmat(quaternions)
 print('Number of rotations sampled: ', rotations.shape[0])
 
 
+
 pd = DisVis()
+#pd.queue = get_queue()
 pd.receptor = receptor
 pd.ligand = ligand
 pd.voxelspacing = 1
 pd.weights = weights 
 pd.rotations = rotations
-pd.surface_radius = 2.5
-pd.erosion_iterations = 7
-pd.max_clash = 1
-pd.min_interaction = 300
+pd.interaction_radius = 3
+pd.erosion_iterations = 3
+pd.max_clash = 100 + 0.8
+pd.min_interaction = 300 + 0.8
 
 # ADH cross links
 ADH_DISTANCE = 23

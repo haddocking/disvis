@@ -5,25 +5,28 @@ import multiprocessing as mp
 from time import time
 from argparse import ArgumentParser
 import logging
-logging.basicConfig(filename='disvis.log', 
-        level=logging.INFO, format='%(asctime)s %(message)s')
+from datetime import timedelta
 
 import numpy as np
 from disvis import DisVis, PDB, Volume
+from disvis.helpers import get_queue
 from disvis.rotations import proportional_orientations, quat_to_rotmat
+
+logging.basicConfig(filename='disvis.log', 
+        level=logging.INFO, format='%(asctime)s %(message)s')
 
 def parse_args():
     p = ArgumentParser()
 
-    p.add_argument('receptor', type=str, help='PDB-file containing fixed chain.')
-    p.add_argument('ligand', type=str, help='PDB-file containing scanning chain.')
-    p.add_argument('constraints', type=str, help='File containing the constraints')
+    p.add_argument('receptor', type=str, 
+            help='PDB-file containing fixed chain.')
+    p.add_argument('ligand', type=str, 
+            help='PDB-file containing scanning chain.')
+    p.add_argument('constraints', type=str, 
+            help='File containing the constraints')
 
     p.add_argument('-a', '--angle', dest='angle', type=float, default=10,
             help='Angular interval for rotational search in degrees')
-
-    p.add_argument('-np', '--nproc', dest='nproc', type=int, default=1,
-            help='Number of processors used duing search.')
 
     p.add_argument('-vs', '--voxelspacing', dest='voxelspacing', 
             type=float, default=1,
@@ -47,9 +50,17 @@ def parse_args():
     p.add_argument('-iv', '--min-interaction', 
             dest='min_interaction', type=float, default=100,
             help='Minimal required interaction volume for a ' +\
-                 'conformation to be considered an accessible ' +\
+                 'conformation to be considered a ' +\
                  'complex. Increasing this number results in a '+\
-                 'stricter counting of accessible complexes.')
+                 'stricter counting of complexes.')
+
+    p.add_argument('-np', '--nproc', dest='nproc', type=int, default=1,
+            help='Number of processors used duing search.')
+
+    p.add_argument('-g', '--gpu', dest='gpu', action='store_true',
+            help='Use GPU-acceleration for search. If not available '+\
+                 'the CPU-version will be used with the given number '+\
+                 'of processors.')
 
     return p.parse_args()
 
@@ -67,13 +78,13 @@ def parse_constraints(fid, pdb1, pdb2):
     return dist_constraints
 
 
-def run_disvis_instance(queue, distance_restraints, rotmat, weights, n, args):
+def run_disvis_instance(queue, distance_constraints, rotmat, weights, n, args):
 
     dv = DisVis()
 
     dv.receptor = PDB.fromfile(args.receptor)
     dv.ligand = PDB.fromfile(args.ligand)
-    dv.distance_restraints = distance_restraints
+    dv.distance_restraints = distance_constraints
     dv.rotations = rotmat
     dv.weights = weights
 
@@ -108,66 +119,93 @@ if __name__=='__main__':
     distance_constraints = parse_constraints(args.constraints, PDB.fromfile(args.receptor), PDB.fromfile(args.ligand))
     print('Number of distance constraints: {:d}'.format(len(distance_constraints)))
 
-    try:
-        max_cpu  = mp.cpu_count()
-        jobs = min(max_cpu, args.nproc)
-    except NotImplementedError:
-        jobs = args.nproc
-    # in case more processes are requiested than the number 
-    # of rotations sampled
-    if jobs > nrot:
-        jobs = nrot
-    nrot_per_job = nrot//jobs
-    print('Number of processors used: ', jobs)
+    queue = None
+    if args.gpu:
+        queue = get_queue()
 
-    print('Creating jobs')
+    if queue is None:
+        # multi-threaded CPU version
+        try:
+            max_cpu  = mp.cpu_count()
+            jobs = min(max_cpu, args.nproc)
+        except NotImplementedError:
+            jobs = args.nproc
+        # in case more processes are requiested than the number 
+        # of rotations sampled
+        if jobs > nrot:
+            jobs = nrot
+        nrot_per_job = nrot//jobs
+        print('Number of processors used: ', jobs)
 
-    queue = mp.Queue()
-    processes = []
-    for n in range(jobs):
+        print('Creating jobs')
 
-
-        init_rot = n * nrot_per_job
-        end_rot = (n + 1) * nrot_per_job
-
-        sub_rotmat = rotmat[init_rot: end_rot]
-        sub_weights = weights[init_rot: end_rot]
-        if n == (jobs - 1):
-            sub_rotmat = rotmat[init_rot:]
-            sub_weights = weights[init_rot:]
-
-        distance_constraints = parse_constraints(args.constraints, PDB.fromfile(args.receptor), PDB.fromfile(args.ligand))
-
-        process = mp.Process(target=run_disvis_instance,
-            args=(queue, distance_constraints, sub_rotmat, sub_weights, n, args))
-
-        processes.append(process)
+        queue = mp.Queue()
+        processes = []
+        for n in range(jobs):
 
 
-    print('Starting jobs')
-    for n in range(jobs):
-        processes[n].start()
-    print('Waiting for jobs to finish')
+            init_rot = n * nrot_per_job
+            end_rot = (n + 1) * nrot_per_job
 
-    for n in range(jobs):
-        processes[n].join()
-    print('Searching done. Combining results')
+            sub_rotmat = rotmat[init_rot: end_rot]
+            sub_weights = weights[init_rot: end_rot]
+            if n == (jobs - 1):
+                sub_rotmat = rotmat[init_rot:]
+                sub_weights = weights[init_rot:]
 
-    accessible_complexes = np.asarray(queue.get(), dtype=np.float64)
-    accessible_interaction_space = Volume.fromfile('accessible_interaction_space_0.mrc.part')
-    for n in range(1, jobs):
-        accessible_complexes += np.asarray(queue.get(), dtype=np.float64)
-        np.maximum(accessible_interaction_space.array, 
-                Volume.fromfile('accessible_interaction_space_{:d}.mrc.part'.format(n)).array, 
-                accessible_interaction_space.array)
+            distance_constraints = parse_constraints(args.constraints, PDB.fromfile(args.receptor), PDB.fromfile(args.ligand))
+
+            process = mp.Process(target=run_disvis_instance,
+                args=(queue, distance_constraints, sub_rotmat, sub_weights, n, args))
+
+            processes.append(process)
 
 
-    print('Cleaning')
-    for n in range(jobs):
-        os.remove('accessible_interaction_space_{:d}.mrc.part'.format(n))
+        print('Starting jobs')
+        for n in range(jobs):
+            processes[n].start()
+        print('Waiting for jobs to finish')
 
-    print('Total time: ', time() - time0)
-    accessible_interaction_space.tofile('accessible_interaction_space.mrc'.format(n))
+        for n in range(jobs):
+            processes[n].join()
+        print('Searching done. Combining results')
+
+        accessible_complexes = np.asarray(queue.get(), dtype=np.float64)
+        accessible_interaction_space = Volume.fromfile('accessible_interaction_space_0.mrc.part')
+        for n in range(1, jobs):
+            accessible_complexes += np.asarray(queue.get(), dtype=np.float64)
+            np.maximum(accessible_interaction_space.array, 
+                    Volume.fromfile('accessible_interaction_space_{:d}.mrc.part'.format(n)).array, 
+                    accessible_interaction_space.array)
+
+
+        print('Cleaning')
+        for n in range(jobs):
+            os.remove('accessible_interaction_space_{:d}.mrc.part'.format(n))
+    else:
+        # GPU-version
+        dv = DisVis()
+
+        dv.receptor = PDB.fromfile(args.receptor)
+        dv.ligand = PDB.fromfile(args.ligand)
+        dv.distance_restraints = distance_constraints
+        dv.rotations = rotmat
+        dv.weights = weights
+
+        dv.voxelspacing = args.voxelspacing
+        dv.interaction_radius = args.interaction_radius
+        dv.erosion_iterations = args.erosion_iterations
+        dv.max_clash = args.max_clash
+        dv.min_interaction = args.min_interaction
+        dv.queue = queue
+
+        accessible_interaction_space, accessible_complexes = dv.search()
+
+    seconds = int(round(time() - time0))
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    print('Total time: {:d}h{:2d}m{:2d}s'.format(h, m, s))
+    accessible_interaction_space.tofile('accessible_interaction_space.mrc')
     norm = accessible_complexes[0]
     for n, acc in enumerate(accessible_complexes):
         print('Number of complexes consistent with at least {:d} constraint: {:d} ({:8.4%})'.format(n, int(acc), acc/norm))

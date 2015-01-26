@@ -116,7 +116,7 @@ class DisVis(object):
     def max_clash(self, max_clash):
         if max_clash < 0:
             raise ValueError("Maximum allowed clashing volume cannot be negative")
-        self._max_clash = max_clash
+        self._max_clash = max_clash + 0.9
 
     @property
     def min_interaction(self):
@@ -125,7 +125,7 @@ class DisVis(object):
     def min_interaction(self, min_interaction):
         if min_interaction < 1:
             raise ValueError("Minimum required interaction volume cannot be smaller than 1")
-        self._min_interaction = min_interaction
+        self._min_interaction = min_interaction + 0.9
         
     @property
     def queue(self):
@@ -180,7 +180,8 @@ class DisVis(object):
         radii = np.zeros(self.ligand.coor.shape[0], dtype=np.float64)
         radii.fill(1.5)
         d['lsurf'] = dilate_points((self.ligand.coor - self.ligand.center \
-                + d['rcore'].origin), radii, volume.zeros_like(d['rcore']))
+                + self.receptor.center), radii, volume.zeros_like(d['rcore']))
+        d['im_center'] = np.asarray((self.receptor.center - d['rcore'].origin)/self.voxelspacing, dtype=np.float64)
 
         # setup the distance restraints
         d['nrestraints'] = len(self.distance_restraints)
@@ -249,14 +250,14 @@ class DisVis(object):
         for n in xrange(c['rotmat'].shape[0]):
             # rotate ligand image
             rotate_image3d(c['im_lsurf'], c['vlength'], 
-                    np.linalg.inv(c['rotmat'][n]), c['lsurf'])
+                    np.linalg.inv(c['rotmat'][n]), d['im_center'], c['lsurf'])
 
             c['ft_lsurf'] = rfftn(c['lsurf']).conj()
             c['clashvol'] = irfftn(c['ft_lsurf'] * c['ft_rcore'])
             c['intervol'] = irfftn(c['ft_lsurf'] * c['ft_rsurf'])
 
-            np.logical_and(c['clashvol'] < (self.max_clash + 0.1),
-                           c['intervol'] > (self.min_interaction - 0.1),
+            np.logical_and(c['clashvol'] < (self.max_clash),
+                           c['intervol'] > (self.min_interaction),
                            c['interspace'])
 
             tot_complex += c['weights'][n] * c['interspace'].sum()
@@ -280,22 +281,19 @@ class DisVis(object):
                         minlength=(max(2, d['nrestraints']+1)))
 
             if _stdout.isatty():
-                pdone = n/c['rotmat'].shape[0]
+                pdone = n/d['nrot']
                 t = _time() - time0
-                if n > 0:
-                    _stdout.write('{:d}/{:d} ({:.2%}, ETA: {:d}s)\r'\
-                            .format(n, c['rotmat'].shape[0], pdone, 
+                if n > 0 and n%10 == 0:
+                    _stdout.write('\r{:d}/{:d} ({:.2%}, ETA: {:d}s)'\
+                            .format(n, d['nrot'], pdone, 
                                     int(t/pdone - t)))
                     _stdout.flush()
+                if n == (d['nrot'] - 1):
+                    _stdout.write('\n')
 
         d['accessible_interaction_space'] = c['access_interspace']
-        d['accessible_complexes'] = [tot_complex] + \
-                list_total_allowed[1:].tolist()
-        d['accessible_complexes'] = [int(x) for x in d['accessible_complexes']]
+        d['accessible_complexes'] = [tot_complex] + np.cumsum(list_total_allowed[1:][::-1])[::-1].tolist()
 
-        for i in range(1, len(d['accessible_complexes'])):
-            d['accessible_complexes'][i] = sum(d['accessible_complexes'][i:])
-        
     def _gpu_init(self):
 
         self.gpu_data = {}
@@ -333,8 +331,8 @@ class DisVis(object):
         g['ft_intervol'] = cl_array.zeros_like(g['ft_rcore'])
 
         g['k'] = Kernels(q.context)
-        g['k'].rfftn = pyclfft.RFFTn(q.context, g['ft_shape'])
-        g['k'].irfftn = pyclfft.iRFFTn(q.context, g['ft_shape'])
+        g['k'].rfftn = pyclfft.RFFTn(q.context, d['shape'])
+        g['k'].irfftn = pyclfft.iRFFTn(q.context, d['shape'])
 
         g['k'].rfftn(q, g['rcore'], g['ft_rcore'])
         g['k'].rfftn(q, g['rsurf'], g['ft_rsurf'])
@@ -350,7 +348,7 @@ class DisVis(object):
         for n in xrange(d['nrot']):
 
             k.rotate_image3d(q, g['sampler'], g['im_lsurf'],
-                    self.rotations[n], g['lsurf'])
+                    self.rotations[n], g['lsurf'], d['im_center'])
 
             k.rfftn(q, g['lsurf'], g['ft_lsurf'])
             k.c_conj_multiply(q, g['ft_lsurf'], g['ft_rcore'], g['ft_clashvol'])
@@ -371,14 +369,17 @@ class DisVis(object):
 
             k.count(q, g['interspace'], g['access_interspace'], 
                     self.weights[n], g['counts'])
+
             if _stdout.isatty():
                 pdone = n/d['nrot']
                 t = _time() - time0
-                if n > 0:
-                    _stdout.write('{:d}/{:d} ({:.2%}, ETA: {:d}s)\r'\
+                if n > 0 and n%10 == 0:
+                    _stdout.write('\r{:d}/{:d} ({:.2%}, ETA: {:d}s)'\
                             .format(n, d['nrot'], pdone, 
                                     int(t/pdone - t)))
                     _stdout.flush()
+                if n == (d['nrot'] - 1):
+                    _stdout.write('\n')
 
         self.queue.finish()
 
@@ -387,10 +388,11 @@ class DisVis(object):
         access_complexes = []
         for i in range(d['nrestraints'] + 1):
             access_complexes.append(np.sum(count[i]))
+        access_complexes[1:] = np.cumsum(access_complexes[1:][::-1])[::-1]
         access_interaction_space = np.zeros(d['shape'], dtype=np.int32)
         for i in xrange(1, d['nrestraints'] + 1):
             access_interaction_space[count[i] > 0] = i
-        d['accessible_interaction_space'] =access_interaction_space 
+        d['accessible_interaction_space'] = access_interaction_space 
         d['accessible_complexes'] = access_complexes
 
 

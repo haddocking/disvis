@@ -1,12 +1,13 @@
 import cython
 import numpy as np
 cimport numpy as np
-from libc.math cimport ceil, exp
+from libc.math cimport ceil, exp, floor
 
 @cython.boundscheck(False)
 def rotate_image3d(np.ndarray[np.float64_t, ndim=3] image,
                    int vlength,
                    np.ndarray[np.float64_t, ndim=2] rotmat,
+                   np.ndarray[np.float64_t, ndim=1] center,
                    np.ndarray[np.float64_t, ndim=3] out,
                    ):
     """Rotate an array around the origin using trilinear interpolation
@@ -52,22 +53,22 @@ def rotate_image3d(np.ndarray[np.float64_t, ndim=3] image,
 
             for x in range(-vlength, vlength+1):
 
-                xcoor_xyz = rotmat[0, 0]*x + xcoor_yz 
-                ycoor_xyz = rotmat[1, 0]*x + ycoor_yz
-                zcoor_xyz = rotmat[2, 0]*x + zcoor_yz
+                xcoor_xyz = rotmat[0, 0]*x + xcoor_yz + center[0]
+                ycoor_xyz = rotmat[1, 0]*x + ycoor_yz + center[1]
+                zcoor_xyz = rotmat[2, 0]*x + zcoor_yz + center[2]
 
                 # trilinear interpolation
-                x0 = int(xcoor_xyz)
-                y0 = int(ycoor_xyz)
-                z0 = int(zcoor_xyz)
+                x0 = <int> floor(xcoor_xyz)
+                y0 = <int> floor(ycoor_xyz)
+                z0 = <int> floor(zcoor_xyz)
 
                 x1 = x0 + 1
                 y1 = y0 + 1
                 z1 = z0 + 1
 
-                dx = xcoor_xyz - x0
-                dy = ycoor_xyz - y0
-                dz = zcoor_xyz - z0
+                dx = xcoor_xyz - <double> x0
+                dy = ycoor_xyz - <double> y0
+                dz = zcoor_xyz - <double> z0
                 dx1 = 1 - dx
                 dy1 = 1 - dy
                 dz1 = 1 - dz
@@ -118,9 +119,9 @@ def dilate_points(np.ndarray[np.float64_t, ndim=2] points,
         ymin = <int> ceil(points[n, 1] - radius[n])
         zmin = <int> ceil(points[n, 2] - radius[n])
 
-        xmax = <int> (points[n, 0] + radius[n])
-        ymax = <int> (points[n, 1] + radius[n])
-        zmax = <int> (points[n, 2] + radius[n])
+        xmax = <int> floor(points[n, 0] + radius[n])
+        ymax = <int> floor(points[n, 1] + radius[n])
+        zmax = <int> floor(points[n, 2] + radius[n])
 
         for x in range(xmin, xmax+1):
             dx = x - points[n, 0]
@@ -166,9 +167,9 @@ def dilate_points_add(np.ndarray[np.float64_t, ndim=2] points,
         ymin = <int> ceil(points[n, 1] - radius[n])
         zmin = <int> ceil(points[n, 2] - radius[n])
 
-        xmax = <int> (points[n, 0] + radius[n])
-        ymax = <int> (points[n, 1] + radius[n])
-        zmax = <int> (points[n, 2] + radius[n])
+        xmax = <int> floor(points[n, 0] + radius[n])
+        ymax = <int> floor(points[n, 1] + radius[n])
+        zmax = <int> floor(points[n, 2] + radius[n])
 
         for x in range(xmin, xmax+1):
             dx = x - points[n, 0]

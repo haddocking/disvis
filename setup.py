@@ -7,7 +7,7 @@ import numpy
 ext_modules = [Extension("disvis/libdisvis",
         ["src/libdisvis.pyx"])]
 
-package_data = {'disvis': ['data/*.npy', 'IO/*']}
+package_data = {'disvis': ['data/*.npy', 'IO/*', 'kernels/*']}
 scripts = ['scripts/disvis']
 
 setup(name="disvis",

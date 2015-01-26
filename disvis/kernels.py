@@ -68,7 +68,7 @@ class Kernels():
         return status
 
     def rotate_image3d(self, queue, sampler, image3d,
-            rotmat, array_buffer):
+            rotmat, array_buffer, center):
 
         kernel = self.kernels.rotate_image3d
         compute_units = queue.device.max_compute_units
@@ -81,7 +81,10 @@ class Kernels():
         inv_rotmat16 = np.zeros(16, dtype=np.float32)
         inv_rotmat16[:9] = inv_rotmat.flatten()[:]
 
-        kernel.set_args(sampler, image3d, inv_rotmat16, array_buffer.data, shape)
+        _center = np.zeros(4, dtype=np.float32)
+        _center[:3] = center[:]
+
+        kernel.set_args(sampler, image3d, inv_rotmat16, array_buffer.data, _center, shape)
         status = cl.enqueue_nd_range_kernel(queue, kernel, work_groups, None)
 
         return status

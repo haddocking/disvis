@@ -30,7 +30,6 @@ class RFFTn:
         self.ft_shape = (shape[0]//2 + 1, shape[1], shape[2])
         self.ndim = ndim
 
-        print self.shape
         self.plan = G.create_plan(context, self.shape)
         self.plan.inplace = False
         self.plan.layouts = (REAL, IMAGINARY)

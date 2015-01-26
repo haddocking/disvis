@@ -51,6 +51,8 @@ def quat_to_rotmat(quaternions, invert=False):
     rotmat[:,2,1] = y*Z + w*X
     rotmat[:,2,2] = 1.0 - (x*X + y*Y)
 
+    np.around(rotmat, decimals=8, out=rotmat)
+
     return rotmat
 
 def random_orientation():
