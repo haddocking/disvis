@@ -1,6 +1,10 @@
 __kernel
-void rotate_image3d(sampler_t sampler, read_only image3d_t im_map, 
-        float16 rotmat, __global float *out, int4 shape)
+void rotate_image3d(sampler_t sampler, 
+                    read_only image3d_t im_map, 
+                    float16 rotmat, 
+                    __global float *out, 
+                    float4 center,
+                    int4 shape)
 {
     /*
      * 
@@ -65,23 +69,9 @@ void rotate_image3d(sampler_t sampler, read_only image3d_t im_map,
                 zcoor_xyz = rotmat.s6*x + zcoor_yz;
                 ind_xyz = x + ind_yz;
 
-                // if rotated coordinate does not fall in the interval
-                // [-hsize, hsize] discard it
-                if ((xcoor_xyz > hxsize) || (ycoor_xyz > hysize) || (zcoor_xyz > hzsize))
-                    continue;
-                if ((xcoor_xyz < -hxsize) || (ycoor_xyz < -hysize) || (zcoor_xyz < -hzsize))
-                    continue;
-
-                if (xcoor_xyz < 0.0f)
-                    xcoor_xyz += shape.s2;
-                if (ycoor_xyz < 0.0f)
-                    ycoor_xyz += shape.s1;
-                if (zcoor_xyz < 0.0f)
-                    zcoor_xyz += shape.s0;
-
-                xcoor_xyz += IM_OFFSET; 
-                ycoor_xyz += IM_OFFSET; 
-                zcoor_xyz += IM_OFFSET; 
+                xcoor_xyz += IM_OFFSET + center.s0; 
+                ycoor_xyz += IM_OFFSET + center.s1; 
+                zcoor_xyz += IM_OFFSET + center.s2; 
 
                 coor = (float4) (xcoor_xyz, ycoor_xyz, zcoor_xyz, 0.0f);
 
