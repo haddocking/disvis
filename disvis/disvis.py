@@ -18,13 +18,14 @@ except ImportError:
 from disvis import volume
 from .points import dilate_points
 from .libdisvis import rotate_image3d, dilate_points_add
-
-import pyopencl as cl
-import pyopencl.array as cl_array
-import disvis.pyclfft
-from disvis.kernels import Kernels
-from disvis import pyclfft
-
+try:
+    import pyopencl as cl
+    import pyopencl.array as cl_array
+    import disvis.pyclfft
+    from disvis.kernels import Kernels
+    from disvis import pyclfft
+except ImportError:
+    pass
 
 class DisVis(object):
 
