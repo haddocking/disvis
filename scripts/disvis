@@ -54,7 +54,7 @@ def parse_args():
                  'complex. Increasing this number results in a '+\
                  'stricter counting of complexes.')
 
-    p.add_argument('-np', '--nproc', dest='nproc', type=int, default=1,
+    p.add_argument('-p', '--nproc', dest='nproc', type=int, default=1,
             help='Number of processors used duing search.')
 
     p.add_argument('-g', '--gpu', dest='gpu', action='store_true',
