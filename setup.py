@@ -3,12 +3,18 @@ from distutils.extension import Extension
 from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 import numpy
+import os.path
 
-ext_modules = [Extension("disvis/libdisvis",
-        ["src/libdisvis.pyx"])]
+ext_modules = [Extension("disvis.libdisvis",
+              [os.path.join("src", "libdisvis.pyx")],
+              include_dirs = [numpy.get_include()],
+              )]
 
-package_data = {'disvis': ['data/*.npy', 'IO/*', 'kernels/*']}
-scripts = ['scripts/disvis']
+package_data = {'disvis': [os.path.join('data', '*.npy'), 
+                           os.path.join('IO', '*.py'),
+                           os.path.join('kernels', '*.cl')]}
+
+scripts = [os.path.join('scripts', 'disvis')]
 
 setup(name="disvis",
       version='1.0.0',
@@ -22,4 +28,4 @@ setup(name="disvis",
       scripts=scripts,
       requires=['numpy', 'cython'],
       include_dirs=[numpy.get_include()],
-    )
+     )
