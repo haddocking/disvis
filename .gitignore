@@ -6,3 +6,4 @@ test-cases/
 *.c
 *.pyc
 *.html
+*.mrc
