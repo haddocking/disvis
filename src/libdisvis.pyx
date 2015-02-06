@@ -1,7 +1,27 @@
 import cython
 import numpy as np
 cimport numpy as np
-from libc.math cimport ceil, exp, floor
+from libc.math cimport ceil, exp, floor, sqrt
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def longest_distance(np.ndarray[np.float64_t, ndim=2] coor):
+
+    cdef unsigned int i, j
+    cdef double dis2
+    cdef double maxdis2 = 0
+
+    for i in range(coor.shape[0] - 1):
+        for j in range(i + 1, coor.shape[0]):
+
+            dis2 = (coor[i, 0] - coor[j, 0])**2 +\
+                   (coor[i, 1] - coor[j, 1])**2 +\
+                   (coor[i, 2] - coor[j, 2])**2
+
+            if dis2 > maxdis2:
+                maxdis2 = dis2
+
+    return sqrt(maxdis2)
 
 @cython.boundscheck(False)
 def rotate_image3d(np.ndarray[np.float64_t, ndim=3] image,
