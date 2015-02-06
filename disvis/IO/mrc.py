@@ -169,7 +169,7 @@ def to_mrc(fid, volume, labels=[]):
     voxelspacing = volume.voxelspacing
     with open(fid, 'wb') as out:
 
-        nx, ny, nz = volume.shape
+        nz, ny, nx = volume.shape
         out.write(pack('i', nx))
         out.write(pack('i', ny))
         out.write(pack('i', nz))
