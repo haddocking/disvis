@@ -167,9 +167,6 @@ class DisVis(object):
                 shape, self.voxelspacing)
         d['rcore'] = volume.erode(d['rsurf'], self.erosion_iterations)
 
-        d['rsurf'].tofile('rsurf')
-        d['rcore'].tofile('rcore')
-
         # keep track of some data for later calculations
         d['origin'] = d['rcore'].origin
         d['shape'] = d['rcore'].shape
@@ -290,7 +287,8 @@ class DisVis(object):
                 self._print_progress(n, c['nrot'], time0)
 
         d['accessible_interaction_space'] = c['access_interspace']
-        d['accessible_complexes'] = [tot_complex] + np.cumsum(list_total_allowed[1:][::-1])[::-1].tolist()
+        d['accessible_complexes'] = [tot_complex] + \
+                np.cumsum(list_total_allowed[1:][::-1])[::-1].tolist()
 
     def _print_progress(self, n, total, time0):
         m = n + 1
