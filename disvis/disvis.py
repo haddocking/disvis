@@ -17,7 +17,7 @@ except ImportError:
 
 from disvis import volume
 from .points import dilate_points
-from .libdisvis import rotate_image3d, dilate_points_add
+from .libdisvis import rotate_image3d, dilate_points_add, longest_distance
 try:
     import pyopencl as cl
     import pyopencl.array as cl_array
@@ -167,6 +167,9 @@ class DisVis(object):
                 shape, self.voxelspacing)
         d['rcore'] = volume.erode(d['rsurf'], self.erosion_iterations)
 
+        d['rsurf'].tofile('rsurf')
+        d['rcore'].tofile('rcore')
+
         # keep track of some data for later calculations
         d['origin'] = d['rcore'].origin
         d['shape'] = d['rcore'].shape
@@ -236,6 +239,8 @@ class DisVis(object):
         c['rotmat'] = np.asarray(self.rotations, dtype=np.float64)
         c['weights'] = np.asarray(self.weights, dtype=np.float64)
 
+        c['nrot'] = d['nrot']
+        c['shape'] = d['shape']
         c['vlength'] = int(np.linalg.norm(self.ligand.coor - \
                 self.ligand.center, axis=1).max() + \
                 self.interaction_radius + 1.5)/self.voxelspacing
@@ -254,8 +259,8 @@ class DisVis(object):
                     np.linalg.inv(c['rotmat'][n]), d['im_center'], c['lsurf'])
 
             c['ft_lsurf'] = rfftn(c['lsurf']).conj()
-            c['clashvol'] = irfftn(c['ft_lsurf'] * c['ft_rcore'])
-            c['intervol'] = irfftn(c['ft_lsurf'] * c['ft_rsurf'])
+            c['clashvol'] = irfftn(c['ft_lsurf'] * c['ft_rcore'], s=c['shape'])
+            c['intervol'] = irfftn(c['ft_lsurf'] * c['ft_rsurf'], s=c['shape'])
 
             np.logical_and(c['clashvol'] < (self.max_clash),
                            c['intervol'] > (self.min_interaction),
@@ -282,18 +287,19 @@ class DisVis(object):
                         minlength=(max(2, d['nrestraints']+1)))
 
             if _stdout.isatty():
-                pdone = n/d['nrot']
-                t = _time() - time0
-                if n > 0 and n%10 == 0:
-                    _stdout.write('\r{:d}/{:d} ({:.2%}, ETA: {:d}s)'\
-                            .format(n, d['nrot'], pdone, 
-                                    int(t/pdone - t)))
-                    _stdout.flush()
-                if n == (d['nrot'] - 1):
-                    _stdout.write('\n')
+                self._print_progress(n, c['nrot'], time0)
 
         d['accessible_interaction_space'] = c['access_interspace']
         d['accessible_complexes'] = [tot_complex] + np.cumsum(list_total_allowed[1:][::-1])[::-1].tolist()
+
+    def _print_progress(self, n, total, time0):
+        m = n + 1
+        pdone = m/total
+        t = _time() - time0
+        _stdout.write('\r{:d}/{:d} ({:.2%}, ETA: {:d}s)'\
+                .format(m, total, pdone, 
+                        int(t/pdone - t)))
+        _stdout.flush()
 
     def _gpu_init(self):
 
@@ -438,12 +444,13 @@ def grid_shape(points1, points2, voxelspacing):
     return shape
 
 def min_grid_shape(points1, points2, voxelspacing):
-    maxdist1 = np.linalg.norm(points1 - points1.mean(axis=0), axis=1).max()
-    maxdist2 = np.linalg.norm(points2 - points2.mean(axis=0), axis=1).max()
+    # the minimal grid shape is the size of the fixed protein in 
+    # each dimension and the longest diameter is the scanning chain
+    dimensions1 = points1.ptp(axis=0)
+    dimension2 = longest_distance(points2)
 
-    grid_length = int(2*(maxdist1 + maxdist2)/voxelspacing)
+    grid_shape = np.asarray(((dimensions1 + dimension2)/voxelspacing) + 3, dtype=np.int32)[::-1]
 
-    grid_shape = [grid_length]*3
     return grid_shape
 
 def float32array(array_like):
