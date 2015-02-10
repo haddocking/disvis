@@ -1,51 +1,101 @@
-DisVis
-======
+# DisVis
 
 
-About DisVis
-------------
+## About DisVis
 
-DisVis is a Python package and program to visualize the accessible interaction space of distance constrained biomolecular complexes.
+DisVis is a Python package and command line tool to visualize and quantify 
+the accessible interaction space of distance restrained biomolecular complexes.
 
 
-Requirements
-------------
+## Requirements
 
 * Python2.7
-* [NumPy]
-* [Cython]
+* NumPy
+* Cython
 
 Optional for faster CPU version
 
-* [FFTW3]
-* [pyFFTW]
+* FFTW3
+* pyFFTW
 
-For GPU hardware acceleration the following packages are also neccesary
+For GPU hardware acceleration the following packages are also required
 
-* OpenCL1.1 or higher distribution
-* [pyopencl] [1]
-* [clFFT] [2]
-* [gpyfft] [3]
-
-
-Installation
-------------
-
-For installation (this might require root access)
-
-    python setup.py install
-
-This will built the extension file in src/ and install DisVis.
+* OpenCL1.1+
+* [pyopencl](https://github.com/pyopencl/pyopencl)
+* [clFFT](https://github.com/clMathLibraries/clFFT)
+* [gpyfft](https://github.com/geggo/gpyfft)
 
 
-Examples
---------
+## Installation
 
-DisVis comes with a script to quickly perform a scan
+If the requirements are met, DisVis can be installed by opening a shell
+and type
+
+    git clone https://github.com/haddocking/disvis.git
+    cd disvis
+    (sudo) python setup.py install
+
+After installation, the command line tool *disvis* should be at your disposal.
+
+If you are starting from a clean system, then read the installation instructions 
+below to prepare your particular operating system.
+
+
+### Linux
+
+First install git and check whether the python header files are available
+
+    (sudo) apt-get install git python-dev
+
+Next we will install [*pip*](https://pip.pypa.io/en/latest/installing.html), 
+the official Python package manager. Follow the link, and install *pip* using
+their installation instructions.
+
+The final step to prepare you system is installing the Python dependencies
+
+    (sudo) pip install numpy cython
+
+Wait till the compilation and installion is finished (this might take awhile).
+Your system is now ready to run DisVis. Follow the general instructions above to install DisVis.
+
+
+### MacOSX (10.7+)
+
+First install [*git*](https://git-scm.com/download) for MacOSX.
+Next we will install [*pip*](https://pip.pypa.io/en/latest/installing.html), 
+the official Python package manager. Follow the link, and install *pip* using
+their installation instructions.
+
+The final step to prepare you system is installing the Python dependencies.
+Open a shell and type
+
+    (sudo) pip install numpy cython
+
+Wait till the compilation and installion is finished (this might take awhile).
+Your system is now ready to run DisVis. Follow the general instructions above to install DisVis.
+
+
+### Windows
+
+First we will install [*git*](https://git-scm.com/download) for Windows, as it also comes
+with a handy *bash* shell.
+
+For Windows it easiest to install a Python distribution with NumPy and Cython
+(and many other) packages available, such as [Anaconda](https://continuum.io/downloads).
+Follow the installation instructions on their website.
+
+Next open a *bash* shell that was shipped with *git*. Follow the general instructions
+above to install DisVis.
+
+
+## Usage
+
+The general pattern to invoke *disvis* is
 
     disvis <pdb1> <pdb2> <distance-restraints-file>
 
-where \<pdb1\> is the fixed chain, \<pdb2\> is the scanning chain and \<distance-restraints-file\> is a text-file
+where \<pdb1\> is the fixed chain, \<pdb2\> is the scanning chain and 
+\<distance-restraints-file\> is a text-file
 containing the distance restraints in the following format
 
      <chainid 1> <resid 1> <atomname 1> <chainid 2> <resid 2> <atomname 2> <distance>
@@ -54,21 +104,29 @@ As an example
     
     A 18 CA A 20 CA 20.0
 
-This puts a 20A distance restraint between the CA-atom of residue 18 of chain A of pdb1 and the CA-atom of residue 20 of chain A of pdb2.
+This puts a 20A distance restraint between the CA-atom of residue 18 of 
+chain A of pdb1 and the CA-atom of residue 20 of chain A of pdb2.
+
+*disvis* outputs a file *accessible_interaction_space.mrc* and prints the 
+number of accessible complexes per number of consistent distance restraints. 
+The *.mrc* file can be straightforwardly opened with UCSF Chimera and PyMol.
+
+
+### Options
 
 To get a help screen with available options
             
     disvis --help
 
-The script outputs a file *accessible_interaction_space.mrc* and prints the number of accessible complexes per number of obeying distance restraints. 
-The *.mrc* file can be straightforwardly opened with UCSF Chimera and PyMol.
+
 
 Licensing
 ---------
 
-MIT licence
+If this software was useful to your research please cite us
 
-[1]: https://github.com/pyopencl/pyopencl
-[2]: https://github.com/clMathLibraries/clFFT
-[3]: https://github.com/geggo/gpyfft
-[4]: 
+**G.C.P. van Zundert and A.M.J.J. Bonvin** (2015) DisVis: Visualizing and
+quantifying the accessible interaction space of distance restrained biomolecular complexes.
+*Bioinformatics* (submitted).
+
+MIT licence
