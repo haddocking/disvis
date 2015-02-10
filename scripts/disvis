@@ -167,7 +167,7 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_constraints, args)
     return accessible_interaction_space, accessible_complexes
 
 
-def gpu_disvis(queue, receptor, ligand, rotmat, weights, distance_constraints, args):
+def run_disvis(queue, receptor, ligand, rotmat, weights, distance_constraints, args):
 
     dv = DisVis()
 
@@ -222,11 +222,11 @@ def main():
                     mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_constraints, args)
         else:
             accessible_interaction_space, accessible_complexes = \
-                    cpu_disvis(receptor, ligand, rotmat, weights, distance_constraints, args)
+                    run_disvis(queue, receptor, ligand, rotmat, weights, distance_constraints, args)
     else:
         # GPU-version
          accessible_interaction_space, accessible_complexes = \
-                 gpu_disvis(queue, receptor, ligand, rotmat, weights, distance_constraints, args)
+                 run_disvis(queue, receptor, ligand, rotmat, weights, distance_constraints, args)
 
     seconds = int(round(time() - time0))
     m, s = divmod(seconds, 60)
