@@ -16,13 +16,13 @@ from disvis.rotations import proportional_orientations, quat_to_rotmat
 def parse_args():
     p = ArgumentParser()
 
-    p.add_argument('receptor', type=str, 
+    p.add_argument('receptor', type=file, 
             help='PDB-file containing fixed chain.')
 
-    p.add_argument('ligand', type=str, 
+    p.add_argument('ligand', type=file, 
             help='PDB-file containing scanning chain.')
 
-    p.add_argument('constraints', type=str, 
+    p.add_argument('constraints', type=file, 
             help='File containing the distance constraints')
 
     p.add_argument('-a', '--angle', dest='angle', type=float, default=10,
@@ -54,6 +54,10 @@ def parse_args():
                  'complex. Increasing this number results in a '
                  'stricter counting of complexes.')
 
+    p.add_argument('-d', '--directory', dest='directory', type=str, default='.',
+            help='Directory where results are written to. '
+                 'Default is current directory.')
+
     p.add_argument('-p', '--nproc', dest='nproc', type=int, default=1,
             help='Number of processors used during search.')
 
@@ -68,7 +72,8 @@ def parse_args():
 def parse_constraints(fid, pdb1, pdb2):
 
     dist_constraints = []
-    for line in open(fid):
+    
+    for line in fid:
         # ignore comments and empty lines
         line = line.strip()
         if line.startswith('#') or not line:
@@ -77,6 +82,9 @@ def parse_constraints(fid, pdb1, pdb2):
         pdb1_sel = pdb1.select('chain', chain1).select('resi', int(resi1)).select('name', name1).duplicate()
         pdb2_sel = pdb2.select('chain', chain2).select('resi', int(resi2)).select('name', name2).duplicate()
         dist_constraints.append([pdb1_sel, pdb2_sel, float(distance)])
+
+    fid.close()
+
     return dist_constraints
 
 
@@ -98,7 +106,7 @@ def run_disvis_instance(queue, receptor, ligand, distance_constraints, rotmat, w
 
     ais, complexes = dv.search()
 
-    ais.tofile('accessible_interaction_space_{:d}.mrc'.format(n))
+    ais.tofile(os.path.join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n)))
 
     queue.put(complexes)
 
@@ -134,8 +142,6 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_constraints, args)
         sub_rotmat = rotmat[init_rot: end_rot]
         sub_weights = weights[init_rot: end_rot]
 
-        distance_constraints = parse_constraints(args.constraints, PDB.fromfile(args.receptor), PDB.fromfile(args.ligand))
-
         process = mp.Process(target=run_disvis_instance,
             args=(queue, receptor, ligand, distance_constraints, sub_rotmat, sub_weights, n, args))
 
@@ -152,17 +158,17 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_constraints, args)
     write('Searching done. Combining results')
 
     accessible_complexes = np.asarray(queue.get(), dtype=np.float64)
-    accessible_interaction_space = Volume.fromfile('accessible_interaction_space_0.mrc')
+    accessible_interaction_space = Volume.fromfile(os.path.join(args.directory, 'accessible_interaction_space_0.mrc'))
     for n in range(1, jobs):
         accessible_complexes += np.asarray(queue.get(), dtype=np.float64)
         np.maximum(accessible_interaction_space.array, 
-                Volume.fromfile('accessible_interaction_space_{:d}.mrc'.format(n)).array, 
+                Volume.fromfile(os.path.join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n))).array, 
                 accessible_interaction_space.array)
 
 
     write('Cleaning')
     for n in range(jobs):
-        os.remove('accessible_interaction_space_{:d}.mrc'.format(n))
+        os.remove(os.path.join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n)))
 
     return accessible_interaction_space, accessible_complexes
 
@@ -197,7 +203,10 @@ def main():
 
     args = parse_args()
 
-    logging.basicConfig(filename='disvis.log', 
+    if not os.path.isdir(args.directory):
+        os.mkdir(args.directory)
+
+    logging.basicConfig(filename=os.path.join(args.directory, 'disvis.log'), 
             level=logging.INFO, format='%(asctime)s %(message)s')
 
     time0 = time()
@@ -231,7 +240,7 @@ def main():
     seconds = int(round(time() - time0))
     m, s = divmod(seconds, 60)
     write('Total time: {:2d}m{:2d}s'.format(m, s))
-    accessible_interaction_space.tofile('accessible_interaction_space.mrc')
+    accessible_interaction_space.tofile(os.path.join(args.directory, 'accessible_interaction_space.mrc'))
     norm = accessible_complexes[0]
     for n, acc in enumerate(accessible_complexes):
         write('Number of complexes consistent with at least {:d} constraint: {:d} ({:8.4%})'.format(n, int(acc), acc/norm))
