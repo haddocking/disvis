@@ -1,6 +1,14 @@
 import numpy as np
 
 def parse_pdb(pdbfile):
+
+    if isinstance(pdbfile, file):
+        pass
+    elif isinstance(pdbfile, str):
+        pdbfile = open(pdbfile)
+    else:
+        raise TypeError('Input should either be a file or string.')
+
     ATOM = "ATOM "
     MODEL = "MODEL "
 
@@ -22,7 +30,7 @@ def parse_pdb(pdbfile):
 
     model_number = 1
 
-    for line in open(pdbfile):
+    for line in pdbfile:
 
         if line.startswith(MODEL):
             model_number = int(line[10:14])
@@ -42,7 +50,10 @@ def parse_pdb(pdbfile):
             z.append(float(line[46:54]))
             occupancy.append(float(line[54:60]))
             temp_factor.append(float(line[60:66]))
-            element.append(line[76:78].strip())
+            e = line[76:78].strip()
+            if not e:
+                e = line[12:16].strip()[0]
+            element.append(e)
             charge.append(line[78:80])
 
             tmp = line[76:78].strip()
@@ -102,7 +113,7 @@ def write_pdb(outfile, pdbdata):
         fhandle.write(MODEL_LINE.format(current_model))
 
     # TER record
-    TER_LINE = 'TER   ' + '{:4d}' + ' '*6 + '{:>3s}' + ' ' + '{:>4d}\n'
+    TER_LINE = 'TER   ' + '{:4d}' + ' '*6 + '{:>3s}' + ' ' + '{:s}' + '{:>4d}\n'
     previous_chain = pdbdata['chain'][0]
 
     for n in range(pdbdata.shape[0]):
@@ -135,6 +146,9 @@ def write_pdb(outfile, pdbdata):
         if current_chain != previous_chain:
             fhandle.write(TER_LINE.format(pdbdata['atom_id'][n], pdbdata['resn'][n], pdbdata['chain'][n], pdbdata['resi'][n]))
             previous_chain = current_chain
+
+    # final TER recored
+    fhandle.write(TER_LINE.format(pdbdata['atom_id'][n], pdbdata['resn'][n], pdbdata['chain'][n], pdbdata['resi'][n]))
 
     # END record
     fhandle.write('END')

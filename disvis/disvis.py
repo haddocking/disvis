@@ -22,7 +22,7 @@ try:
     import pyopencl as cl
     import pyopencl.array as cl_array
     import disvis.pyclfft
-    from disvis.kernels import Kernels
+    from .kernels import Kernels
     from disvis import pyclfft
 except ImportError:
     pass
@@ -161,8 +161,7 @@ class DisVis(object):
         shape = grid_shape(self.receptor.coor, self.ligand.coor, self.voxelspacing)
 
         # calculate the interaction surface and core of the receptor
-        radii = np.zeros(self.receptor.coor.shape[0], dtype=np.float64)
-        radii.fill(1.5 + self.interaction_radius)
+        radii = self.receptor.vdw_radius + self.interaction_radius
         d['rsurf'] = rsurface(self.receptor.coor, radii, 
                 shape, self.voxelspacing)
         d['rcore'] = volume.erode(d['rsurf'], self.erosion_iterations)
@@ -178,8 +177,7 @@ class DisVis(object):
 
         # set ligand center to the origin of the receptor map
         # and make a grid of the ligand
-        radii = np.zeros(self.ligand.coor.shape[0], dtype=np.float64)
-        radii.fill(1.5)
+        radii = self.ligand.vdw_radius
         d['lsurf'] = dilate_points((self.ligand.coor - self.ligand.center \
                 + self.receptor.center), radii, volume.zeros_like(d['rcore']))
         d['im_center'] = np.asarray((self.receptor.center - d['rcore'].origin)/self.voxelspacing, dtype=np.float64)
@@ -342,6 +340,8 @@ class DisVis(object):
         g['k'].rfftn(q, g['rcore'], g['ft_rcore'])
         g['k'].rfftn(q, g['rsurf'], g['ft_rsurf'])
 
+        g['nrot'] = d['nrot']
+
 
     def _gpu_search(self):
         d = self.data
@@ -350,7 +350,7 @@ class DisVis(object):
         k = g['k']
 
         time0 = _time()
-        for n in xrange(d['nrot']):
+        for n in xrange(g['nrot']):
 
             k.rotate_image3d(q, g['sampler'], g['im_lsurf'],
                     self.rotations[n], g['lsurf'], d['im_center'])
@@ -376,15 +376,7 @@ class DisVis(object):
                     self.weights[n], g['counts'])
 
             if _stdout.isatty():
-                pdone = n/d['nrot']
-                t = _time() - time0
-                if n > 0 and n%10 == 0:
-                    _stdout.write('\r{:d}/{:d} ({:.2%}, ETA: {:d}s)'\
-                            .format(n, d['nrot'], pdone, 
-                                    int(t/pdone - t)))
-                    _stdout.flush()
-                if n == (d['nrot'] - 1):
-                    _stdout.write('\n')
+                self._print_progress(n, g['nrot'], time0)
 
         self.queue.finish()
 
