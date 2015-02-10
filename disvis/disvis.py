@@ -38,7 +38,6 @@ class DisVis(object):
         self.rotations = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]]
         self.weights = None
         self.voxelspacing = 1.0
-        self.erosion_iterations = 2
         self.interaction_radius = 2.5
         self.max_clash = 100
         self.min_interaction = 300
@@ -93,13 +92,6 @@ class DisVis(object):
         if radius <= 0:
             raise ValueError("Interaction radius should be bigger than zero")
         self._interaction_radius = radius
-
-    @property
-    def erosion_iterations(self):
-        return self._erosion_iterations
-    @erosion_iterations.setter
-    def erosion_iterations(self, erosion_iterations):
-        self._erosion_iterations = erosion_iterations
 
     @property
     def voxelspacing(self):
@@ -161,10 +153,12 @@ class DisVis(object):
         shape = grid_shape(self.receptor.coor, self.ligand.coor, self.voxelspacing)
 
         # calculate the interaction surface and core of the receptor
-        radii = self.receptor.vdw_radius + self.interaction_radius
+        vdw_radii = self.receptor.vdw_radius
+        radii = vdw_radii + self.interaction_radius
         d['rsurf'] = rsurface(self.receptor.coor, radii, 
                 shape, self.voxelspacing)
-        d['rcore'] = volume.erode(d['rsurf'], self.erosion_iterations)
+        d['rcore'] = rsurface(self.receptor.coor, vdw_radii, 
+                shape, self.voxelspacing)
 
         # keep track of some data for later calculations
         d['origin'] = d['rcore'].origin

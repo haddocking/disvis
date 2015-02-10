@@ -33,14 +33,8 @@ def parse_args():
             help='Voxel spacing of search grid in angstrom.')
 
     p.add_argument('-ir', '--interaction-radius', 
-            dest='interaction_radius', type=float, default=4.0,
+            dest='interaction_radius', type=float, default=3.0,
             help='Radius of the space filled by average atom in anstrom.')
-
-    p.add_argument('-ei', '--erosion_iterations', 
-            dest='erosion_iterations', type=int, default=6,
-            help='Number of erosion iterations to apply on the fixed '
-                 'chain space. This determines the thickness of the '
-                 'interacting shell.')
 
     p.add_argument('-cv', '--max_clash', 
             dest='max_clash', type=float, default=25,
@@ -100,7 +94,6 @@ def run_disvis_instance(queue, receptor, ligand, distance_constraints, rotmat, w
 
     dv.voxelspacing = args.voxelspacing
     dv.interaction_radius = args.interaction_radius
-    dv.erosion_iterations = args.erosion_iterations
     dv.max_clash = args.max_clash
     dv.min_interaction = args.min_interaction
 
@@ -185,7 +178,6 @@ def run_disvis(queue, receptor, ligand, rotmat, weights, distance_constraints, a
 
     dv.voxelspacing = args.voxelspacing
     dv.interaction_radius = args.interaction_radius
-    dv.erosion_iterations = args.erosion_iterations
     dv.max_clash = args.max_clash
     dv.min_interaction = args.min_interaction
     dv.queue = queue
