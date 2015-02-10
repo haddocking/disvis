@@ -182,6 +182,9 @@ class DisVis(object):
                 + self.receptor.center), radii, volume.zeros_like(d['rcore']))
         d['im_center'] = np.asarray((self.receptor.center - d['rcore'].origin)/self.voxelspacing, dtype=np.float64)
 
+        d['max_clash'] = self.max_clash/self.voxelspacing**3
+        d['min_interaction'] = self.min_interaction/self.voxelspacing**3
+
         # setup the distance restraints
         d['nrestraints'] = len(self.distance_restraints)
         if self.distance_restraints:
@@ -236,6 +239,8 @@ class DisVis(object):
 
         c['nrot'] = d['nrot']
         c['shape'] = d['shape']
+        c['max_clash'] = d['max_clash']
+        c['min_interaction'] = d['min_interaction']
         c['vlength'] = int(np.linalg.norm(self.ligand.coor - \
                 self.ligand.center, axis=1).max() + \
                 self.interaction_radius + 1.5)/self.voxelspacing
@@ -257,8 +262,8 @@ class DisVis(object):
             c['clashvol'] = irfftn(c['ft_lsurf'] * c['ft_rcore'], s=c['shape'])
             c['intervol'] = irfftn(c['ft_lsurf'] * c['ft_rsurf'], s=c['shape'])
 
-            np.logical_and(c['clashvol'] < (self.max_clash),
-                           c['intervol'] > (self.min_interaction),
+            np.logical_and(c['clashvol'] < c['max_clash'],
+                           c['intervol'] > c['min_interaction'],
                            c['interspace'])
 
             tot_complex += c['weights'][n] * c['interspace'].sum()
@@ -341,6 +346,8 @@ class DisVis(object):
         g['k'].rfftn(q, g['rsurf'], g['ft_rsurf'])
 
         g['nrot'] = d['nrot']
+        g['max_clash'] = d['max_clash']
+        g['min_interaction'] = d['min_interaction']
 
 
     def _gpu_search(self):
@@ -362,8 +369,8 @@ class DisVis(object):
             k.c_conj_multiply(q, g['ft_lsurf'], g['ft_rsurf'], g['ft_intervol'])
             k.irfftn(q, g['ft_intervol'], g['intervol'])
 
-            k.touch(q, g['clashvol'], self.max_clash, 
-                    g['intervol'], self.min_interaction,
+            k.touch(q, g['clashvol'], g['max_clash'],
+                    g['intervol'], g['min_interaction'],
                     g['interspace'])
 
             if self.distance_restraints:
@@ -404,12 +411,13 @@ def rsurface(points, radius, shape, voxelspacing):
     return rsurf
 
 def volume_origin(points, dimensions):
-    
+
     center = points.mean(axis=0)
     origin = [(c - d/2.0) for c, d in zip(center, dimensions)]
 
     return origin
     
+
 def grid_restraints(restraints, voxelspacing, origin, lcenter):
 
     nrestraints = len(restraints)
@@ -433,15 +441,17 @@ def grid_shape(points1, points2, voxelspacing):
     shape = [volume.radix235(x) for x in shape]
     return shape
 
+
 def min_grid_shape(points1, points2, voxelspacing):
     # the minimal grid shape is the size of the fixed protein in 
     # each dimension and the longest diameter is the scanning chain
     dimensions1 = points1.ptp(axis=0)
     dimension2 = longest_distance(points2)
 
-    grid_shape = np.asarray(((dimensions1 + dimension2)/voxelspacing) + 3, dtype=np.int32)[::-1]
+    grid_shape = np.asarray(((dimensions1 + dimension2)/voxelspacing) + 10, dtype=np.int32)[::-1]
 
     return grid_shape
+
 
 def float32array(array_like):
     return np.asarray(array_like, dtype=np.float32)

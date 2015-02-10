@@ -34,10 +34,10 @@ def parse_args():
 
     p.add_argument('-ir', '--interaction-radius', 
             dest='interaction_radius', type=float, default=4.0,
-            help='Radius of the spherical space filled by average atom in anstrom.')
+            help='Radius of the space filled by average atom in anstrom.')
 
     p.add_argument('-ei', '--erosion_iterations', 
-            dest='erosion_iterations', type=int, default=5,
+            dest='erosion_iterations', type=int, default=6,
             help='Number of erosion iterations to apply on the fixed '
                  'chain space. This determines the thickness of the '
                  'interacting shell.')
@@ -239,7 +239,7 @@ def main():
 
     seconds = int(round(time() - time0))
     m, s = divmod(seconds, 60)
-    write('Total time: {:2d}m{:2d}s'.format(m, s))
+    write('Total time: {:d}m {:2d}s'.format(m, s))
     accessible_interaction_space.tofile(os.path.join(args.directory, 'accessible_interaction_space.mrc'))
     norm = accessible_complexes[0]
     for n, acc in enumerate(accessible_complexes):
