@@ -123,3 +123,64 @@ void dilate_points_add(__global float8 *constraints,
          }
     }
 }
+
+__kernel
+void distance_restraint(__global float8 *constraints, 
+                       float16 rotmat, 
+                       __global int *restspace, int4 shape, int nrestraints)
+{
+
+    int zid = get_global_id(0);
+    int yid = get_global_id(1);
+    int xid = get_global_id(2);
+    
+    int zstride = get_global_size(0);
+    int ystride = get_global_size(1);
+    int xstride = get_global_size(2);
+
+    int i, ix, iy, iz;
+    int z_ind, yz_ind, xyz_ind, slice;
+    float xligand, yligand, zligand;
+    float xcenter, ycenter, zcenter, mindis2, maxdis2, z_dis2, yz_dis2, xyz_dis2;
+
+    slice = shape.s2 * shape.s1;
+
+    for (i = 0; i < nrestraints; i++){
+
+         // determine the center of the point that will be dilated
+         xligand = rotmat.s0 * constraints[i].s3 + rotmat.s1 * constraints[i].s4 + rotmat.s2 * constraints[i].s5;
+         yligand = rotmat.s3 * constraints[i].s3 + rotmat.s4 * constraints[i].s4 + rotmat.s5 * constraints[i].s5;
+         zligand = rotmat.s6 * constraints[i].s3 + rotmat.s7 * constraints[i].s4 + rotmat.s8 * constraints[i].s5;
+
+         xcenter = constraints[i].s0 - xligand;
+         ycenter = constraints[i].s1 - yligand;
+         zcenter = constraints[i].s2 - zligand;
+
+         mindis2 = pown(constraints[i].s6, 2);
+         maxdis2 = pown(constraints[i].s7, 2);
+
+         // calculate the distance of every voxel to the determined center
+         for (iz = zid; iz < shape.s0; iz += zstride){
+
+             z_dis2 = pown(iz - zcenter, 2);
+
+             z_ind = iz * slice;
+
+             for (iy = yid; iy < shape.s1; iy += ystride){
+                 yz_dis2 = pown(iy - ycenter, 2) + z_dis2;
+
+                 yz_ind = z_ind + iy*shape.s2;
+
+                 for (ix = xid; ix < shape.s2; ix += xstride){
+
+                     xyz_dis2 = pown(ix - xcenter, 2) + yz_dis2;
+
+                     if ((xyz_dis2 <= maxdis2) && (xyz_dis2 > mindis2)){
+                         xyz_ind = ix + yz_ind;
+                         restspace[xyz_ind] += 1;
+                     }
+                 }
+             }
+         }
+    }
+}

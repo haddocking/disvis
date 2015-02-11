@@ -139,3 +139,26 @@ class Kernels():
         return status
 
 
+    def distance_restraint(self, queue, constraints, rotmat, restspace):
+
+        kernel = self.kernels.distance_restraint
+
+        compute_units = queue.device.max_compute_units
+        preferred_work_groups = compute_units*16*8
+
+        shape = np.asarray(list(restspace.shape) + [0], dtype=np.int32)
+        nrestraints = np.int32(constraints.shape[0])
+
+        zworkgroups = int(max(min(shape[0], preferred_work_groups), 1))
+        yworkgroups = int(max(min(shape[1], preferred_work_groups - zworkgroups), 1))
+        xworkgroups = int(max(min(shape[2], preferred_work_groups - zworkgroups - yworkgroups ), 1))
+        workgroups = (zworkgroups, yworkgroups, xworkgroups)
+
+        rotmat16 = np.zeros(16, dtype=np.float32)
+        rotmat16[:9] = np.asarray(rotmat, dtype=np.float32).flatten()[:]
+
+        kernel.set_args(constraints.data, rotmat16, restspace.data, shape, nrestraints)
+
+        status = cl.enqueue_nd_range_kernel(queue, kernel, workgroups, None)
+
+        return status

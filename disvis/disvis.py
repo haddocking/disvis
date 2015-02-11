@@ -17,7 +17,7 @@ except ImportError:
 
 from disvis import volume
 from .points import dilate_points
-from .libdisvis import rotate_image3d, dilate_points_add, longest_distance
+from .libdisvis import rotate_image3d, dilate_points_add, longest_distance, distance_restraint
 try:
     import pyopencl as cl
     import pyopencl.array as cl_array
@@ -193,7 +193,9 @@ class DisVis(object):
         else:
             self._gpu_init()
             self._gpu_search()
-            pass
+
+        if _stdout.isatty():
+            print()
 
         accessible_interaction_space = \
                 volume.Volume(self.data['accessible_interaction_space'], 
@@ -268,8 +270,10 @@ class DisVis(object):
                 rest_center = d['restraints'][:, :3] - \
                         (np.mat(c['rotmat'][n]) * \
                         np.mat(d['restraints'][:,3:6]).T).T
-                radii = d['restraints'][:,6]
-                dilate_points_add(rest_center, radii, c['restspace'])
+                mindis = d['restraints'][:,6]
+                maxdis = d['restraints'][:,7]
+                #dilate_points_add(rest_center, radii, c['restspace'])
+                distance_restraint(rest_center, mindis, maxdis, c['restspace'])
 
                 c['interspace'] *= c['restspace']
 
@@ -291,7 +295,7 @@ class DisVis(object):
         m = n + 1
         pdone = m/total
         t = _time() - time0
-        _stdout.write('\r{:d}/{:d} ({:.2%}, ETA: {:d}s)'\
+        _stdout.write('\r{:d}/{:d} ({:.2%}, ETA: {:d}s)    '\
                 .format(m, total, pdone, 
                         int(t/pdone - t)))
         _stdout.flush()
@@ -369,7 +373,7 @@ class DisVis(object):
 
             if self.distance_restraints:
                 k.fill(q, g['restspace'], 0)
-                k.dilate_points_add(q, g['restraints'],
+                k.distance_restraint(q, g['restraints'],
                         self.rotations[n], g['restspace'])
                 k.multiply(q, g['restspace'], g['interspace'], g['access_interspace'])
 
@@ -418,14 +422,15 @@ def grid_restraints(restraints, voxelspacing, origin, lcenter):
     g_restraints = np.zeros((nrestraints, 8), dtype=np.float64)
 
     for n in range(nrestraints):
-        r_sel, l_sel, distance = restraints[n]
+        r_sel, l_sel, mindis, maxdis = restraints[n]
 
         r_pos = (r_sel.center - origin)/voxelspacing
         l_pos = (l_sel.center - lcenter)/voxelspacing
 
         g_restraints[n, 0:3] = r_pos
         g_restraints[n, 3:6] = l_pos
-        g_restraints[n, 6] = distance/voxelspacing
+        g_restraints[n, 6] = mindis/voxelspacing
+        g_restraints[n, 7] = maxdis/voxelspacing
 
     return g_restraints
 

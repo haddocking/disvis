@@ -72,10 +72,10 @@ def parse_constraints(fid, pdb1, pdb2):
         line = line.strip()
         if line.startswith('#') or not line:
             continue
-        chain1, resi1, name1, chain2, resi2, name2, distance = line.split()
+        chain1, resi1, name1, chain2, resi2, name2, mindis, maxdis = line.split()
         pdb1_sel = pdb1.select('chain', chain1).select('resi', int(resi1)).select('name', name1).duplicate()
         pdb2_sel = pdb2.select('chain', chain2).select('resi', int(resi2)).select('name', name2).duplicate()
-        dist_constraints.append([pdb1_sel, pdb2_sel, float(distance)])
+        dist_constraints.append([pdb1_sel, pdb2_sel, float(mindis), float(maxdis)])
 
     fid.close()
 

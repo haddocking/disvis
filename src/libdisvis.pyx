@@ -250,3 +250,61 @@ def binary_erosion(np.ndarray[np.float64_t, ndim=3] image,
                     out[z, y, x] = 0
 
     return out
+
+@cython.boundscheck(False)
+def distance_restraint(np.ndarray[np.float64_t, ndim=2] points,
+                  np.ndarray[np.float64_t, ndim=1] mindis,
+                  np.ndarray[np.float64_t, ndim=1] maxdis,
+                  np.ndarray[np.int32_t, ndim=3] out,
+                  ):
+    """Creates a mask from the points into the volume
+
+    Parameters
+    ----------
+    points : ndarray
+
+    out : 3D-numpy array
+
+    Returns
+    -------
+    out
+    """
+    cdef unsigned int n
+    cdef int x, y, z, xmin, ymin, zmin, xmax, ymax, zmax
+    cdef double mindis2, maxdis2
+    cdef double z2, y2z2, x2y2z2
+
+    for n in range(points.shape[0]):
+
+        mindis2 = mindis[n]**2
+        maxdis2 = maxdis[n]**2
+
+        xmin = <int> ceil(points[n, 0] - maxdis[n])
+        ymin = <int> ceil(points[n, 1] - maxdis[n])
+        zmin = <int> ceil(points[n, 2] - maxdis[n])
+
+        xmax = <int> floor(points[n, 0] + maxdis[n])
+        ymax = <int> floor(points[n, 1] + maxdis[n])
+        zmax = <int> floor(points[n, 2] + maxdis[n])
+
+        for z in range(zmin, zmax+1):
+            if abs(z) > out.shape[0]:
+                continue
+
+            z2 = (z - points[n, 2])**2
+
+            for y in range(ymin, ymax+1):
+                if abs(y) > out.shape[1]:
+                    continue
+
+                y2z2 = (y - points[n, 1])**2 + z2
+
+                for x in range(xmin, xmax+1):
+                    if abs(x) > out.shape[2]:
+                        continue
+
+                    x2y2z2 = (x - points[n, 0])**2 + y2z2
+                    if mindis2 < x2y2z2 <= maxdis2:
+                        out[z,y,x] += 1
+
+    return out
