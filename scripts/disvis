@@ -23,30 +23,35 @@ def parse_args():
             help='PDB-file containing scanning chain.')
 
     p.add_argument('constraints', type=file, 
-            help='File containing the distance constraints')
+            help='File containing the distance restraints')
 
-    p.add_argument('-a', '--angle', dest='angle', type=float, default=10,
-            help='Rotational sampling density in degrees')
+    p.add_argument('-a', '--angle', dest='angle', type=float, default=15,
+            help='Rotational sampling density in degrees. Default is 15 degrees.')
 
     p.add_argument('-vs', '--voxelspacing', dest='voxelspacing', 
             type=float, default=1,
-            help='Voxel spacing of search grid in angstrom.')
+            help='Voxel spacing of search grid in angstrom. Default is 1A.')
 
     p.add_argument('-ir', '--interaction-radius', 
             dest='interaction_radius', type=float, default=3.0,
-            help='Radius of the space filled by average atom in anstrom.')
+            help='Radius of the interaction space for each atom in angstrom. '
+                 'Atoms are thus considered interacting if the distance is '
+                 'larger than the vdW radius and shorther than or equal to '
+                 'vdW + interaction_radius. Default is 3A.')
 
     p.add_argument('-cv', '--max_clash', 
-            dest='max_clash', type=float, default=25,
+            dest='max_clash', type=float, default=100,
             help='Maximum allowed volume of clashes. Increasing this '
-                 'number results in more allowed complexes.')
+                 'number results in more allowed complexes. '
+                 'Default is 100 A^3.')
 
     p.add_argument('-iv', '--min-interaction', 
-            dest='min_interaction', type=float, default=100,
+            dest='min_interaction', type=float, default=200,
             help='Minimal required interaction volume for a '
                  'conformation to be considered a '
                  'complex. Increasing this number results in a '
-                 'stricter counting of complexes.')
+                 'stricter counting of complexes. '
+                 'Default is 200 A^3.')
 
     p.add_argument('-d', '--directory', dest='directory', type=str, default='.',
             help='Directory where results are written to. '

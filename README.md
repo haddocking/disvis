@@ -29,7 +29,7 @@ For GPU hardware acceleration the following packages are also required
 ## Installation
 
 If the requirements are met, DisVis can be installed by opening a shell
-and type
+and typing
 
     git clone https://github.com/haddocking/disvis.git
     cd disvis
@@ -98,14 +98,15 @@ where \<pdb1\> is the fixed chain, \<pdb2\> is the scanning chain and
 \<distance-restraints-file\> is a text-file
 containing the distance restraints in the following format
 
-     <chainid 1> <resid 1> <atomname 1> <chainid 2> <resid 2> <atomname 2> <distance>
+     <chainid 1> <resid 1> <atomname 1> <chainid 2> <resid 2> <atomname 2> <mindis> <maxdis>
 
 As an example
     
-    A 18 CA A 20 CA 20.0
+    A 18 CA F 27 CB 10.0 20.0
 
-This puts a 20A distance restraint between the CA-atom of residue 18 of 
-chain A of pdb1 and the CA-atom of residue 20 of chain A of pdb2.
+This puts a distance restraint between the CA-atom of residue 18 of 
+chain A of pdb1 and the CB-atom of residue 27 of chain F of pdb2 that 
+should be longer than or equal to 10A and smaller than or equal to 20A.
 
 *disvis* outputs a file *accessible_interaction_space.mrc* and prints the 
 number of accessible complexes per number of consistent distance restraints. 
