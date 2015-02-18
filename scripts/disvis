@@ -263,19 +263,31 @@ def main():
     with open(os.path.join(args.directory, 'accessible_complexes.out'), 'w') as f_accessible_complexes:
         write('Writing number of accessible complexes to: {:s}'.format(f_accessible_complexes.name))
         header = '# consistent restraints | accessible complexes |' +\
-                 'percentage | cumulative accessible complexes | percentage\n'
+                 'relative | cumulative accessible complexes | relative\n'
         f_accessible_complexes.write(header)
         for n, acc in enumerate(accessible_complexes):
-            f_accessible_complexes.write('{0:3d} {2:{1}d} {3:8.4%} {4:{1}d} {5:8.4%}\n'\
+            f_accessible_complexes.write('{0:3d} {2:{1}d} {3:8.6f} {4:{1}d} {5:8.6f}\n'\
                     .format(n, digits, int(acc), acc/norm, 
                     int(cum_complexes[n]), cum_complexes[n]/norm))
     
     # writing out violations
     with open(os.path.join(args.directory, 'violations.out'), 'w') as f_viol:
         write('Writing violations to file: {:s}'.format(f_viol.name))
-        for line in violations:
+        num_violations = violations.sum(axis=1)
+        nrestraints = num_violations.shape[0]
+        header = ('# row represents the number of consistent restraints\n'
+                  '# column represents how often that restraint is violated\n')
+        f_viol.write(header)
+        header = ('   ' + '{:8d}'*nrestraints + '\n').format(*range(1, nrestraints + 1))
+        f_viol.write(header)
+        for n, line in enumerate(violations):
+            f_viol.write('{:2d} '.format(n+1))
             for word in line:
-                f_viol.write(str(word) + ' ')
+                if num_violations[n] > 0:
+                    percentage_violated = word/num_violations[n]
+                else:
+                    percentage_violated = 0
+                f_viol.write('{:8.4f}'.format(percentage_violated))
             f_viol.write('\n')
 
     # time indication
