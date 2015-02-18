@@ -50,6 +50,7 @@ class Kernels():
             intervol, np.float32(min_inter), out)
         return status
 
+
     def c_conj_multiply(self, queue, array1, array2, out):
         if (array1.dtype == array2.dtype == out.dtype == np.complex64):
             status = self.kernels.c_conj_multiply(array1, array2, out)
@@ -57,6 +58,7 @@ class Kernels():
             raise TypeError("Datatype of arrays is not supported")
 
         return status
+
 
     def multiply(self, queue, array1, array2, out):
         if array1.dtype == array2.dtype == out.dtype == np.float32:
@@ -67,14 +69,75 @@ class Kernels():
             raise TypeError("Array type is not supported")
         return status
 
+
+    def copy_partial(self, queue, part, full):
+        
+        kernel = self.kernels.copy_partial
+        WORKGROUPSIZE = 32
+
+        part_shape = np.asarray(list(part.shape) + [part.size], dtype=np.int32)
+        full_shape = np.asarray(list(full.shape) + [full.size], dtype=np.int32)
+        kernel.set_args(part.data, full.data, part_shape, full_shape)
+
+        lws = (WORKGROUPSIZE,)
+        gws = (full.size//(WORKGROUPSIZE * 8),)
+        status = cl.enqueue_nd_range_kernel(queue, kernel, gws, None)
+        return status
+
+
+    def histogram(self, queue, data, subhists, weight, nrestraints):
+        
+        WORKGROUPSIZE = 32
+        kernel = self.kernels.histogram16
+
+        local_hist = cl.LocalMemory(4*(nrestraints + 1)*WORKGROUPSIZE)
+
+        #kernel.set_args(data.data, subhists.data, local_hist, np.uint32(nrestraints),
+        #        np.float32(weight), np.uint32(data.size))
+
+        gws = (data.size//(WORKGROUPSIZE*8),)
+        lws = (WORKGROUPSIZE,)
+        #status = cl.enqueue_nd_range_kernel(queue, kernel, gws, lws)
+
+        args = (data.data, subhists.data, local_hist, np.uint32(nrestraints + 1),
+                np.float32(weight), np.uint32(data.size))
+        status = kernel(queue, gws, lws, *args)
+
+        return status
+
+
+    def count_violations(self, queue, restraints, rotmat, access_interspace, 
+            viol_counter, weight):
+
+        WORKGROUPSIZE = 32
+        kernel = self.kernels.count_violations
+
+        rotmat16 = np.zeros(16, dtype=np.float32)
+        rotmat16[:9] = rotmat.flatten()[:]
+        shape = np.asarray(list(access_interspace.shape) + [access_interspace.size], dtype=np.int32)
+        loc_viol = cl.LocalMemory(4*restraints.shape[0]**2*WORKGROUPSIZE)
+        # float4
+        restraints_center = cl.LocalMemory(4*restraints.shape[0]*4)
+        mindist2 = cl.LocalMemory(4*restraints.shape[0])
+        maxdist2 = cl.LocalMemory(4*restraints.shape[0])
+
+        kernel.set_args(restraints.data, rotmat16, access_interspace.data, 
+                viol_counter.data, loc_viol, restraints_center, mindist2, maxdist2, 
+                np.int32(restraints.shape[0]), shape, np.float32(weight))
+
+        gws = (access_interspace.size//(WORKGROUPSIZE*8),)
+        lws = (WORKGROUPSIZE,)
+        status = cl.enqueue_nd_range_kernel(queue, kernel, gws, lws)
+
+        return status
+
+
     def rotate_image3d(self, queue, sampler, image3d,
             rotmat, array_buffer, center):
 
         kernel = self.kernels.rotate_image3d
-        compute_units = queue.device.max_compute_units
 
-        work_groups = (compute_units*16*8*4, 1, 1)
-
+        gws = (min(4096*4, array_buffer.size), )
         shape = np.asarray(list(array_buffer.shape) + [np.product(array_buffer.shape)], dtype=np.int32)
 
         inv_rotmat = np.linalg.inv(rotmat)
@@ -85,9 +148,10 @@ class Kernels():
         _center[:3] = center[:]
 
         kernel.set_args(sampler, image3d, inv_rotmat16, array_buffer.data, _center, shape)
-        status = cl.enqueue_nd_range_kernel(queue, kernel, work_groups, None)
+        status = cl.enqueue_nd_range_kernel(queue, kernel, gws, None)
 
         return status
+
 
     def fill(self, queue, array, value):
         if array.dtype == np.float32:
@@ -98,67 +162,21 @@ class Kernels():
             raise TypeError("Array type ({:s}) is not supported.".format(array.dtype))
         return status
 
-    def dilate_points_add(self, queue, constraints, rotmat, restspace):
-
-        kernel = self.kernels.dilate_points_add
-
-        compute_units = queue.device.max_compute_units
-        preferred_work_groups = compute_units*16*8
-
-        shape = np.asarray(list(restspace.shape) + [0], dtype=np.int32)
-        nrestraints = np.int32(constraints.shape[0])
-
-        zworkgroups = int(max(min(shape[0], preferred_work_groups), 1))
-        yworkgroups = int(max(min(shape[1], preferred_work_groups - zworkgroups), 1))
-        xworkgroups = int(max(min(shape[2], preferred_work_groups - zworkgroups - yworkgroups ), 1))
-        workgroups = (zworkgroups, yworkgroups, xworkgroups)
-
-        rotmat16 = np.zeros(16, dtype=np.float32)
-        rotmat16[:9] = np.asarray(rotmat, dtype=np.float32).flatten()[:]
-
-        kernel.set_args(constraints.data, rotmat16, restspace.data, shape, nrestraints)
-
-        status = cl.enqueue_nd_range_kernel(queue, kernel, workgroups, None)
-
-        return status
-
-    def count(self, queue, interaction_space, accessible_interaction_space,
-              weight, counts):
-
-        kernel = self.kernels.count
-        compute_units = queue.device.max_compute_units
-        workgroups = (compute_units*16*8, )
-
-        size = np.int32(interaction_space.size)
-        w = np.float32(weight)
-
-        kernel.set_args(interaction_space.data, accessible_interaction_space.data,
-                        w, counts.data, size)
-        status = cl.enqueue_nd_range_kernel(queue, kernel, workgroups, None)
-
-        return status
-
 
     def distance_restraint(self, queue, constraints, rotmat, restspace):
 
         kernel = self.kernels.distance_restraint
 
-        compute_units = queue.device.max_compute_units
-        preferred_work_groups = compute_units*16*8
-
         shape = np.asarray(list(restspace.shape) + [0], dtype=np.int32)
         nrestraints = np.int32(constraints.shape[0])
 
-        zworkgroups = int(max(min(shape[0], preferred_work_groups), 1))
-        yworkgroups = int(max(min(shape[1], preferred_work_groups - zworkgroups), 1))
-        xworkgroups = int(max(min(shape[2], preferred_work_groups - zworkgroups - yworkgroups ), 1))
-        workgroups = (zworkgroups, yworkgroups, xworkgroups)
+        gws = (restspace.shape[0], restspace.shape[1], 1)
 
         rotmat16 = np.zeros(16, dtype=np.float32)
         rotmat16[:9] = np.asarray(rotmat, dtype=np.float32).flatten()[:]
 
         kernel.set_args(constraints.data, rotmat16, restspace.data, shape, nrestraints)
 
-        status = cl.enqueue_nd_range_kernel(queue, kernel, workgroups, None)
+        status = cl.enqueue_nd_range_kernel(queue, kernel, gws, None)
 
         return status

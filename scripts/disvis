@@ -1,9 +1,10 @@
 #! usr/bin/python
 from __future__ import print_function, division, absolute_import
 import os
+import errno
 import sys
-import multiprocessing as mp
 from time import time
+import multiprocessing as mp
 from argparse import ArgumentParser
 import logging
 
@@ -14,6 +15,7 @@ from disvis.rotations import proportional_orientations, quat_to_rotmat
 
 
 def parse_args():
+
     p = ArgumentParser()
 
     p.add_argument('receptor', type=file, 
@@ -102,10 +104,11 @@ def run_disvis_instance(queue, receptor, ligand, distance_constraints, rotmat, w
     dv.max_clash = args.max_clash
     dv.min_interaction = args.min_interaction
 
-    ais, complexes = dv.search()
+    ais, complexes, violations = dv.search()
 
     ais.tofile(os.path.join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n)))
 
+    np.save(os.path.join(args.directory, 'violations_{:d}.npy'.format(n)), violations)
     queue.put(complexes)
 
 
@@ -131,7 +134,6 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_constraints, args)
     processes = []
     for n in range(jobs):
 
-
         init_rot = n * nrot_per_job
         end_rot = (n + 1) * nrot_per_job
         if n == (jobs - 1):
@@ -145,7 +147,6 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_constraints, args)
 
         processes.append(process)
 
-
     write('Starting jobs')
     for n in range(jobs):
         processes[n].start()
@@ -157,18 +158,20 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_constraints, args)
 
     accessible_complexes = np.asarray(queue.get(), dtype=np.float64)
     accessible_interaction_space = Volume.fromfile(os.path.join(args.directory, 'accessible_interaction_space_0.mrc'))
+    violations = np.load('violations_0.npy')
     for n in range(1, jobs):
         accessible_complexes += np.asarray(queue.get(), dtype=np.float64)
         np.maximum(accessible_interaction_space.array, 
                 Volume.fromfile(os.path.join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n))).array, 
                 accessible_interaction_space.array)
-
+        violations += np.load(os.path.join(args.directory, 'violations_{:d}.npy'.format(n)))
 
     write('Cleaning')
     for n in range(jobs):
         os.remove(os.path.join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n)))
+        os.remove(os.path.join(args.directory, 'violations_{:d}.npy'.format(n)))
 
-    return accessible_interaction_space, accessible_complexes
+    return accessible_interaction_space, accessible_complexes, violations
 
 
 def run_disvis(queue, receptor, ligand, rotmat, weights, distance_constraints, args):
@@ -196,24 +199,40 @@ def write(line):
     logging.info(line)
 
 
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc: # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else: 
+            raise
+
+
 def main():
 
     args = parse_args()
 
-    if not os.path.isdir(args.directory):
-        os.mkdir(args.directory)
+    mkdir_p(args.directory)
 
     logging.basicConfig(filename=os.path.join(args.directory, 'disvis.log'), 
             level=logging.INFO, format='%(asctime)s %(message)s')
 
     time0 = time()
 
+    write('Reading fixed model from: {:s}'.format(args.receptor.name))
     receptor = PDB.fromfile(args.receptor)
+    write('Reading scanning model from: {:s}'.format(args.ligand.name))
     ligand = PDB.fromfile(args.ligand)
+
+    write('Reading in rotations.')
     q, weights, a = proportional_orientations(args.angle)
     rotmat = quat_to_rotmat(q)
+    write('Requested rotational sampling density: {:.2f}'.format(args.angle))
+    write('Real rotational sampling density: {:.2f}'.format(a))
     write('Number of rotations: {:d}'.format(rotmat.shape[0]))
 
+    write('Reading in restraints.')
     distance_constraints = parse_constraints(args.constraints, receptor, ligand)
     write('Number of distance constraints: {:d}'.format(len(distance_constraints)))
 
@@ -224,24 +243,45 @@ def main():
     if queue is None:
         # CPU-version
         if args.nproc > 1:
-            accessible_interaction_space, accessible_complexes = \
+            accessible_interaction_space, accessible_complexes, violations = \
                     mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_constraints, args)
         else:
-            accessible_interaction_space, accessible_complexes = \
+            accessible_interaction_space, accessible_complexes, violations = \
                     run_disvis(queue, receptor, ligand, rotmat, weights, distance_constraints, args)
     else:
         # GPU-version
-         accessible_interaction_space, accessible_complexes = \
+         accessible_interaction_space, accessible_complexes, violations = \
                  run_disvis(queue, receptor, ligand, rotmat, weights, distance_constraints, args)
 
+    f_accessible_interaction_space = os.path.join(args.directory, 'accessible_interaction_space.mrc')
+    write('Writing accessible interaction space to: {:s}'.format(f_accessible_interaction_space))
+    accessible_interaction_space.tofile(f_accessible_interaction_space)
+
+    norm = sum(accessible_complexes)
+    digits = len(str(int(norm))) + 1
+    cum_complexes = np.cumsum(np.asarray(accessible_complexes)[::-1])[::-1]
+    with open(os.path.join(args.directory, 'accessible_complexes.out'), 'w') as f_accessible_complexes:
+        write('Writing number of accessible complexes to: {:s}'.format(f_accessible_complexes.name))
+        header = '# consistent restraints | accessible complexes |' +\
+                 'percentage | cumulative accessible complexes | percentage\n'
+        f_accessible_complexes.write(header)
+        for n, acc in enumerate(accessible_complexes):
+            f_accessible_complexes.write('{0:3d} {2:{1}d} {3:8.4%} {4:{1}d} {5:8.4%}\n'\
+                    .format(n, digits, int(acc), acc/norm, 
+                    int(cum_complexes[n]), cum_complexes[n]/norm))
+    
+    # writing out violations
+    with open(os.path.join(args.directory, 'violations.out'), 'w') as f_viol:
+        write('Writing violations to file: {:s}'.format(f_viol.name))
+        for line in violations:
+            for word in line:
+                f_viol.write(str(word) + ' ')
+            f_viol.write('\n')
+
+    # time indication
     seconds = int(round(time() - time0))
     m, s = divmod(seconds, 60)
-    write('Total time: {:d}m {:2d}s'.format(m, s))
-    accessible_interaction_space.tofile(os.path.join(args.directory, 'accessible_interaction_space.mrc'))
-    norm = accessible_complexes[0]
-    for n, acc in enumerate(accessible_complexes):
-        write('Number of complexes consistent with at least {:d} constraint: {:d} ({:8.4%})'.format(n, int(acc), acc/norm))
-        
+    write('Total time passed: {:d}m {:2d}s'.format(m, s))
 
 if __name__=='__main__':
     main()

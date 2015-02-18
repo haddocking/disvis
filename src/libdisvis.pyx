@@ -5,6 +5,36 @@ from libc.math cimport ceil, exp, floor, sqrt
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+def count_violations(np.ndarray[np.float64_t, ndim=2] points,
+        np.ndarray[np.float64_t, ndim=1] mindis,
+        np.ndarray[np.float64_t, ndim=1] maxdis,
+        np.ndarray[np.int32_t, ndim=3] interspace,
+        double weight,
+        np.ndarray[np.float64_t, ndim=2] violations):
+
+    cdef unsigned int x, y, z, i
+    cdef double distance2, mindis2, maxdis2
+
+    for z in range(interspace.shape[0]):
+        for y in range(interspace.shape[1]):
+            for x in range(interspace.shape[2]):
+
+                if interspace[z, y, x] == 0:
+                    continue
+
+                for i in range(violations.shape[0]):
+                    distance2 = (x - points[i, 0])**2 +\
+                            (y - points[i, 1])**2 + (z - points[i, 2])**2
+                    mindis2 = mindis[i]**2
+                    maxdis2 = maxdis[i]**2
+
+                    if distance2 < mindis2 or distance2 > maxdis2:
+                        violations[interspace[z, y, x] - 1, i] += weight
+
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def longest_distance(np.ndarray[np.float64_t, ndim=2] coor):
 
     cdef unsigned int i, j
@@ -35,7 +65,7 @@ def rotate_image3d(np.ndarray[np.float64_t, ndim=3] image,
     Parameters
     ----------
     image : ndarray
-    
+
     vlenght : unsigned integer
         Vertice length
 
@@ -60,7 +90,7 @@ def rotate_image3d(np.ndarray[np.float64_t, ndim=3] image,
     cdef double c0, c1, c
 
     for z in range(-vlength, vlength+1):
-        
+
         xcoor_z = rotmat[0, 2]*z
         ycoor_z = rotmat[1, 2]*z
         zcoor_z = rotmat[2, 2]*z
@@ -114,7 +144,7 @@ def dilate_points(np.ndarray[np.float64_t, ndim=2] points,
 
     Parameters
     ----------
-    points : ndarray 
+    points : ndarray
         Coordinates in (x, y, z)
 
     radius : float
@@ -221,14 +251,14 @@ def binary_erosion(np.ndarray[np.float64_t, ndim=3] image,
             for x in range(nx):
                 if image[z, y, x] > 0:
                     if x > 0:
-                        if image[z, y, x - 1] == 0: 
+                        if image[z, y, x - 1] == 0:
                             out[z, y, x] = 0
                             continue
                     if x < nx - 1:
                         if image[z, y, x + 1] == 0:
                             out[z, y, x] = 0
                             continue
-                        
+
                     if y > 0:
                         if image[z, y - 1, x] == 0:
                             out[z, y, x] = 0

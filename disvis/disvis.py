@@ -1,6 +1,7 @@
 from __future__ import print_function, absolute_import, division
 from sys import stdout as _stdout
 from time import time as _time
+from math import ceil
 
 import numpy as np
 
@@ -17,7 +18,8 @@ except ImportError:
 
 from disvis import volume
 from .points import dilate_points
-from .libdisvis import rotate_image3d, dilate_points_add, longest_distance, distance_restraint
+from .libdisvis import (rotate_image3d, dilate_points_add, longest_distance, 
+        distance_restraint, count_violations)
 try:
     import pyopencl as cl
     import pyopencl.array as cl_array
@@ -201,7 +203,7 @@ class DisVis(object):
                 volume.Volume(self.data['accessible_interaction_space'], 
                         self.voxelspacing, self.data['origin'])
 
-        return accessible_interaction_space, self.data['accessible_complexes']
+        return accessible_interaction_space, self.data['accessible_complexes'], self.data['violations']
 
     def _cpu_init(self):
 
@@ -212,6 +214,7 @@ class DisVis(object):
         c['rcore'] = d['rcore'].array
         c['rsurf'] = d['rsurf'].array
         c['im_lsurf'] = d['lsurf'].array
+        c['restraints'] = d['restraints']
 
         c['lsurf'] = np.zeros_like(c['rcore'])
         c['clashvol'] = np.zeros_like(c['rcore'])
@@ -232,6 +235,7 @@ class DisVis(object):
         c['ft_rsurf'] = rfftn(c['rsurf'])
         c['rotmat'] = np.asarray(self.rotations, dtype=np.float64)
         c['weights'] = np.asarray(self.weights, dtype=np.float64)
+        c['violations'] = np.zeros((d['nrestraints'], d['nrestraints']), dtype=np.float64)
 
         c['nrot'] = d['nrot']
         c['shape'] = d['shape']
@@ -272,12 +276,13 @@ class DisVis(object):
                         np.mat(d['restraints'][:,3:6]).T).T
                 mindis = d['restraints'][:,6]
                 maxdis = d['restraints'][:,7]
-                #dilate_points_add(rest_center, radii, c['restspace'])
                 distance_restraint(rest_center, mindis, maxdis, c['restspace'])
 
                 c['interspace'] *= c['restspace']
 
-            np.maximum(c['interspace'], c['access_interspace'], \
+                count_violations(rest_center, mindis, maxdis, c['interspace'], c['weights'][n], c['violations'])
+
+            np.maximum(c['interspace'], c['access_interspace'],
                        c['access_interspace'])
 
             list_total_allowed += c['weights'][n] *\
@@ -288,8 +293,8 @@ class DisVis(object):
                 self._print_progress(n, c['nrot'], time0)
 
         d['accessible_interaction_space'] = c['access_interspace']
-        d['accessible_complexes'] = [tot_complex] + \
-                np.cumsum(list_total_allowed[1:][::-1])[::-1].tolist()
+        d['accessible_complexes'] = [tot_complex - sum(list_total_allowed[1:])] + list(list_total_allowed[1:])
+        d['violations'] = c['violations']
 
     def _print_progress(self, n, total, time0):
         m = n + 1
@@ -319,15 +324,18 @@ class DisVis(object):
         g['lsurf'] = cl_array.zeros_like(g['rcore'])
         g['clashvol'] = cl_array.zeros_like(g['rcore'])
         g['intervol'] = cl_array.zeros_like(g['rcore'])
-
-
         g['interspace'] = cl_array.zeros(q, d['shape'], dtype=np.int32)
         g['restspace'] = cl_array.zeros_like(g['interspace'])
         g['access_interspace'] = cl_array.zeros_like(g['interspace'])
+        g['best_access_interspace'] = cl_array.zeros_like(g['interspace'])
 
-        g['counts'] = cl_array.zeros(q,
-                [d['nrestraints'] + 1] + list(d['shape']), dtype=np.float32)
+        # arrays for counting
+        WORKGROUPSIZE = 32
+        g['data'] = cl_array.zeros(q, [int(ceil(x/WORKGROUPSIZE)) * (WORKGROUPSIZE) for x in d['shape']], dtype=np.int32)
+        g['subhists'] = cl_array.zeros(q, (g['data'].size//WORKGROUPSIZE, d['nrestraints'] + 1), dtype=np.float32)
+        g['viol_counter'] = cl_array.zeros(q, (g['data'].size//WORKGROUPSIZE, d['nrestraints'], d['nrestraints']), dtype=np.float32)
 
+        # complex arrays
         g['ft_shape'] = list(d['shape'])
         g['ft_shape'][0] = d['shape'][0]//2 + 1
         g['ft_rcore'] = cl_array.zeros(q, g['ft_shape'], dtype=np.complex64)
@@ -336,6 +344,7 @@ class DisVis(object):
         g['ft_clashvol'] = cl_array.zeros_like(g['ft_rcore'])
         g['ft_intervol'] = cl_array.zeros_like(g['ft_rcore'])
 
+        # kernels
         g['k'] = Kernels(q.context)
         g['k'].rfftn = pyclfft.RFFTn(q.context, d['shape'])
         g['k'].irfftn = pyclfft.iRFFTn(q.context, d['shape'])
@@ -353,6 +362,8 @@ class DisVis(object):
         g = self.gpu_data
         q = self.queue
         k = g['k']
+
+        tot_complexes = cl_array.sum(g['interspace'])
 
         time0 = _time()
         for n in xrange(g['nrot']):
@@ -373,29 +384,33 @@ class DisVis(object):
 
             if self.distance_restraints:
                 k.fill(q, g['restspace'], 0)
+
                 k.distance_restraint(q, g['restraints'],
                         self.rotations[n], g['restspace'])
                 k.multiply(q, g['restspace'], g['interspace'], g['access_interspace'])
 
-            k.count(q, g['interspace'], g['access_interspace'], 
-                    self.weights[n], g['counts'])
+
+            tot_complexes += cl_array.sum(g['interspace'])
+            cl_array.maximum(g['best_access_interspace'], g['access_interspace'], g['best_access_interspace'])
+            k.copy_partial(q, g['access_interspace'], g['data'])
+
+            k.histogram(q, g['data'], g['subhists'], self.weights[n], d['nrestraints'])
+
+            k.count_violations(q, g['restraints'], self.rotations[n], 
+                    g['data'], g['viol_counter'], self.weights[n])
 
             if _stdout.isatty():
                 self._print_progress(n, g['nrot'], time0)
 
         self.queue.finish()
 
-        count = g['counts'].get()
+        access_complexes = g['subhists'].get().sum(axis=0)
+        access_complexes[0] = tot_complexes.get() - sum(access_complexes[1:])
+        access_interaction_space = g['best_access_interspace'].get()
 
-        access_complexes = []
-        for i in range(d['nrestraints'] + 1):
-            access_complexes.append(np.sum(count[i]))
-        access_complexes[1:] = np.cumsum(access_complexes[1:][::-1])[::-1]
-        access_interaction_space = np.zeros(d['shape'], dtype=np.int32)
-        for i in xrange(1, d['nrestraints'] + 1):
-            access_interaction_space[count[i] > 0] = i
         d['accessible_interaction_space'] = access_interaction_space 
         d['accessible_complexes'] = access_complexes
+        d['violations'] = g['viol_counter'].get().sum(axis=0)
 
 
 def rsurface(points, radius, shape, voxelspacing):
