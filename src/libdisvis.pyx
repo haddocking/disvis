@@ -318,19 +318,19 @@ def distance_restraint(np.ndarray[np.float64_t, ndim=2] points,
         zmax = <int> floor(points[n, 2] + maxdis[n])
 
         for z in range(zmin, zmax+1):
-            if abs(z) > out.shape[0]:
+            if (z >= out.shape[0]) or (z < 0):
                 continue
 
             z2 = (z - points[n, 2])**2
 
             for y in range(ymin, ymax+1):
-                if abs(y) > out.shape[1]:
+                if (y >= out.shape[1]) or (y < 0):
                     continue
 
                 y2z2 = (y - points[n, 1])**2 + z2
 
                 for x in range(xmin, xmax+1):
-                    if abs(x) > out.shape[2]:
+                    if (x >= out.shape[2]) or (x < 0):
                         continue
 
                     x2y2z2 = (x - points[n, 0])**2 + y2z2

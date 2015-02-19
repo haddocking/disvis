@@ -19,7 +19,7 @@ class TestCPUvsGPU(unittest.TestCase):
 
         self.pdb1 = disvis.PDB.fromfile(os.path.join(os.path.dirname(__file__), 'data', 'O14250.pdb'))
         self.pdb2 = disvis.PDB.fromfile(os.path.join(os.path.dirname(__file__), 'data', 'Q9UT97.pdb'))
-        q, w, a = disvis.rotations.proportional_orientations(20)
+        q, w, a = disvis.rotations.proportional_orientations(10)
         self.rotations = disvis.rotations.quat_to_rotmat(q)
         self.vlength = int(np.linalg.norm(self.pdb2.coor - self.pdb2.center, axis=1).max() +\
                        3 + 1.5)/1.0
@@ -47,7 +47,6 @@ class TestCPUvsGPU(unittest.TestCase):
         self.kernels.rfftn = disvis.pyclfft.RFFTn(self.queue.context, self.shape)
         self.kernels.irfftn = disvis.pyclfft.iRFFTn(self.queue.context, self.shape)
 
-    @unittest.skip('hoi')
     def test_rotate_image3d(self):
         # CPU
         NROT = np.random.randint(self.rotations.shape[0] + 1)
@@ -62,13 +61,8 @@ class TestCPUvsGPU(unittest.TestCase):
         gpu_lsurf = cl_array.zeros(self.queue, self.shape, dtype=np.float32)
         self.kernels.rotate_image3d(self.queue, self.sampler, gpu_im_lsurf, rotmat, gpu_lsurf, self.im_center)
 
-        #disvis.volume.Volume(cpu_lsurf, self.im_lsurf.voxelspacing, self.im_lsurf.origin).tofile('cpu_lsurf.mrc')
-        #disvis.volume.Volume(gpu_lsurf.get(), self.im_lsurf.voxelspacing, self.im_lsurf.origin).tofile('gpu_lsurf.mrc')
-        #disvis.volume.Volume(cpu_lsurf - gpu_lsurf.get(), self.im_lsurf.voxelspacing, self.im_lsurf.origin).tofile('diff.mrc')
-
         self.assertTrue(np.allclose(cpu_lsurf, gpu_lsurf.get(), atol=0.01))
 
-    @unittest.skip('hoi')
     def test_c_conj_multiply(self):
         
         shape = (5, 6, 8)
@@ -93,7 +87,6 @@ class TestCPUvsGPU(unittest.TestCase):
 
         self.assertTrue(np.allclose(expected, cl_out.get()))
 
-    @unittest.skip('hoi')
     def test_clashvol(self):
 
         NROT = np.random.randint(self.rotations.shape[0] + 1)
@@ -101,7 +94,7 @@ class TestCPUvsGPU(unittest.TestCase):
         cpu_lsurf = np.zeros_like(self.im_lsurf.array)
         disvis.libdisvis.rotate_image3d(self.im_lsurf.array, self.vlength, np.linalg.inv(rotmat), self.im_center, cpu_lsurf)
 
-        cpu_clashvol = numpy.fft.irfftn(numpy.fft.rfftn(cpu_lsurf).conj() * numpy.fft.rfftn(self.rcore.array))
+        cpu_clashvol = numpy.fft.irfftn(numpy.fft.rfftn(cpu_lsurf).conj() * numpy.fft.rfftn(self.rcore.array), s=self.shape)
 
         gpu_rcore = cl_array.to_device(self.queue, np.asarray(self.rcore.array, dtype=np.float32))
         gpu_im_lsurf = cl.image_from_array(self.queue.context, np.asarray(self.im_lsurf.array, dtype=np.float32))
@@ -121,7 +114,6 @@ class TestCPUvsGPU(unittest.TestCase):
 
         self.assertTrue(np.allclose(cpu_clashvol, gpu_clashvol.get(), atol=0.8))
 
-    @unittest.skip('hoi')
     def test_intervol(self):
 
         NROT = np.random.randint(self.rotations.shape[0] + 1)
@@ -129,7 +121,7 @@ class TestCPUvsGPU(unittest.TestCase):
         cpu_lsurf = np.zeros_like(self.im_lsurf.array)
         disvis.libdisvis.rotate_image3d(self.im_lsurf.array, self.vlength, np.linalg.inv(rotmat), self.im_center, cpu_lsurf)
 
-        cpu_intervol = numpy.fft.irfftn(numpy.fft.rfftn(cpu_lsurf).conj() * numpy.fft.rfftn(self.rsurf.array))
+        cpu_intervol = numpy.fft.irfftn(numpy.fft.rfftn(cpu_lsurf).conj() * numpy.fft.rfftn(self.rsurf.array), s=self.shape)
 
         gpu_rsurf = cl_array.to_device(self.queue, np.asarray(self.rsurf.array, dtype=np.float32))
         gpu_im_lsurf = cl.image_from_array(self.queue.context, np.asarray(self.im_lsurf.array, dtype=np.float32))
@@ -149,6 +141,7 @@ class TestCPUvsGPU(unittest.TestCase):
 
         self.assertTrue(np.allclose(cpu_intervol, gpu_intervol.get(), atol=0.8))
 
+    @unittest.skip('hoi')
     def test_touch(self):
 
         MAX_CLASH = 100 + 0.9

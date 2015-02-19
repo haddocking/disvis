@@ -127,6 +127,7 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_constraints, args)
         jobs = nrot
     nrot_per_job = nrot//jobs
     write('Number of processors used: {:d}'.format(jobs))
+    write('Number of rotations per job: {:d}'.format(nrot_per_job))
 
     write('Creating jobs')
 
@@ -158,7 +159,7 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_constraints, args)
 
     accessible_complexes = np.asarray(queue.get(), dtype=np.float64)
     accessible_interaction_space = Volume.fromfile(os.path.join(args.directory, 'accessible_interaction_space_0.mrc'))
-    violations = np.load('violations_0.npy')
+    violations = np.load(os.path.join(args.directory, 'violations_0.npy'))
     for n in range(1, jobs):
         accessible_complexes += np.asarray(queue.get(), dtype=np.float64)
         np.maximum(accessible_interaction_space.array, 

@@ -88,7 +88,7 @@ class Kernels():
     def histogram(self, queue, data, subhists, weight, nrestraints):
         
         WORKGROUPSIZE = 32
-        kernel = self.kernels.histogram16
+        kernel = self.kernels.histogram
 
         local_hist = cl.LocalMemory(4*(nrestraints + 1)*WORKGROUPSIZE)
 

@@ -46,7 +46,7 @@ void count_violations(__global float8 *restraints,
     // loop over the accessable interaction space
     for (uint i = id; i < shape.s3; i += stride) {
         int consistent = access_interspace[i];
-        if (consistent == 0)
+        if ((consistent == 0) || (consistent == nrestraints))
             continue;
         consistent--;
         
@@ -61,7 +61,7 @@ void count_violations(__global float8 *restraints,
             float dist2 = pown(x - restraints_center[j].s0, 2) +
                           pown(y - restraints_center[j].s1, 2) +
                           pown(z - restraints_center[j].s2, 2);
-            if ((mindist2[j] > dist2) || (dist2 > maxdist2[j])){
+            if ((dist2 < mindist2[j]) || (dist2 > maxdist2[j])){
                 uint ind = ind_z + nrestraints*consistent + j;
                 loc_viol[ind] += weight;
             }
@@ -103,7 +103,7 @@ void copy_partial(__global float *part, __global float *full, int4 part_size, in
 
 
 __kernel
-void histogram16(__global int *data,
+void histogram(__global int *data,
                  __global float *subhists,
                  __local float *local_hist,
                  uint nrestraints,
@@ -146,6 +146,7 @@ void rotate_image3d(sampler_t sampler,
     float4 coordinate, weight;
 
     slice = shape.s2*shape.s1;
+    float OFFSET = 0.5f;
 
     int i;
     for (i = id; i < shape.s3; i += stride) {
@@ -165,9 +166,9 @@ void rotate_image3d(sampler_t sampler,
         yrot = rotmat.s3*x + rotmat.s4*y + rotmat.s5*z;
         zrot = rotmat.s6*x + rotmat.s7*y + rotmat.s8*z;
 
-        xrot += 0.5f + center.s0;
-        yrot += 0.5f + center.s1;
-        zrot += 0.5f + center.s2;
+        xrot += OFFSET + center.s0;
+        yrot += OFFSET + center.s1;
+        zrot += OFFSET + center.s2;
     
         coordinate = (float4) (xrot, yrot, zrot, 0);
         weight = read_imagef(image, sampler, coordinate);
@@ -229,7 +230,7 @@ void distance_restraint(__global float8 *restraints,
 
                      xyz_dis2 = pown(ix - xcenter, 2) + yz_dis2;
 
-                     if ((xyz_dis2 <= maxdis2) && (xyz_dis2 > mindis2)){
+                     if ((xyz_dis2 <= maxdis2) && (xyz_dis2 >= mindis2)){
                          xyz_ind = ix + yz_ind;
                          restspace[xyz_ind] += 1;
                      }
