@@ -163,19 +163,19 @@ class Kernels():
         return status
 
 
-    def distance_restraint(self, queue, constraints, rotmat, restspace):
+    def distance_restraint(self, queue, restraints, rotmat, restspace):
 
         kernel = self.kernels.distance_restraint
 
         shape = np.asarray(list(restspace.shape) + [0], dtype=np.int32)
-        nrestraints = np.int32(constraints.shape[0])
+        nrestraints = np.int32(restraints.shape[0])
 
         gws = (restspace.shape[0], restspace.shape[1], 1)
 
         rotmat16 = np.zeros(16, dtype=np.float32)
         rotmat16[:9] = np.asarray(rotmat, dtype=np.float32).flatten()[:]
 
-        kernel.set_args(constraints.data, rotmat16, restspace.data, shape, nrestraints)
+        kernel.set_args(restraints.data, rotmat16, restspace.data, shape, nrestraints)
 
         status = cl.enqueue_nd_range_kernel(queue, kernel, gws, None)
 

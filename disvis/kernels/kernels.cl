@@ -178,7 +178,7 @@ void rotate_image3d(sampler_t sampler,
 
 
 __kernel
-void distance_restraint(__global float8 *constraints, 
+void distance_restraint(__global float8 *restraints, 
                        float16 rotmat, 
                        __global int *restspace, 
                        int4 shape, int nrestraints)
@@ -202,16 +202,16 @@ void distance_restraint(__global float8 *constraints,
     for (i = 0; i < nrestraints; i++){
 
          // determine the center of the point that will be dilated
-         xligand = rotmat.s0 * constraints[i].s3 + rotmat.s1 * constraints[i].s4 + rotmat.s2 * constraints[i].s5;
-         yligand = rotmat.s3 * constraints[i].s3 + rotmat.s4 * constraints[i].s4 + rotmat.s5 * constraints[i].s5;
-         zligand = rotmat.s6 * constraints[i].s3 + rotmat.s7 * constraints[i].s4 + rotmat.s8 * constraints[i].s5;
+         xligand = rotmat.s0 * restraints[i].s3 + rotmat.s1 * restraints[i].s4 + rotmat.s2 * restraints[i].s5;
+         yligand = rotmat.s3 * restraints[i].s3 + rotmat.s4 * restraints[i].s4 + rotmat.s5 * restraints[i].s5;
+         zligand = rotmat.s6 * restraints[i].s3 + rotmat.s7 * restraints[i].s4 + rotmat.s8 * restraints[i].s5;
 
-         xcenter = constraints[i].s0 - xligand;
-         ycenter = constraints[i].s1 - yligand;
-         zcenter = constraints[i].s2 - zligand;
+         xcenter = restraints[i].s0 - xligand;
+         ycenter = restraints[i].s1 - yligand;
+         zcenter = restraints[i].s2 - zligand;
 
-         mindis2 = pown(constraints[i].s6, 2);
-         maxdis2 = pown(constraints[i].s7, 2);
+         mindis2 = pown(restraints[i].s6, 2);
+         maxdis2 = pown(restraints[i].s7, 2);
 
          // calculate the distance of every voxel to the determined center
          for (iz = zid; iz < shape.s0; iz += zstride){
