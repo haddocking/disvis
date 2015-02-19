@@ -281,7 +281,7 @@ def main():
         header = ('   ' + '{:8d}'*nrestraints + '\n').format(*range(1, nrestraints + 1))
         f_viol.write(header)
         for n, line in enumerate(violations):
-            f_viol.write('{:2d} '.format(n+1))
+            f_viol.write('{:<2d} '.format(n+1))
             for word in line:
                 if num_violations[n] > 0:
                     percentage_violated = word/num_violations[n]
