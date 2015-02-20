@@ -42,13 +42,13 @@ def parse_args():
                  'vdW + interaction_radius. Default is 3A.')
 
     p.add_argument('-cv', '--max_clash', 
-            dest='max_clash', type=float, default=100,
+            dest='max_clash', type=float, default=200,
             help='Maximum allowed volume of clashes. Increasing this '
                  'number results in more allowed complexes. '
                  'Default is 100 A^3.')
 
     p.add_argument('-iv', '--min-interaction', 
-            dest='min_interaction', type=float, default=200,
+            dest='min_interaction', type=float, default=300,
             help='Minimal required interaction volume for a '
                  'conformation to be considered a '
                  'complex. Increasing this number results in a '
@@ -237,11 +237,17 @@ def main():
     distance_constraints = parse_constraints(args.constraints, receptor, ligand)
     write('Number of distance constraints: {:d}'.format(len(distance_constraints)))
 
+    write('Interaction radius set to: {:.2f}'.format(args.interaction_radius))
+    write('Minimum required interaction volume: {:.2f}'.format(args.min_interaction))
+    write('Maximum allowed volume of clashes: {:.2f}'.format(args.max_clash))
+
     queue = None
     if args.gpu:
         queue = get_queue()
 
     if queue is None:
+        if args.gpu:
+            write('No GPU queue was found. Falling back on CPU implementation.')
         # CPU-version
         if args.nproc > 1:
             accessible_interaction_space, accessible_complexes, violations = \
@@ -251,13 +257,16 @@ def main():
                     run_disvis(queue, receptor, ligand, rotmat, weights, distance_constraints, args)
     else:
         # GPU-version
-         accessible_interaction_space, accessible_complexes, violations = \
+        write('Using GPU accelerated search.')
+        accessible_interaction_space, accessible_complexes, violations = \
                  run_disvis(queue, receptor, ligand, rotmat, weights, distance_constraints, args)
 
+    # write out accessible interaction space
     f_accessible_interaction_space = os.path.join(args.directory, 'accessible_interaction_space.mrc')
     write('Writing accessible interaction space to: {:s}'.format(f_accessible_interaction_space))
     accessible_interaction_space.tofile(f_accessible_interaction_space)
 
+    # write out accessible complexes
     norm = sum(accessible_complexes)
     digits = len(str(int(norm))) + 1
     cum_complexes = np.cumsum(np.asarray(accessible_complexes)[::-1])[::-1]
