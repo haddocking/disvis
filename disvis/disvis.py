@@ -363,7 +363,7 @@ class DisVis(object):
         q = self.queue
         k = g['k']
 
-        tot_complexes = cl_array.sum(g['interspace'])
+        tot_complexes = cl_array.sum(g['interspace'], dtype=np.float32)
 
         time0 = _time()
         for n in xrange(g['nrot']):
@@ -390,7 +390,7 @@ class DisVis(object):
                 k.multiply(q, g['restspace'], g['interspace'], g['access_interspace'])
 
 
-            tot_complexes += cl_array.sum(g['interspace'])
+            tot_complexes += cl_array.sum(g['interspace'], dtype=np.float32)*np.float32(self.weights[n])
             cl_array.maximum(g['best_access_interspace'], g['access_interspace'], g['best_access_interspace'])
             k.copy_partial(q, g['access_interspace'], g['data'])
 
