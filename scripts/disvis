@@ -233,7 +233,7 @@ def main():
     write('Real rotational sampling density: {:.2f}'.format(a))
     write('Number of rotations: {:d}'.format(rotmat.shape[0]))
 
-    write('Reading in restraints.')
+    write('Reading in restraints from file: {:s}'.format(args.restraints.name))
     distance_restraints = parse_restraints(args.restraints, receptor, ligand)
     write('Number of distance restraints: {:d}'.format(len(distance_restraints)))
 
