@@ -58,6 +58,16 @@ class PDB(object):
 
 
     @property
+    def elements(self):
+        return self.data['elements']
+
+
+    @property
+    def natoms(self):
+        return self.data.shape[0]
+
+
+    @property
     def sequence(self):
         resids, indices = np.unique(self.data['resi'], return_index=True)
         return self.data['resn'][indices]
