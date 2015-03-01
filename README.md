@@ -55,10 +55,11 @@ below to prepare your particular operating system.
 ### Linux
 
 First install git and check whether the Python header files and the Python
-package manager, *pip*, are available
+package manager, *pip*, are available by typing
 
     sudo apt-get install git python-dev python-pip
 
+If you are working on a Fedora system, replace *apt-get* with *yum*.
 The final step to prepare you system is installing the Python dependencies
 
     sudo pip install numpy cython
@@ -80,7 +81,7 @@ Open a shell and type
     sudo pip install numpy cython
 
 Wait till the compilation and installion is finished (this might take awhile).
-Your system is now proporly prepared. Follow the general instructions above to install DisVis.
+Your system is now proporly prepared. Follow the general instructions above to install **DisVis**.
 
 
 ### Windows
@@ -93,7 +94,7 @@ For Windows it easiest to install a Python distribution with NumPy and Cython
 Follow the installation instructions on their website.
 
 Next open a *bash* shell that was shipped with *git*. Follow the general instructions
-above to install DisVis.
+above to install **DisVis**.
 
 
 ## Usage
@@ -137,14 +138,14 @@ To perform a 9.72 degree rotational search with 16 processors and a voxel spacin
     disvis O14250.pdb Q9UT97.pdb restraints.dat -a 9.72 -p 16 -vs 2
 
 Finally, to offload computations to the GPU and increase the maximum allowed volume of clashes 
-and decrease the minimum required volume of interaction, and set the interaction radius to 2A.
+and decrease the minimum required volume of interaction, and set the interaction radius to 2A
 
     disvis 1wcm_A.pdb 1wcm_E.pdb restraints.dat -g -cv 6000 -iv 7000 -ir 2
 
 These examples have shown all the 9 available options.
 
 
-## Output
+### Output
 
 *disvis* outputs 4 different files:
 
@@ -166,7 +167,7 @@ Licensing
 
 If this software was useful to your research please cite us
 
-**G.C.P. van Zundert and A.M.J.J. Bonvin** (2015) DisVis: Visualizing and
+**Van Zundert, G.C.P. and Bonvin A.M.J.J.** (2015) DisVis: Visualizing and
 quantifying the accessible interaction space of distance restrained biomolecular complexes.
 *Bioinformatics* (submitted).
 
