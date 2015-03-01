@@ -241,6 +241,7 @@ def main():
     distance_restraints = parse_restraints(args.restraints, receptor, ligand)
     write('Number of distance restraints: {:d}'.format(len(distance_restraints)))
 
+    write('Voxel spacing set to: {:.2f}'.format(args.voxelspacing))
     write('Interaction radius set to: {:.2f}'.format(args.interaction_radius))
     write('Minimum required interaction volume: {:.2f}'.format(args.min_interaction))
     write('Maximum allowed volume of clashes: {:.2f}'.format(args.max_clash))
