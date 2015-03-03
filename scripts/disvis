@@ -299,7 +299,7 @@ def main():
             f_viol.write('{:<2d} '.format(n+1))
             for word in line:
                 if num_violations[n] > 0:
-                    percentage_violated = word/num_violations[n]
+                    percentage_violated = word/accessible_complexes[n+1]
                 else:
                     percentage_violated = 0
                 f_viol.write('{:8.4f}'.format(percentage_violated))
