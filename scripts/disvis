@@ -10,7 +10,6 @@ import logging
 
 import numpy as np
 from disvis import DisVis, PDB, Volume
-from disvis.helpers import get_queue
 from disvis.rotations import proportional_orientations, quat_to_rotmat
 
 
@@ -248,6 +247,7 @@ def main():
 
     queue = None
     if args.gpu:
+        from disvis.helpers import get_queue
         queue = get_queue()
 
     if queue is None:
