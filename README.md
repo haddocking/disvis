@@ -30,7 +30,7 @@ For GPU hardware acceleration the following packages are also required
 * [clFFT](https://github.com/clMathLibraries/clFFT)
 * [gpyfft](https://github.com/geggo/gpyfft)
 
-Recommended for easy installation
+Recommended for installation
 
 * [git](https://git-scm.com/download)
 * [pip](https://pip.pypa.io/en/latest/installing.html)
@@ -71,7 +71,7 @@ Your system is now ready. Follow the general instructions above to install **Dis
 ### MacOSX (10.7+)
 
 First install [*git*](https://git-scm.com/download) for MacOSX.
-Next we will install [*pip*](https://pip.pypa.io/en/latest/installing.html), 
+Next, install [*pip*](https://pip.pypa.io/en/latest/installing.html), 
 the official Python package manager. Follow the link, and install *pip* using
 their installation instructions.
 
@@ -86,11 +86,11 @@ Your system is now proporly prepared. Follow the general instructions above to i
 
 ### Windows
 
-First we will install [*git*](https://git-scm.com/download) for Windows, as it also comes
+First install [*git*](https://git-scm.com/download) for Windows, as it also comes
 with a handy *bash* shell.
 
 For Windows it easiest to install a Python distribution with NumPy and Cython
-(and many other) packages available, such as [Anaconda](https://continuum.io/downloads).
+(and many other) packages included, such as [Anaconda](https://continuum.io/downloads).
 Follow the installation instructions on their website.
 
 Next open a *bash* shell that was shipped with *git*. Follow the general instructions
@@ -172,3 +172,15 @@ quantifying the accessible interaction space of distance restrained biomolecular
 *Bioinformatics* (submitted).
 
 MIT licence
+
+
+## Tested platforms
+
+| Operating System| CPU single | CPU multi | GPU |
+| --------------- | ---------- | --------- | --- |
+|Linux            | Yes        | Yes       | Yes |
+|MacOSX           | Yes        | Yes       | No  |
+|Windows          | Yes        | Fail      | No  |
+
+The GPU version has been tested on:
+NVIDIA GeForce GTX 680 and AMD Radeon HD 7730M for Linux
