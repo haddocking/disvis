@@ -53,13 +53,31 @@ class PDB(object):
 
 
     @property
+    def center_of_mass(self):
+        mass = self.mass.reshape(-1, 1)
+        return (self.coor * mass).sum(axis=0)/mass.sum()
+
+
+    @property
     def chain_list(self):
         return np.unique(self.data['chain'])
 
 
     @property
+    def com(self):
+        return self.center_of_mass
+
+
+    @property
     def elements(self):
         return self.data['elements']
+
+
+    @property
+    def mass(self):
+        elements, ind = np.unique(self.data['element'], return_inverse=True)
+        mass = np.asarray([atompar[e]['mass'] for e in elements], dtype=np.float64)
+        return mass[ind]
 
 
     @property
