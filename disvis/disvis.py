@@ -286,7 +286,7 @@ class DisVis(object):
                        c['access_interspace'])
 
             list_total_allowed += c['weights'][n] *\
-                        np.bincount(c['interspace'].flatten(),
+                        np.bincount(c['interspace'].ravel(),
                         minlength=(max(2, d['nrestraints']+1)))
 
             if _stdout.isatty():
