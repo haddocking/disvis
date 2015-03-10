@@ -55,7 +55,7 @@ below to prepare your particular operating system.
 ### Linux
 
 First install git and check whether the Python header files and the Python
-package manager, *pip*, are available by typing
+package manager *pip*, are available by typing
 
     sudo apt-get install git python-dev python-pip
 
@@ -64,16 +64,19 @@ The final step to prepare you system is installing the Python dependencies
 
     sudo pip install numpy cython
 
-Wait untill the compilation and installion is finished (this might take awhile).
+Wait untill the installation is finished.
 Your system is now ready. Follow the general instructions above to install **DisVis**.
 
 
-### MacOSX (10.7+)
+### MacOSX
 
 First install [*git*](https://git-scm.com/download) for MacOSX.
 Next, install [*pip*](https://pip.pypa.io/en/latest/installing.html), 
-the official Python package manager. Follow the link, and install *pip* using
-their installation instructions.
+the official Python package manager. 
+Either follow the link and install *pip* using
+their installation instructions or type
+
+    sudo easy_install pip
 
 The final step to prepare you system is installing the Python dependencies.
 Open a shell and type
@@ -147,7 +150,7 @@ These examples have shown all the 9 available options.
 
 ### Output
 
-*disvis* outputs 4 different files:
+*disvis* outputs 5 files:
 
 * *accessible_complexes.out*: a text file containing the number of complexes consistent with
 a number of restraints. 
@@ -156,9 +159,11 @@ of consistent restraints. This helps in identifying which restraint is most like
 if any.
 * *accessible_interaction_space.mrc*: a density file in MRC format. The density represents the
 center of mass of the scanning chain conforming to the maximum found consistent restraints at
-every position in space. The density can be inspected most naturally by opening it together with the
+every position in space. The density can be inspected by opening it together with the
 fixed chain in a molecular viewer (UCSF Chimera is recommended for its easier manipulation of density
 data, but also PyMol works).
+* *z-score.out*: a text file giving the Z-score for each restraint. The higher the score, the more
+likely the restraint is a false-positive. Z-scores above 1.0 are explicitly mentioned in the output.
 * *disvis.log*: a log file showing all the parameters used, together with date and time indications.
 
 
@@ -167,8 +172,8 @@ Licensing
 
 If this software was useful to your research please cite us
 
-**Van Zundert, G.C.P. and Bonvin A.M.J.J.** (2015) DisVis: Visualizing and
-quantifying the accessible interaction space of distance restrained biomolecular complexes.
+**Van Zundert, G.C.P. and Bonvin, A.M.J.J.** (2015) DisVis: Visualizing and
+quantifying accessible interaction space of distance restrained biomolecular complexes.
 *Bioinformatics* (submitted).
 
 MIT licence
