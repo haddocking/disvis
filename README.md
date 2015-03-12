@@ -70,20 +70,20 @@ Your system is now ready. Follow the general instructions above to install **Dis
 
 ### MacOSX
 
-First install [*git*](https://git-scm.com/download) for MacOSX.
+First install [*git*](https://git-scm.com/download) for MacOSX (this might already be present on your system).
 Next, install [*pip*](https://pip.pypa.io/en/latest/installing.html), 
 the official Python package manager. 
 Either follow the link and install *pip* using
-their installation instructions or type
+their installation instructions or open a terminal and type
 
     sudo easy_install pip
 
-The final step to prepare you system is installing the Python dependencies.
-Open a shell and type
+The final step to prepare your system, is installing the Python dependencies.
+In a terminal, type
 
     sudo pip install numpy cython
 
-Wait till the compilation and installion is finished (this might take awhile).
+Wait till the compilation and installation is finished. 
 Your system is now proporly prepared. Follow the general instructions above to install **DisVis**.
 
 
