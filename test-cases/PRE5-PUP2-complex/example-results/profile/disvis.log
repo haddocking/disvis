@@ -1,0 +1,18 @@
+2015-03-12 11:35:37,941 Reading fixed model from: O14250.pdb
+2015-03-12 11:35:37,986 Reading scanning model from: Q9UT97.pdb
+2015-03-12 11:35:38,063 Reading in rotations.
+2015-03-12 11:35:38,102 Requested rotational sampling density: 9.72
+2015-03-12 11:35:38,113 Real rotational sampling density: 9.72
+2015-03-12 11:35:38,113 Number of rotations: 7416
+2015-03-12 11:35:38,113 Reading in restraints from file: restraints.dat
+2015-03-12 11:35:38,137 Number of distance restraints: 7
+2015-03-12 11:35:38,137 Voxel spacing set to: 2.00
+2015-03-12 11:35:38,138 Interaction radius set to: 3.00
+2015-03-12 11:35:38,138 Minimum required interaction volume: 300.00
+2015-03-12 11:35:38,138 Maximum allowed volume of clashes: 200.00
+2015-03-12 11:41:20,080 Writing accessible interaction space to: results/profile/accessible_interaction_space.mrc
+2015-03-12 11:41:20,102 Writing number of accessible complexes to: results/profile/accessible_complexes.out
+2015-03-12 11:41:20,103 Writing violations to file: results/profile/violations.out
+2015-03-12 11:41:20,103 Possible false-positive restraints (z-score > 1.0): 1 2
+2015-03-12 11:41:20,104 Writing z-score of each restraint to results/profile/z-score.out
+2015-03-12 11:41:20,104 Total time passed: 5m 42s

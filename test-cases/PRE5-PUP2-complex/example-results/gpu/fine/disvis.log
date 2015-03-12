@@ -1,0 +1,19 @@
+2015-03-12 15:09:47,616 Reading fixed model from: O14250.pdb
+2015-03-12 15:09:47,628 Reading scanning model from: Q9UT97.pdb
+2015-03-12 15:09:47,638 Reading in rotations.
+2015-03-12 15:09:47,658 Requested rotational sampling density: 5.27
+2015-03-12 15:09:47,659 Real rotational sampling density: 5.27
+2015-03-12 15:09:47,659 Number of rotations: 53256
+2015-03-12 15:09:47,659 Reading in restraints from file: restraints.dat
+2015-03-12 15:09:47,666 Number of distance restraints: 7
+2015-03-12 15:09:47,666 Voxel spacing set to: 1.00
+2015-03-12 15:09:47,666 Interaction radius set to: 3.00
+2015-03-12 15:09:47,666 Minimum required interaction volume: 300.00
+2015-03-12 15:09:47,666 Maximum allowed volume of clashes: 200.00
+2015-03-12 15:09:47,707 Using GPU accelerated search.
+2015-03-12 15:29:51,963 Writing accessible interaction space to: example-results/gpu/fine/accessible_interaction_space.mrc
+2015-03-12 15:29:52,031 Writing number of accessible complexes to: example-results/gpu/fine/accessible_complexes.out
+2015-03-12 15:29:52,033 Writing violations to file: example-results/gpu/fine/violations.out
+2015-03-12 15:29:52,035 Possible false-positive restraints (z-score > 1.0): 1 2
+2015-03-12 15:29:52,035 Writing z-score of each restraint to example-results/gpu/fine/z-score.out
+2015-03-12 15:29:52,036 Total time passed: 20m  4s
