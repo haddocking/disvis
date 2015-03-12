@@ -1,0 +1,26 @@
+2015-03-10 18:10:17,900 Reading fixed model from: 1wcm_A.pdb
+2015-03-10 18:10:17,995 Reading scanning model from: 1wcm_E.pdb
+2015-03-10 18:10:18,009 Reading in rotations.
+2015-03-10 18:10:18,040 Requested rotational sampling density: 5.27
+2015-03-10 18:10:18,040 Real rotational sampling density: 5.27
+2015-03-10 18:10:18,040 Number of rotations: 53256
+2015-03-10 18:10:18,040 Reading in restraints from file: restraints.dat
+2015-03-10 18:10:18,073 Number of distance restraints: 8
+2015-03-10 18:10:18,074 Voxel spacing set to: 1.00
+2015-03-10 18:10:18,074 Interaction radius set to: 3.00
+2015-03-10 18:10:18,074 Minimum required interaction volume: 300.00
+2015-03-10 18:10:18,074 Maximum allowed volume of clashes: 200.00
+2015-03-10 18:10:18,074 Number of processors used: 16
+2015-03-10 18:10:18,074 Number of rotations per job: 3328
+2015-03-10 18:10:18,074 Creating jobs
+2015-03-10 18:10:18,078 Starting jobs
+2015-03-10 18:10:18,099 Waiting for jobs to finish
+2015-03-10 19:24:05,585 Searching done. Combining results
+2015-03-10 19:24:05,924 Cleaning
+2015-03-10 19:24:06,156 Writing accessible interaction space to: results/cpu/fine/accessible_interaction_space.mrc
+2015-03-10 19:24:06,328 Writing number of accessible complexes to: results/cpu/fine/accessible_complexes.out
+2015-03-10 19:24:06,328 Writing violations to file: results/cpu/fine/violations.out
+2015-03-10 19:24:06,329 Not all restraints are consistent. Number of false-positive restraints present is at least: 1
+2015-03-10 19:24:06,329 Possible false-positive restraints (z-score > 1.0): 7 8
+2015-03-10 19:24:06,330 Writing z-score of each restraint to results/cpu/fine/z-score.out
+2015-03-10 19:24:06,330 Total time passed: 73m 48s
