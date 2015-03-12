@@ -286,6 +286,7 @@ def main():
                     int(cum_complexes[n]), cum_complexes[n]/norm))
 
     # writing out violations
+    cum_violations = violations[::-1].cumsum(axis=0)[::-1]
     with open(os.path.join(args.directory, 'violations.out'), 'w') as f_viol:
         write('Writing violations to file: {:s}'.format(f_viol.name))
         num_violations = violations.sum(axis=1)
@@ -295,11 +296,11 @@ def main():
         f_viol.write(header)
         header = ('   ' + '{:8d}'*nrestraints + '\n').format(*range(1, nrestraints + 1))
         f_viol.write(header)
-        for n, line in enumerate(violations):
+        for n, line in enumerate(cum_violations):
             f_viol.write('{:<2d} '.format(n+1))
             for word in line:
                 if num_violations[n] > 0:
-                    percentage_violated = word/accessible_complexes[n+1]
+                    percentage_violated = word/cum_complexes[n+1]
                 else:
                     percentage_violated = 0
                 f_viol.write('{:8.4f}'.format(percentage_violated))
@@ -320,22 +321,22 @@ def main():
         n = None
     else:
         n = -n + 1
-    percentage_violated = violations[:n]/np.asarray(accessible_complexes[1:n]).reshape(-1, 1)
+    percentage_violated = cum_violations[:n]/np.asarray(cum_complexes[1:n]).reshape(-1, 1)
     average_restraint_violation = percentage_violated.mean(axis=0)
-    std_restraint_violations = average_restraint_violation.std()
-    zscore_violations = (average_restraint_violation - average_restraint_violation.mean())/std_restraint_violations
+    std_restraint_violation = percentage_violated.std(axis=0)
+    zscore_violations = (average_restraint_violation - average_restraint_violation.mean())/average_restraint_violation.std()
     ind_false_positives = np.flatnonzero(zscore_violations >= 1.0)
     nfalse_positives = ind_false_positives.size
     if nfalse_positives > 0:
         ind_false_positives += 1
-        write(('Possible false-positive restraints (Z-score > 1.0):' +\
+        write(('Possible false-positive restraints (z-score > 1.0):' +\
                 ' {:d}'*nfalse_positives).format(*tuple(ind_false_positives)))
 
     with open(os.path.join(args.directory, 'z-score.out'), 'w') as f:
-        write('Writing Z-score of each restraint to {:s}'.format(f.name))
-        for n, zscore in enumerate(zscore_violations):
-            f.write('{:2d} {:6.3f}\n'.format(n+1, zscore))
-
+        write('Writing z-score of each restraint to {:s}'.format(f.name))
+        for n in xrange(zscore_violations.shape[0]):
+            f.write('{:2d} {:6.3f} {:6.3f} {:6.3f}\n'.format(n+1,
+                    average_restraint_violation[n], std_restraint_violation[n], zscore_violations[n]))
 
     # time indication
     seconds = int(round(time() - time0))
