@@ -1,8 +1,7 @@
 #! usr/bin/python
 from __future__ import print_function, division, absolute_import
 import os
-import errno
-import sys
+from sys import stdout
 from time import time
 import multiprocessing as mp
 from argparse import ArgumentParser
@@ -11,6 +10,7 @@ import logging
 import numpy as np
 from disvis import DisVis, PDB, Volume
 from disvis.rotations import proportional_orientations, quat_to_rotmat
+from disvis.helpers import mkdir_p
 
 
 def parse_args():
@@ -198,19 +198,9 @@ def run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints, ar
 
 
 def write(line):
-    if sys.stdout.isatty():
+    if stdout.isatty():
         print(line)
     logging.info(line)
-
-
-def mkdir_p(path):
-    try:
-        os.makedirs(path)
-    except OSError as exc: # Python >2.5
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
 
 
 def main():
