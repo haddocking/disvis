@@ -70,21 +70,6 @@ class Kernels():
         return status
 
 
-    def copy_partial(self, queue, part, full):
-        
-        kernel = self.kernels.copy_partial
-        WORKGROUPSIZE = 32
-
-        part_shape = np.asarray(list(part.shape) + [part.size], dtype=np.int32)
-        full_shape = np.asarray(list(full.shape) + [full.size], dtype=np.int32)
-        kernel.set_args(part.data, full.data, part_shape, full_shape)
-
-        lws = (WORKGROUPSIZE,)
-        gws = (full.size//(WORKGROUPSIZE * 8),)
-        status = cl.enqueue_nd_range_kernel(queue, kernel, gws, None)
-        return status
-
-
     def histogram(self, queue, data, subhists, weight, nrestraints):
         
         WORKGROUPSIZE = 32
@@ -92,12 +77,8 @@ class Kernels():
 
         local_hist = cl.LocalMemory(4*(nrestraints + 1)*WORKGROUPSIZE)
 
-        #kernel.set_args(data.data, subhists.data, local_hist, np.uint32(nrestraints),
-        #        np.float32(weight), np.uint32(data.size))
-
-        gws = (data.size//(WORKGROUPSIZE*8),)
+        gws = (8*WORKGROUPSIZE*8,)
         lws = (WORKGROUPSIZE,)
-        #status = cl.enqueue_nd_range_kernel(queue, kernel, gws, lws)
 
         args = (data.data, subhists.data, local_hist, np.uint32(nrestraints + 1),
                 np.float32(weight), np.uint32(data.size))
@@ -125,7 +106,7 @@ class Kernels():
                 viol_counter.data, loc_viol, restraints_center, mindist2, maxdist2, 
                 np.int32(restraints.shape[0]), shape, np.float32(weight))
 
-        gws = (access_interspace.size//(WORKGROUPSIZE*8),)
+        gws = (8*WORKGROUPSIZE*8,)
         lws = (WORKGROUPSIZE,)
         status = cl.enqueue_nd_range_kernel(queue, kernel, gws, lws)
 
@@ -137,7 +118,7 @@ class Kernels():
 
         kernel = self.kernels.rotate_image3d
 
-        gws = (min(4096*4, array_buffer.size), )
+        gws = (8 * 32 *8, )
         shape = np.asarray(list(array_buffer.shape) + [np.product(array_buffer.shape)], dtype=np.int32)
 
         inv_rotmat = np.linalg.inv(rotmat)

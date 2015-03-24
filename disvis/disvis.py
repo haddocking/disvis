@@ -331,9 +331,8 @@ class DisVis(object):
 
         # arrays for counting
         WORKGROUPSIZE = 32
-        g['data'] = cl_array.zeros(q, [int(ceil(x/WORKGROUPSIZE)) * (WORKGROUPSIZE) for x in d['shape']], dtype=np.int32)
-        g['subhists'] = cl_array.zeros(q, (g['data'].size//WORKGROUPSIZE, d['nrestraints'] + 1), dtype=np.float32)
-        g['viol_counter'] = cl_array.zeros(q, (g['data'].size//WORKGROUPSIZE, d['nrestraints'], d['nrestraints']), dtype=np.float32)
+        g['subhists'] = cl_array.zeros(q, (g['rcore'].size, d['nrestraints'] + 1), dtype=np.float32)
+        g['viol_counter'] = cl_array.zeros(q, (g['rcore'].size, d['nrestraints'], d['nrestraints']), dtype=np.float32)
 
         # complex arrays
         g['ft_shape'] = list(d['shape'])
@@ -392,12 +391,11 @@ class DisVis(object):
 
             tot_complexes += cl_array.sum(g['interspace'], dtype=np.float32)*np.float32(self.weights[n])
             cl_array.maximum(g['best_access_interspace'], g['access_interspace'], g['best_access_interspace'])
-            k.copy_partial(q, g['access_interspace'], g['data'])
 
-            k.histogram(q, g['data'], g['subhists'], self.weights[n], d['nrestraints'])
+            k.histogram(q, g['access_interspace'], g['subhists'], self.weights[n], d['nrestraints'])
 
             k.count_violations(q, g['restraints'], self.rotations[n], 
-                    g['data'], g['viol_counter'], self.weights[n])
+                    g['access_interspace'], g['viol_counter'], self.weights[n])
 
             if _stdout.isatty():
                 self._print_progress(n, g['nrot'], time0)
