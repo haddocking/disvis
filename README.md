@@ -50,6 +50,7 @@ After installation, the command line tool *disvis* should be at your disposal.
 
 If you are starting from a clean system, then read the installation instructions 
 below to prepare your particular operating system.
+The INSTALLATION.md file contains instructions for accessing GPU acceleration on MacOSX.
 
 
 ### Linux
@@ -70,7 +71,11 @@ Your system is now ready. Follow the general instructions above to install **Dis
 
 ### MacOSX
 
-First install [*git*](https://git-scm.com/download) for MacOSX (this might already be present on your system).
+First install [*git*](https://git-scm.com/download) for MacOSX (this might already be present on your system)
+by either installing it from the website or using *brew*
+
+    brew install git
+
 Next, install [*pip*](https://pip.pypa.io/en/latest/installing.html), 
 the official Python package manager. 
 Either follow the link and install *pip* using
@@ -84,7 +89,7 @@ In a terminal, type
     sudo pip install numpy cython
 
 Wait till the compilation and installation is finished. 
-Your system is now proporly prepared. Follow the general instructions above to install **DisVis**.
+Your system is now properly prepared. Follow the general instructions above to install **DisVis**.
 
 
 ### Windows
