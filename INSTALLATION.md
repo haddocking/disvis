@@ -1,6 +1,9 @@
 # Installation instructions for DisVis
 
 This document shows how to prepare your system for GPU accelerated DisVis for MacOSX, using the OpenCL framework.
+Note though, that it requires a high-end graphics card to get a proper acceleration, else the speedup will be neglible.
+Practically this means that it should be either an AMD or NVIDIA GPU; 
+if it is a power efficient Intel card, usually present on laptops, installing the GPU version will most likely not help much. 
 
 ## Requirements
 
@@ -20,7 +23,7 @@ This requires the cmake program first
 
     brew install cmake
 
-Next download the source code of clFFT of built the library
+Next download the source code of clFFT and build the library
 
     git clone https://github.com/clMathLibraries/clFFT.git
     cd clFFT/src && cmake CMakeLists.txt && make && cd ../../
@@ -36,3 +39,4 @@ Then type
     sudo python setup.py install
 
 If it all worked out, congratulations, your system is now ready for GPU calculations!
+
