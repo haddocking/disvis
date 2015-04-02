@@ -126,6 +126,8 @@ class PDB(object):
             oper = operator.ge
         elif loperator == '<=':
             oper = operator.le
+        elif loperator == '!=':
+            oper = operator.ne
         selection = np.where(oper(self.data[identifier], value))
 
         return PDB(self.data[selection])
