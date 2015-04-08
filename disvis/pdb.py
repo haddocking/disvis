@@ -70,7 +70,7 @@ class PDB(object):
 
     @property
     def elements(self):
-        return self.data['elements']
+        return self.data['element']
 
 
     @property
