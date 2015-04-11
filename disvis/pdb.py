@@ -1,6 +1,7 @@
 from __future__ import absolute_import, print_function, division
 import os.path
 import operator
+from collections import Iterable
 import numpy as np
 from .IO.pdb import parse_pdb, write_pdb
 from .IO.mmcif import parse_cif
@@ -114,7 +115,7 @@ class PDB(object):
         self.data['z'] += vector[2]
 
 
-    def select(self, identifier, value, loperator='=='):
+    def select(self, identifier, values, loperator='=='):
         """A simple and probably pretty inefficient way of selection atoms"""
         if loperator == '==':
             oper = operator.eq
@@ -128,7 +129,14 @@ class PDB(object):
             oper = operator.le
         elif loperator == '!=':
             oper = operator.ne
-        selection = np.where(oper(self.data[identifier], value))
+
+        if not isinstance(values, Iterable):
+            values = (values,)
+        selection = oper(self.data[identifier], values[0])
+
+        if len(values) > 1:
+            for v in values[1:]:
+                selection |= oper(self.data[identifier], v)
 
         return PDB(self.data[selection])
 
