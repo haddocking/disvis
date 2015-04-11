@@ -1,5 +1,6 @@
 #define UMUL(a, b) ((a) * (b))
 #define UMAD(a, b, c) (UMUL((a), (b)) + (c))
+#define SQUARE(a) ((a) * (a))
 
 
 __kernel
@@ -38,8 +39,8 @@ void count_violations(__global float8 *restraints,
                                    (rotmat.s6*restraints[lid].s3 +
                                     rotmat.s7*restraints[lid].s4 +
                                     rotmat.s8*restraints[lid].s5);
-        mindist2[lid] = pown(restraints[lid].s6, 2);
-        maxdist2[lid] = pown(restraints[lid].s7, 2);
+        mindist2[lid] = SQUARE(restraints[lid].s6);
+        maxdist2[lid] = SQUARE(restraints[lid].s7);
     }
     barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -58,9 +59,9 @@ void count_violations(__global float8 *restraints,
         // check which restraints are violated for a certain number
         // of consistent restraints
         for (uint j = 0; j < nrestraints; j++){
-            float dist2 = pown(x - restraints_center[j].s0, 2) +
-                          pown(y - restraints_center[j].s1, 2) +
-                          pown(z - restraints_center[j].s2, 2);
+            float dist2 = SQUARE(x - restraints_center[j].s0) +
+                          SQUARE(y - restraints_center[j].s1) +
+                          SQUARE(z - restraints_center[j].s2);
             if ((dist2 < mindist2[j]) || (dist2 > maxdist2[j])){
                 uint ind = ind_z + nrestraints*consistent + j;
                 loc_viol[ind] += weight;
@@ -215,24 +216,24 @@ void distance_restraint(__global float8 *restraints,
          ycenter = restraints[i].s1 - yligand;
          zcenter = restraints[i].s2 - zligand;
 
-         mindis2 = pown(restraints[i].s6, 2);
-         maxdis2 = pown(restraints[i].s7, 2);
+         mindis2 = SQUARE(restraints[i].s6);
+         maxdis2 = SQUARE(restraints[i].s7);
 
          // calculate the distance of every voxel to the determined center
          for (iz = zid; iz < shape.s0; iz += zstride){
 
-             z_dis2 = pown(iz - zcenter, 2);
+             z_dis2 = SQUARE(iz - zcenter);
 
              z_ind = iz * slice;
 
              for (iy = yid; iy < shape.s1; iy += ystride){
-                 yz_dis2 = pown(iy - ycenter, 2) + z_dis2;
+                 yz_dis2 = SQUARE(iy - ycenter) + z_dis2;
 
                  yz_ind = z_ind + iy*shape.s2;
 
                  for (ix = xid; ix < shape.s2; ix += xstride){
 
-                     xyz_dis2 = pown(ix - xcenter, 2) + yz_dis2;
+                     xyz_dis2 = SQUARE(ix - xcenter) + yz_dis2;
 
                      if ((xyz_dis2 <= maxdis2) && (xyz_dis2 >= mindis2)){
                          xyz_ind = ix + yz_ind;
