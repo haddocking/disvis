@@ -26,10 +26,10 @@ void count_violations(__global float8 *restraints,
 
     // calculate the center of the restraints
     if (lid < nrestraints) {
-        restraints_center[lid].s0 = restraints[lid].s0 - 
+        restraints_center[lid].s0 = restraints[lid].s0 -
                                    (rotmat.s0*restraints[lid].s3 +
                                     rotmat.s1*restraints[lid].s4 +
-                                    rotmat.s2*restraints[lid].s5); 
+                                    rotmat.s2*restraints[lid].s5);
         restraints_center[lid].s1 = restraints[lid].s1 -
                                    (rotmat.s3*restraints[lid].s3 +
                                     rotmat.s4*restraints[lid].s4 +
@@ -49,13 +49,13 @@ void count_violations(__global float8 *restraints,
         if ((consistent == 0) || (consistent == nrestraints))
             continue;
         consistent--;
-        
+
         // get x, y, z map coordinate
         uint z = i/slice;
         uint y = (i - slice*z)/shape.s2;
         uint x = i - slice*z - y*shape.s2;
 
-        // check which restraints are violated for a certain number 
+        // check which restraints are violated for a certain number
         // of consistent restraints
         for (uint j = 0; j < nrestraints; j++){
             float dist2 = pown(x - restraints_center[j].s0, 2) +
@@ -110,32 +110,36 @@ void histogram(__global int *data,
                  float weight,
                  uint size)
 {
-    for (int i = 0; i < nrestraints; i++)
-        local_hist[get_local_id(0) + i * get_local_size(0)] = 0;
+    uint lid = get_local_id(0);
 
-    for (int pos = get_global_id(0); pos < size; pos += get_global_size(0))
-        local_hist[get_local_id(0) + data[pos] * get_local_size(0)] += weight;
+    for (uint i = 0; i < nrestraints; i++)
+        local_hist[lid + i * get_local_size(0)] = 0;
+
+    for (uint pos = get_global_id(0); pos < size; pos += get_global_size(0))
+        local_hist[lid + data[pos] * get_local_size(0)] += weight;
 
     barrier(CLK_LOCAL_MEM_FENCE);
 
-    if (get_local_id(0) < nrestraints) {
+    if (lid < nrestraints) {
+        for (uint j =  lid; j < nrestraints; j += get_local_size(0)) {
 
-        float sum = 0;
-        int pos = get_local_size(0) * get_local_id(0);
+            float sum = 0;
+            int pos = get_local_size(0) * lid;
 
-        for (int i = 0; i < get_local_size(0); i++)
-            sum += local_hist[pos + i];
-        
-        subhists[get_group_id(0)*nrestraints + get_local_id(0)] += sum;
+            for (uint i = 0; i < get_local_size(0); i++)
+                sum += local_hist[pos + i];
+
+            subhists[get_group_id(0)*nrestraints + j] += sum;
+        }
     }
 }
 
 __kernel
 void rotate_image3d(sampler_t sampler,
                     read_only image3d_t image,
-                    float16 rotmat, 
-                   __global float *out, 
-                   float4 center, 
+                    float16 rotmat,
+                   __global float *out,
+                   float4 center,
                    int4 shape)
 {
     int id = get_global_id(0);
@@ -169,7 +173,7 @@ void rotate_image3d(sampler_t sampler,
         xrot += OFFSET + center.s0;
         yrot += OFFSET + center.s1;
         zrot += OFFSET + center.s2;
-    
+
         coordinate = (float4) (xrot, yrot, zrot, 0);
         weight = read_imagef(image, sampler, coordinate);
 
@@ -179,16 +183,16 @@ void rotate_image3d(sampler_t sampler,
 
 
 __kernel
-void distance_restraint(__global float8 *restraints, 
-                       float16 rotmat, 
-                       __global int *restspace, 
+void distance_restraint(__global float8 *restraints,
+                       float16 rotmat,
+                       __global int *restspace,
                        int4 shape, int nrestraints)
 {
 
     uint zid = get_global_id(0);
     uint yid = get_global_id(1);
     uint xid = get_global_id(2);
-    
+
     uint zstride = get_global_size(0);
     uint ystride = get_global_size(1);
     uint xstride = get_global_size(2);
