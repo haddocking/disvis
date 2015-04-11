@@ -77,7 +77,7 @@ class Kernels():
 
         local_hist = cl.LocalMemory(4*(nrestraints + 1)*WORKGROUPSIZE)
 
-        gws = (8*WORKGROUPSIZE*8,)
+        gws = (8*WORKGROUPSIZE*8*4,)
         lws = (WORKGROUPSIZE,)
 
         args = (data.data, subhists.data, local_hist, np.uint32(nrestraints + 1),
@@ -106,7 +106,7 @@ class Kernels():
                 viol_counter.data, loc_viol, restraints_center, mindist2, maxdist2, 
                 np.int32(restraints.shape[0]), shape, np.float32(weight))
 
-        gws = (8*WORKGROUPSIZE*8,)
+        gws = (8*WORKGROUPSIZE*8*4,)
         lws = (WORKGROUPSIZE,)
         status = cl.enqueue_nd_range_kernel(queue, kernel, gws, lws)
 
