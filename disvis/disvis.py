@@ -20,7 +20,7 @@ from disvis import volume
 from .pdb import PDB
 from .points import dilate_points
 from .libdisvis import (rotate_image3d, dilate_points_add, longest_distance, 
-        distance_restraint, count_violations)
+        distance_restraint, count_violations, count_interactions)
 try:
     import pyopencl as cl
     import pyopencl.array as cl_array
@@ -140,27 +140,27 @@ class DisVis(object):
 
 
     @property
-    def receptor_interaction_atoms(self):
-        return self._receptor_interaction_atoms
+    def receptor_interaction_selection(self):
+        return self._receptor_interaction_selection
 
 
-    @receptor_interaction_atoms.setter
+    @receptor_interaction_selection.setter
     def receptor_interaction_selection(self, interaction_selection):
         if not isinstance(interaction_selection, PDB):
             raise TypeError('The interaction selection should be a PDB object')
-        self._receptor_interaction_selection = interaction_selections
+        self._receptor_interaction_selection = interaction_selection
 
 
     @property
-    def ligand_interaction_atoms(self):
-        return self._ligand_interaction_atoms
+    def ligand_interaction_selection(self):
+        return self._ligand_interaction_selection
 
 
-    @ligand_interaction_atoms.setter
+    @ligand_interaction_selection.setter
     def ligand_interaction_selection(self, interaction_selection):
         if not isinstance(interaction_selection, PDB):
             raise TypeError('The interaction selection should be a PDB object')
-        self._ligand_interaction_selection = interaction_selections
+        self._ligand_interaction_selection = interaction_selection
 
 
     @property
@@ -259,7 +259,7 @@ class DisVis(object):
             results['violations'] = self.data['violations']
         
         results['interaction_matrix'] = None
-        if d['interaction_analysis']:
+        if self.data['interaction_analysis']:
             results['interaction_matrix'] = self.data['interaction_matrix']
 
         return results
@@ -305,13 +305,14 @@ class DisVis(object):
                 self.interaction_radius + 1.5)/self.voxelspacing
 
         # interaction analysis arrays
+        c['interaction_analysis'] = d['interaction_analysis']
         if d['interaction_analysis']:
             c['r_inter_coor'] = d['r_inter_coor']
             c['l_inter_coor'] = d['l_inter_coor']
-            c['interaction_analysis'] = d['interaction_analysis']
             c['interaction_matrix'] = d['interaction_matrix']
             c['origin'] = d['origin']
             c['voxelspacing'] = self.voxelspacing
+            c['interaction_distance'] = np.float64(self.interaction_distance)
 
     def _cpu_search(self):
 
@@ -361,9 +362,8 @@ class DisVis(object):
 
             # perform interaction analysis
             if c['interaction_analysis']:
-                pass
                 count_interactions(c['access_interspace'], c['r_inter_coor'], 
-                    (np.mat(c['rotmat']) * np.mat(['l_inter_coor']).T).T, 
+                    (np.mat(c['rotmat'][n]) * np.mat(c['l_inter_coor']).T).T, 
                     c['origin'], c['voxelspacing'], c['interaction_distance'], 
                     c['weights'][n], c['interaction_matrix'])
 

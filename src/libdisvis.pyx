@@ -3,8 +3,9 @@ import numpy as np
 cimport numpy as np
 from libc.math cimport ceil, exp, floor, sqrt
 
-
-def count_interactions(np.ndarray[np.float64_t, ndim=3] interaction_space,
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def count_interactions(np.ndarray[np.int32_t, ndim=3] interaction_space,
         np.ndarray[np.float64_t, ndim=2] r_inter_coor,
         np.ndarray[np.float64_t, ndim=2] l_inter_coor,
         np.ndarray[np.float64_t, ndim=1] origin,
@@ -15,21 +16,27 @@ def count_interactions(np.ndarray[np.float64_t, ndim=3] interaction_space,
 
     cdef unsigned int x, y, z, i, j, n
     cdef double interaction_distance2 = interaction_distance**2
-    cdef double dist2
+    cdef double dist2, lx, ly, lz
 
-    for z in range(interaction_space):
-        for y in range(interaction_space):
-            for x in range(interaction_space):
+    for z in range(interaction_space.shape[0]):
 
-                n = interspace[z, y, x]
-                if n == 0:
+        for y in range(interaction_space.shape[1]):
+
+            for x in range(interaction_space.shape[2]):
+
+                n = interaction_space[z, y, x]
+                if n <= 4:
                     continue
                 
-                for i in range(r_inter_coor.shape[0]):
-                    for j in range(l_inter_coor.shape[0]):
-                        dist2 = (r_inter_coor[i, 0] - l_inter_coor[j, 0])**2 +\
-                                (r_inter_coor[i, 1] - l_inter_coor[j, 1])**2 +\
-                                (r_inter_coor[i, 2] - l_inter_coor[j, 2])**2
+                for j in range(l_inter_coor.shape[0]):
+                    lx = l_inter_coor[j, 0] + origin[0] + voxelspacing * x
+                    ly = l_inter_coor[j, 1] + origin[1] + voxelspacing * y
+                    lz = l_inter_coor[j, 2] + origin[2] + voxelspacing * z
+
+                    for i in range(r_inter_coor.shape[0]):
+                        dist2 = (r_inter_coor[i, 0] - lx)**2 +\
+                                (r_inter_coor[i, 1] - ly)**2 +\
+                                (r_inter_coor[i, 2] - lz)**2
 
                         if dist2 <= interaction_distance2:
                             interaction_matrix[n - 1, j, i] += weight
