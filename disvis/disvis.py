@@ -331,8 +331,9 @@ class DisVis(object):
 
         # arrays for counting
         WORKGROUPSIZE = 32
-        g['subhists'] = cl_array.zeros(q, (g['rcore'].size, d['nrestraints'] + 1), dtype=np.float32)
-        g['viol_counter'] = cl_array.zeros(q, (g['rcore'].size, d['nrestraints'], d['nrestraints']), dtype=np.float32)
+        nsubhists = int(np.ceil(g['rcore'].size/WORKGROUPSIZE))
+        g['subhists'] = cl_array.zeros(q, (nsubhists, d['nrestraints'] + 1), dtype=np.float32)
+        g['viol_counter'] = cl_array.zeros(q, (nsubhists, d['nrestraints'], d['nrestraints']), dtype=np.float32)
 
         # complex arrays
         g['ft_shape'] = list(d['shape'])
