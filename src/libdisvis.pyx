@@ -3,6 +3,38 @@ import numpy as np
 cimport numpy as np
 from libc.math cimport ceil, exp, floor, sqrt
 
+
+def count_interactions(np.ndarray[np.float64_t, ndim=3] interaction_space,
+        np.ndarray[np.float64_t, ndim=2] r_inter_coor,
+        np.ndarray[np.float64_t, ndim=2] l_inter_coor,
+        np.ndarray[np.float64_t, ndim=1] origin,
+        double voxelspacing,
+        double interaction_distance,
+        double weight,
+        np.ndarray[np.float64_t, ndim=3] interaction_matrix):
+
+    cdef unsigned int x, y, z, i, j, n
+    cdef double interaction_distance2 = interaction_distance**2
+    cdef double dist2
+
+    for z in range(interaction_space):
+        for y in range(interaction_space):
+            for x in range(interaction_space):
+
+                n = interspace[z, y, x]
+                if n == 0:
+                    continue
+                
+                for i in range(r_inter_coor.shape[0]):
+                    for j in range(l_inter_coor.shape[0]):
+                        dist2 = (r_inter_coor[i, 0] - l_inter_coor[j, 0])**2 +\
+                                (r_inter_coor[i, 1] - l_inter_coor[j, 1])**2 +\
+                                (r_inter_coor[i, 2] - l_inter_coor[j, 2])**2
+
+                        if dist2 <= interaction_distance2:
+                            interaction_matrix[n - 1, j, i] += weight
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def count_violations(np.ndarray[np.float64_t, ndim=2] points,

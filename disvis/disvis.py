@@ -17,6 +17,7 @@ except ImportError:
 
 
 from disvis import volume
+from .pdb import PDB
 from .points import dilate_points
 from .libdisvis import (rotate_image3d, dilate_points_add, longest_distance, 
         distance_restraint, count_violations)
@@ -44,6 +45,10 @@ class DisVis(object):
         self.max_clash = 100
         self.min_interaction = 300
         self.distance_restraints = []
+
+        self._receptor_interaction_selection = None
+        self._ligand_interaction_selection = None
+        self._interaction_distance = 10
 
         # CPU or GPU
         self._queue = None
@@ -133,6 +138,41 @@ class DisVis(object):
     def data(self):
         return self._data
 
+
+    @property
+    def receptor_interaction_atoms(self):
+        return self._receptor_interaction_atoms
+
+
+    @receptor_interaction_atoms.setter
+    def receptor_interaction_selection(self, interaction_selection):
+        if not isinstance(interaction_selection, PDB):
+            raise TypeError('The interaction selection should be a PDB object')
+        self._receptor_interaction_selection = interaction_selections
+
+
+    @property
+    def ligand_interaction_atoms(self):
+        return self._ligand_interaction_atoms
+
+
+    @ligand_interaction_atoms.setter
+    def ligand_interaction_selection(self, interaction_selection):
+        if not isinstance(interaction_selection, PDB):
+            raise TypeError('The interaction selection should be a PDB object')
+        self._ligand_interaction_selection = interaction_selections
+
+
+    @property
+    def interaction_distance(self):
+        return self._interaction_distance
+
+
+    @interaction_distance.setter
+    def interaction_distance(self, interaction_distance):
+        self._interaction_distance = interaction_distance
+
+
     def add_distance_restraint(self, receptor_selection, ligand_selection, distance):
         distance_restraint = [receptor_selection, ligand_selection, distance]
         self.distance_restraints.append(distance_restraint)
@@ -187,6 +227,13 @@ class DisVis(object):
             d['restraints'] = grid_restraints(self.distance_restraints, 
                     self.voxelspacing, d['origin'], d['lcenter'])
 
+        d['interaction_analysis'] = False
+        if not any(x is None for x in (self.ligand_interaction_selection, self.receptor_interaction_selection)):
+            d['r_inter_coor'] = self.receptor_interaction_selection.coor
+            d['l_inter_coor'] = self.ligand_interaction_selection.coor - self.ligand.center
+            d['interaction_analysis'] = True
+            d['interaction_matrix'] = np.zeros((d['nrestraints'], d['l_inter_coor'].shape[0], d['r_inter_coor'].shape[0]), dtype=np.float64)
+
     def search(self):
         self._initialize()
         if self.queue is None:
@@ -203,7 +250,19 @@ class DisVis(object):
                 volume.Volume(self.data['accessible_interaction_space'], 
                         self.voxelspacing, self.data['origin'])
 
-        return accessible_interaction_space, self.data['accessible_complexes'], self.data['violations']
+        results = {}
+        results['accessible_interaction_space'] = accessible_interaction_space
+        results['accessible_complexes'] = self.data['accessible_complexes']
+
+        results['violations'] = None
+        if self.distance_restraints:
+            results['violations'] = self.data['violations']
+        
+        results['interaction_matrix'] = None
+        if d['interaction_analysis']:
+            results['interaction_matrix'] = self.data['interaction_matrix']
+
+        return results
 
     def _cpu_init(self):
 
@@ -245,6 +304,15 @@ class DisVis(object):
                 self.ligand.center, axis=1).max() + \
                 self.interaction_radius + 1.5)/self.voxelspacing
 
+        # interaction analysis arrays
+        if d['interaction_analysis']:
+            c['r_inter_coor'] = d['r_inter_coor']
+            c['l_inter_coor'] = d['l_inter_coor']
+            c['interaction_analysis'] = d['interaction_analysis']
+            c['interaction_matrix'] = d['interaction_matrix']
+            c['origin'] = d['origin']
+            c['voxelspacing'] = self.voxelspacing
+
     def _cpu_search(self):
 
         d = self.data
@@ -258,6 +326,7 @@ class DisVis(object):
             rotate_image3d(c['im_lsurf'], c['vlength'], 
                     np.linalg.inv(c['rotmat'][n]), d['im_center'], c['lsurf'])
 
+            # determine interaction space
             c['ft_lsurf'] = rfftn(c['lsurf']).conj()
             c['clashvol'] = irfftn(c['ft_lsurf'] * c['ft_rcore'], s=c['shape'])
             c['intervol'] = irfftn(c['ft_lsurf'] * c['ft_rsurf'], s=c['shape'])
@@ -268,6 +337,7 @@ class DisVis(object):
 
             tot_complex += c['weights'][n] * c['interspace'].sum()
 
+            # determined the reduced accessible interaction space
             if self.distance_restraints:
                 c['restspace'].fill(0)
 
@@ -289,12 +359,23 @@ class DisVis(object):
                         np.bincount(c['interspace'].ravel(),
                         minlength=(max(2, d['nrestraints']+1)))
 
+            # perform interaction analysis
+            if c['interaction_analysis']:
+                pass
+                count_interactions(c['access_interspace'], c['r_inter_coor'], 
+                    (np.mat(c['rotmat']) * np.mat(['l_inter_coor']).T).T, 
+                    c['origin'], c['voxelspacing'], c['interaction_distance'], 
+                    c['weights'][n], c['interaction_matrix'])
+
             if _stdout.isatty():
                 self._print_progress(n, c['nrot'], time0)
 
         d['accessible_interaction_space'] = c['access_interspace']
         d['accessible_complexes'] = [tot_complex - sum(list_total_allowed[1:])] + list(list_total_allowed[1:])
         d['violations'] = c['violations']
+
+        if c['interaction_analysis']:
+            d['interaction_matrix'] = c['interaction_matrix']
 
     def _print_progress(self, n, total, time0):
         m = n + 1

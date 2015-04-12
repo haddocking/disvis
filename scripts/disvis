@@ -248,8 +248,9 @@ def main():
             accessible_interaction_space, accessible_complexes, violations = \
                     mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints, args)
         else:
-            accessible_interaction_space, accessible_complexes, violations = \
-                    run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints, args)
+            results = run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints, args)
+            #accessible_interaction_space, accessible_complexes, violations = \
+            #        run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints, args)
     else:
         # GPU-version
         write('Using GPU accelerated search.')
@@ -259,9 +260,10 @@ def main():
     # write out accessible interaction space
     f_accessible_interaction_space = os.path.join(args.directory, 'accessible_interaction_space.mrc')
     write('Writing accessible interaction space to: {:s}'.format(f_accessible_interaction_space))
-    accessible_interaction_space.tofile(f_accessible_interaction_space)
+    results['accessible_interaction_space'].tofile(f_accessible_interaction_space)
 
     # write out accessible complexes
+    accessible_complexes = results['accessible_complexes']
     norm = sum(accessible_complexes)
     digits = len(str(int(norm))) + 1
     cum_complexes = np.cumsum(np.asarray(accessible_complexes)[::-1])[::-1]
@@ -276,6 +278,7 @@ def main():
                     int(cum_complexes[n]), cum_complexes[n]/norm))
 
     # writing out violations
+    violations = results['violations']
     cum_violations = violations[::-1].cumsum(axis=0)[::-1]
     with open(os.path.join(args.directory, 'violations.out'), 'w') as f_viol:
         write('Writing violations to file: {:s}'.format(f_viol.name))
@@ -327,6 +330,10 @@ def main():
         for n in xrange(zscore_violations.shape[0]):
             f.write('{:2d} {:6.3f} {:6.3f} {:6.3f}\n'.format(n+1,
                     average_restraint_violation[n], std_restraint_violation[n], zscore_violations[n]))
+
+    # write out interaction analysis
+    inter_mat = results['interaction_matrix']
+    print(inter_mat)
 
     # time indication
     seconds = int(round(time() - time0))
