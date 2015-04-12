@@ -126,7 +126,6 @@ def run_disvis_instance(queue, receptor, ligand, distance_restraints, rotmat, we
         dv.ligand_interaction_selection = pdb2_sel
 
     results = dv.search()
-    results = dv.search()
 
     results['accessible_interaction_space'].tofile(join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n)))
 
@@ -203,9 +202,10 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints, pdb1_s
             
     write('Cleaning')
     for n in range(jobs):
-        os.remove(os.path.join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n)))
-        os.remove(os.path.join(args.directory, 'violations_{:d}.npy'.format(n)))
-        os.remove(os.path.join(args.directory, 'interaction_matrix_{:d}.npy'.format(n)))
+        os.remove(join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n)))
+        os.remove(join(args.directory, 'violations_{:d}.npy'.format(n)))
+        if args.interaction_selection is not None:
+            os.remove(join(args.directory, 'interaction_matrix_{:d}.npy'.format(n)))
 
     results['accessible_interaction_space'] = accessible_interaction_space
     results['accessible_complexes'] = accessible_complexes
@@ -379,7 +379,14 @@ def main():
     # write out interaction analysis
     interaction_matrix = results['interaction_matrix']
     if interaction_matrix is not None:
-        print(interaction_matrix.max())
+        receptor_residues = interaction_matrix[5].sum(axis=0)
+        order = np.argsort(receptor_residues)[::-1]
+        residues = pdb1_sel.data['resi'][order]
+        print(residues)
+        ligand_residues = interaction_matrix[5].sum(axis=1)
+        order = np.argsort(ligand_residues)[::-1]
+        residues = pdb2_sel.data['resi'][order]
+        print(residues)
 
     # time indication
     seconds = int(round(time() - time0))

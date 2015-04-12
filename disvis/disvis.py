@@ -362,7 +362,7 @@ class DisVis(object):
 
             # perform interaction analysis
             if c['interaction_analysis']:
-                count_interactions(c['access_interspace'], c['r_inter_coor'], 
+                count_interactions(c['interspace'], c['r_inter_coor'], 
                     (np.mat(c['rotmat'][n]) * np.mat(c['l_inter_coor']).T).T, 
                     c['origin'], c['voxelspacing'], c['interaction_distance'], 
                     c['weights'][n], c['interaction_matrix'])
