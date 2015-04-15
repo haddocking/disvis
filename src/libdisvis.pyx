@@ -12,6 +12,7 @@ def count_interactions(np.ndarray[np.int32_t, ndim=3] interaction_space,
         double voxelspacing,
         double interaction_distance,
         double weight,
+        int interaction_restraint_cutoff,
         np.ndarray[np.float64_t, ndim=3] interaction_matrix):
 
     cdef unsigned int x, y, z, i, j, n
@@ -25,7 +26,7 @@ def count_interactions(np.ndarray[np.int32_t, ndim=3] interaction_space,
             for x in range(interaction_space.shape[2]):
 
                 n = interaction_space[z, y, x]
-                if n <= 4:
+                if n < interaction_restraint_cutoff:
                     continue
                 
                 for j in range(l_inter_coor.shape[0]):

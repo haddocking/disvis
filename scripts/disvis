@@ -1,6 +1,6 @@
 #! usr/bin/python
 from __future__ import print_function, division, absolute_import
-import os
+from os import remove
 from os.path import join
 from sys import stdout
 from time import time
@@ -69,6 +69,8 @@ def parse_args():
 
     p.add_argument('-is', '--interaction_selection', dest='interaction_selection', type=file, default=None)
 
+    p.add_argument('-ic', '--interaction_restraint_cutoff', dest='interaction_restraint_cutoff', type=int, default=None)
+
     return p.parse_args()
 
 
@@ -124,6 +126,7 @@ def run_disvis_instance(queue, receptor, ligand, distance_restraints, rotmat, we
     if args.interaction_selection is not None:
         dv.receptor_interaction_selection = pdb1_sel
         dv.ligand_interaction_selection = pdb2_sel
+        dv.interaction_restraint_cutoff = args.interaction_restraint_cutoff
 
     results = dv.search()
 
@@ -183,14 +186,14 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints, pdb1_s
     results = {}
 
     accessible_complexes = np.asarray(queue.get(), dtype=np.float64)
-    accessible_interaction_space = Volume.fromfile(os.path.join(args.directory, 'accessible_interaction_space_0.mrc'))
-    violations = np.load(os.path.join(args.directory, 'violations_0.npy'))
+    accessible_interaction_space = Volume.fromfile(join(args.directory, 'accessible_interaction_space_0.mrc'))
+    violations = np.load(join(args.directory, 'violations_0.npy'))
     for n in range(1, jobs):
         accessible_complexes += np.asarray(queue.get(), dtype=np.float64)
         np.maximum(accessible_interaction_space.array,
-                Volume.fromfile(os.path.join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n))).array,
+                Volume.fromfile(join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n))).array,
                 accessible_interaction_space.array)
-        violations += np.load(os.path.join(args.directory, 'violations_{:d}.npy'.format(n)))
+        violations += np.load(join(args.directory, 'violations_{:d}.npy'.format(n)))
 
     # combine the interaction analysis
     results['interaction_matrix'] = None
@@ -202,10 +205,10 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints, pdb1_s
             
     write('Cleaning')
     for n in range(jobs):
-        os.remove(join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n)))
-        os.remove(join(args.directory, 'violations_{:d}.npy'.format(n)))
+        remove(join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n)))
+        remove(join(args.directory, 'violations_{:d}.npy'.format(n)))
         if args.interaction_selection is not None:
-            os.remove(join(args.directory, 'interaction_matrix_{:d}.npy'.format(n)))
+            remove(join(args.directory, 'interaction_matrix_{:d}.npy'.format(n)))
 
     results['accessible_interaction_space'] = accessible_interaction_space
     results['accessible_complexes'] = accessible_complexes
@@ -233,6 +236,7 @@ def run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints, pd
     if not any([x is None for x in (pdb1_sel, pdb2_sel)]):
         dv.receptor_interaction_selection = pdb1_sel
         dv.ligand_interaction_selection = pdb2_sel
+        dv.interaction_restraint_cutoff = args.interaction_restraint_cutoff
 
     return dv.search()
 
@@ -249,7 +253,7 @@ def main():
 
     mkdir_p(args.directory)
 
-    logging.basicConfig(filename=os.path.join(args.directory, 'disvis.log'),
+    logging.basicConfig(filename=join(args.directory, 'disvis.log'),
             level=logging.INFO, format='%(asctime)s %(message)s')
 
     time0 = time()
@@ -289,9 +293,9 @@ def main():
         queue = get_queue()
 
     if queue is None:
+        # CPU-version
         if args.gpu:
             write('No GPU queue was found. Falling back on CPU implementation.')
-        # CPU-version
         if args.nproc > 1:
             results = mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints, pdb1_sel, pdb2_sel, args)
         else:
@@ -303,7 +307,7 @@ def main():
                  run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints, args)
 
     # write out accessible interaction space
-    f_accessible_interaction_space = os.path.join(args.directory, 'accessible_interaction_space.mrc')
+    f_accessible_interaction_space = join(args.directory, 'accessible_interaction_space.mrc')
     write('Writing accessible interaction space to: {:s}'.format(f_accessible_interaction_space))
     results['accessible_interaction_space'].tofile(f_accessible_interaction_space)
 
@@ -312,7 +316,7 @@ def main():
     norm = sum(accessible_complexes)
     digits = len(str(int(norm))) + 1
     cum_complexes = np.cumsum(np.asarray(accessible_complexes)[::-1])[::-1]
-    with open(os.path.join(args.directory, 'accessible_complexes.out'), 'w') as f_accessible_complexes:
+    with open(join(args.directory, 'accessible_complexes.out'), 'w') as f_accessible_complexes:
         write('Writing number of accessible complexes to: {:s}'.format(f_accessible_complexes.name))
         header = '# consistent restraints | accessible complexes |' +\
                  'relative | cumulative accessible complexes | relative\n'
@@ -325,7 +329,7 @@ def main():
     # writing out violations
     violations = results['violations']
     cum_violations = violations[::-1].cumsum(axis=0)[::-1]
-    with open(os.path.join(args.directory, 'violations.out'), 'w') as f_viol:
+    with open(join(args.directory, 'violations.out'), 'w') as f_viol:
         write('Writing violations to file: {:s}'.format(f_viol.name))
         num_violations = violations.sum(axis=1)
         nrestraints = num_violations.shape[0]
@@ -370,7 +374,7 @@ def main():
         write(('Possible false-positive restraints (z-score > 1.0):' +\
                 ' {:d}'*nfalse_positives).format(*tuple(ind_false_positives)))
 
-    with open(os.path.join(args.directory, 'z-score.out'), 'w') as f:
+    with open(join(args.directory, 'z-score.out'), 'w') as f:
         write('Writing z-score of each restraint to {:s}'.format(f.name))
         for n in xrange(zscore_violations.shape[0]):
             f.write('{:2d} {:6.3f} {:6.3f} {:6.3f}\n'.format(n+1,
@@ -379,14 +383,55 @@ def main():
     # write out interaction analysis
     interaction_matrix = results['interaction_matrix']
     if interaction_matrix is not None:
-        receptor_residues = interaction_matrix[5].sum(axis=0)
-        order = np.argsort(receptor_residues)[::-1]
-        residues = pdb1_sel.data['resi'][order]
-        print(residues)
-        ligand_residues = interaction_matrix[5].sum(axis=1)
-        order = np.argsort(ligand_residues)[::-1]
-        residues = pdb2_sel.data['resi'][order]
-        print(residues)
+
+        # save interaction matrix
+        f = join(args.directory, 'interaction_matrix.npy')
+        write('Writing interaction-matrix to: {:s}'.format(f))
+        np.save(f, interaction_matrix)
+
+        # save contacted receptor residue interaction
+        with open(join(args.directory, 'receptor_interactions.out'), 'w') as f:
+            write('Writing contacted receptor residue interactions to: {:s}'.format(f.name))
+
+            f.write('#consistent-restraints cumulative-complexes')
+            for n in pdb1_sel.data['resi']:
+                f.write(' {:d}'.format(n))
+            f.write('\n')
+
+            cum_interactions = interaction_matrix.sum(axis=1)[::-1].cumsum(axis=0)[::-1]
+            for n in xrange(interaction_matrix.shape[0]):
+                # do not write out interactions that have not been analyzed
+                interactions = interaction_matrix[n].sum(axis=0)
+                if interactions.sum() == 0:
+                    continue
+
+                f.write('{:d} {:d}'.format(n + 1, int(cum_complexes[n + 1])))
+                for i in cum_interactions[n]:
+                    f.write(' {:d}'.format(int(i)))
+                f.write('\n')
+            
+        # save contacted ligand residue interactions
+        with open(join(args.directory, 'ligand_interactions.out'), 'w') as f:
+
+            write('Writing contacted ligand residue interactions to: {:s}'.format(f.name))
+
+            f.write('#consistent-restraints cumulative-complexes')
+            for n in pdb2_sel.data['resi']:
+                f.write(' {:d}'.format(n))
+            f.write('\n')
+
+            cum_interactions = interaction_matrix.sum(axis=2)[::-1].cumsum(axis=0)[::-1]
+            for n in xrange(interaction_matrix.shape[0]):
+
+                # do not write out interactions that have not been analyzed
+                interactions = interaction_matrix[n].sum(axis=1)
+                if interactions.sum() == 0:
+                    continue
+
+                f.write('{:d} {:d}'.format(n + 1, int(cum_complexes[n + 1])))
+                for i in cum_interactions[n]:
+                    f.write(' {:d}'.format(int(i)))
+                f.write('\n')
 
     # time indication
     seconds = int(round(time() - time0))

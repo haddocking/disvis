@@ -49,6 +49,7 @@ class DisVis(object):
         self._receptor_interaction_selection = None
         self._ligand_interaction_selection = None
         self._interaction_distance = 10
+        self._interaction_restraints_cutoff = None
 
         # CPU or GPU
         self._queue = None
@@ -173,6 +174,16 @@ class DisVis(object):
         self._interaction_distance = interaction_distance
 
 
+    @property
+    def interaction_restraints_cutoff(self):
+        return self._interaction_restraints_cutoff
+
+
+    @interaction_restraints_cutoff.setter
+    def interaction_restraints_cutoff(self, cutoff):
+        self._interaction_restraints_cutoff = cutoff
+
+
     def add_distance_restraint(self, receptor_selection, ligand_selection, distance):
         distance_restraint = [receptor_selection, ligand_selection, distance]
         self.distance_restraints.append(distance_restraint)
@@ -232,7 +243,12 @@ class DisVis(object):
             d['r_inter_coor'] = self.receptor_interaction_selection.coor
             d['l_inter_coor'] = self.ligand_interaction_selection.coor - self.ligand.center
             d['interaction_analysis'] = True
-            d['interaction_matrix'] = np.zeros((d['nrestraints'], d['l_inter_coor'].shape[0], d['r_inter_coor'].shape[0]), dtype=np.float64)
+            d['interaction_matrix'] = np.zeros((d['nrestraints'], 
+                    d['l_inter_coor'].shape[0], d['r_inter_coor'].shape[0]), dtype=np.float64)
+            if self.interaction_restraints_cutoff is None:
+                d['interaction_restraints_cutoff'] = int(np.ceil(0.5 * d['nrestraints']))
+            else:
+                d['interaction_restraints_cutoff'] = self.interaction_restraints_cutoff
 
     def search(self):
         self._initialize()
@@ -313,6 +329,7 @@ class DisVis(object):
             c['origin'] = d['origin']
             c['voxelspacing'] = self.voxelspacing
             c['interaction_distance'] = np.float64(self.interaction_distance)
+            c['interaction_restraints_cutoff'] = np.int32(d['interaction_restraints_cutoff'])
 
     def _cpu_search(self):
 
@@ -365,7 +382,8 @@ class DisVis(object):
                 count_interactions(c['interspace'], c['r_inter_coor'], 
                     (np.mat(c['rotmat'][n]) * np.mat(c['l_inter_coor']).T).T, 
                     c['origin'], c['voxelspacing'], c['interaction_distance'], 
-                    c['weights'][n], c['interaction_matrix'])
+                    c['weights'][n], c['interaction_restraints_cutoff'], 
+                    c['interaction_matrix'])
 
             if _stdout.isatty():
                 self._print_progress(n, c['nrot'], time0)
