@@ -26,3 +26,21 @@ def mkdir_p(path):
             pass
         else:
             raise
+
+
+def parse_interactions(f):
+    data = {}
+    with open(f) as f:
+        words = f.readline().split()
+        data['residues'] = [int(x) for x in words[2:]]
+
+        for line in f:
+            words = line.split()
+
+            consistent_restraints = int(words[0])
+            data[consistent_restraints] = {}
+
+            data[consistent_restraints]['total'] = int(words[1])
+            data[consistent_restraints]['interactions'] = [int(x) for x in words[2:]]
+    return data
+

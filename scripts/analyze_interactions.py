@@ -2,23 +2,8 @@ from __future__ import print_function, division
 import sys
 import matplotlib.pyplot as plt
 from numpy import argsort, asarray
+from disvis.helpers import parse_interactions
 
-
-def parse_interactions(f):
-    data = {}
-    with open(f) as f:
-        words = f.readline().split()
-        data['residues'] = [int(x) for x in words[2:]]
-
-        for line in f:
-            words = line.split()
-
-            consistent_restraints = int(words[0])
-            data[consistent_restraints] = {}
-
-            data[consistent_restraints]['total'] = int(words[1])
-            data[consistent_restraints]['interactions'] = [int(x) for x in words[2:]]
-    return data
 
 def main():
     f = sys.argv[1]
@@ -26,22 +11,21 @@ def main():
 
     data = parse_interactions(f)
 
-    b_order = False
-    y = range(len(data[nrestraints]['interactions']))
+    b_order = True
+    y = asarray(range(len(data[nrestraints]['interactions'])))
     labels = asarray(data['residues'])
     x = asarray(data[nrestraints]['interactions']) / data[nrestraints]['total']
     if b_order:
-        order = argsort(data[nrestraints]['interactions'])[::-1]
-        lables = labels[order]
+        order = argsort(x)
+        labels = labels[order]
         x = x[order]
 
-
     active_res = labels[x >= 1]
-    passive_res = labels[(x > 0) & (x < 1)]
+    passive_res = labels[(x > 0.25) & (x < 1)]
 
-    print('Active residues:')
+    print('Active residues ({:d}):'.format(active_res.size))
     print(str(list(active_res))[1: -1])
-    print('Passive residues:')
+    print('Passive residues ({:d}):'.format(passive_res.size))
     print(str(list(passive_res))[1: -1])
 
 
