@@ -104,8 +104,8 @@ properly prepared. Follow the general instructions above to install **DisVis**.
 First install [*git*](https://git-scm.com/download) for Windows, as it also
 comes with a handy *bash* shell.
 
-For Windows it easiest to install a Python distribution with NumPy and Cython
-(and many other) packages included, such as
+For Windows it is easiest to install a Python distribution with NumPy and
+Cython (and many other) packages included, such as
 [Anaconda](https://continuum.io/downloads). Follow the installation
 instructions on their website.
 
@@ -206,7 +206,7 @@ Licensing
 If this software was useful to your research please cite us
 
 **Van Zundert, G.C.P. and Bonvin, A.M.J.J.** (2015) DisVis: Visualizing and
-quantifying accessible interaction space of distance restrained biomolecular
+quantifying accessible interaction space of distance-restrained biomolecular
 complexes.  *Bioinformatics* (submitted).
 
 MIT licence
