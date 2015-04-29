@@ -14,6 +14,14 @@ from disvis.helpers import mkdir_p
 
 
 def parse_args():
+    """Parse the arguments given with the command line"""
+
+    # defaults
+    DEFAULT_ANGLE = 9.72
+    DEFAULT_VOXELSPACING = 1
+    DEFAULT_INTERACTION_RADIUS = 3
+    DEFAULT_MAX_CLASH = 200
+    DEFAULT_MIN_INTERACTION = 300
 
     p = ArgumentParser()
 
@@ -26,33 +34,36 @@ def parse_args():
     p.add_argument('restraints', type=file,
             help='File containing the distance restraints')
 
-    p.add_argument('-a', '--angle', dest='angle', type=float, default=15,
-            help='Rotational sampling density in degrees. Default is 15 degrees.')
+    p.add_argument('-a', '--angle', dest='angle', type=float, default=DEFAULT_ANGLE,
+            help='Rotational sampling density in degrees. Default is {:} '
+                'degrees.'.format(DEFAULT_ANGLE))
 
     p.add_argument('-vs', '--voxelspacing', dest='voxelspacing',
-            type=float, default=1,
-            help='Voxel spacing of search grid in angstrom. Default is 1A.')
+            type=float, default=DEFAULT_VOXELSPACING,
+            help='Voxel spacing of search grid in angstrom. Default is {:} '
+                'angstrom.'.format(DEFAULT_VOXELSPACING))
 
     p.add_argument('-ir', '--interaction-radius',
-            dest='interaction_radius', type=float, default=3.0,
+            dest='interaction_radius', type=float, default=DEFAULT_INTERACTION_RADIUS,
             help='Radius of the interaction space for each atom in angstrom. '
                  'Atoms are thus considered interacting if the distance is '
                  'larger than the vdW radius and shorther than or equal to '
-                 'vdW + interaction_radius. Default is 3A.')
+                 'vdW + interaction_radius. Default is {:.2f} '
+                 'angstrom.'.format(DEFAULT_INTERACTION_RADIUS))
 
     p.add_argument('-cv', '--max_clash',
-            dest='max_clash', type=float, default=200,
+            dest='max_clash', type=float, default=DEFAULT_MAX_CLASH,
             help='Maximum allowed volume of clashes. Increasing this '
                  'number results in more allowed complexes. '
-                 'Default is 200 A^3.')
+                 'Default is {:} A^3.'.format(DEFAULT_MAX_CLASH))
 
     p.add_argument('-iv', '--min-interaction',
-            dest='min_interaction', type=float, default=300,
+            dest='min_interaction', type=float, default=DEFAULT_MIN_INTERACTION,
             help='Minimal required interaction volume for a '
                  'conformation to be considered a '
                  'complex. Increasing this number results in a '
                  'stricter counting of complexes. '
-                 'Default is 300 A^3.')
+                 'Default is {:} A^3.'.format(DEFAULT_MIN_INTERACTION))
 
     p.add_argument('-d', '--directory', dest='directory', type=str, default='.',
             help='Directory where results are written to. '
@@ -70,6 +81,7 @@ def parse_args():
 
 
 def parse_restraints(fid, pdb1, pdb2):
+    """Parse the restraint file"""
 
     dist_restraints = []
 
@@ -93,6 +105,7 @@ def parse_restraints(fid, pdb1, pdb2):
 
 
 def run_disvis_instance(queue, receptor, ligand, distance_restraints, rotmat, weights, n, args):
+    """Run a DisVis instance"""
 
     dv = DisVis()
 
@@ -109,6 +122,7 @@ def run_disvis_instance(queue, receptor, ligand, distance_restraints, rotmat, we
 
     ais, complexes, violations = dv.search()
 
+    # save all files to disk, to be merged later
     ais.tofile(os.path.join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n)))
 
     np.save(os.path.join(args.directory, 'violations_{:d}.npy'.format(n)), violations)
@@ -116,6 +130,7 @@ def run_disvis_instance(queue, receptor, ligand, distance_restraints, rotmat, we
 
 
 def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints, args):
+    """Function to perform a multi-processor search with DisVis"""
 
     # multi-threaded CPU version
     try:
@@ -160,6 +175,7 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints, args):
         processes[n].join()
     write('Searching done. Combining results')
 
+    # combine the results from all jobs
     accessible_complexes = np.asarray(queue.get(), dtype=np.float64)
     accessible_interaction_space = Volume.fromfile(os.path.join(args.directory, 'accessible_interaction_space_0.mrc'))
     violations = np.load(os.path.join(args.directory, 'violations_0.npy'))
@@ -170,6 +186,7 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints, args):
                 accessible_interaction_space.array)
         violations += np.load(os.path.join(args.directory, 'violations_{:d}.npy'.format(n)))
 
+    # delete all the intermediate files
     write('Cleaning')
     for n in range(jobs):
         os.remove(os.path.join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n)))
@@ -179,6 +196,7 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints, args):
 
 
 def run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints, args):
+    """Run a DisVis instance. Can be either CPU or GPU"""
 
     dv = DisVis()
 
@@ -198,12 +216,15 @@ def run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints, ar
 
 
 def write(line):
+    """Write string to log file and terminal"""
+
     if stdout.isatty():
         print(line)
     logging.info(line)
 
 
 def main():
+    """Main loop"""
 
     args = parse_args()
 
@@ -262,6 +283,8 @@ def main():
     accessible_interaction_space.tofile(f_accessible_interaction_space)
 
     # write out accessible complexes
+    # we are interested in both the number of complexes consistent with EXACTLY
+    # N restraints and with AT LEAST N restraints
     norm = sum(accessible_complexes)
     digits = len(str(int(norm))) + 1
     cum_complexes = np.cumsum(np.asarray(accessible_complexes)[::-1])[::-1]
@@ -275,7 +298,8 @@ def main():
                     .format(n, digits, int(acc), acc/norm,
                     int(cum_complexes[n]), cum_complexes[n]/norm))
 
-    # writing out violations
+    # writing out violation matrix. We want the violation analysis on the
+    # complexes consistent with AT LEAST N restraints
     cum_violations = violations[::-1].cumsum(axis=0)[::-1]
     with open(os.path.join(args.directory, 'violations.out'), 'w') as f_viol:
         write('Writing violations to file: {:s}'.format(f_viol.name))
@@ -324,6 +348,7 @@ def main():
 
     with open(os.path.join(args.directory, 'z-score.out'), 'w') as f:
         write('Writing z-score of each restraint to {:s}'.format(f.name))
+        f.write('# Consistent restraints, Average-restraint-violation, standard_deviation_violation, z-score\n')
         for n in xrange(zscore_violations.shape[0]):
             f.write('{:2d} {:6.3f} {:6.3f} {:6.3f}\n'.format(n+1,
                     average_restraint_violation[n], std_restraint_violation[n], zscore_violations[n]))
