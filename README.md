@@ -168,22 +168,23 @@ These examples have shown all the 9 available options.
 *Disvis* outputs 5 files:
 
 * *accessible_complexes.out*: a text file containing the number of complexes
-consistent with a number of restraints. Column 1 shows the number of consistent
-restraints for each complex counted, denoted by N; column 2 shows the number of
-complexes consistent with **exactly** N restraints; column 3
-shows the fraction of all complexes sampled that are consistent with
-**exactly** N restraints; column 4 gives the number of complexes consistent
-with **at least** N restraints, and is thus the cumulative sum of column 2;
-column 5 is again the fraction of complexes consistent with **at least** N
-restraints, and also the cumulative sum of column 3.
+consistent with a given number of restraints. Column 1 shows the number of
+consistent restraints for each complex counted, denoted by N; column 2 shows
+the number of complexes consistent with *exactly* N restraints; column 3 shows
+the fraction of all complexes sampled that are consistent with *exactly* N
+restraints; column 4 gives the number of complexes consistent with *at least* N
+restraints, and is thus the cumulative sum of column 2; column 5 is again the
+fraction of complexes consistent with *at least* N restraints, and also the
+cumulative sum of column 3.
 
 * *violations.out*: a text file showing how often a specific restraint is
-violated for each number of consistent restraints and indicates which restraint
-is most likely to be a false-positive. Column 1 shows the number of consistent
-restraints N, while each following column indicates the violation fraction of
-each specific restraints. Each row thus represents in what fraction of all
-complexes consistent with **at least** N restraints a particular restraint is
-violated.
+violated for complexes consistent with a number of restraints.  The higher
+the violation fraction of a specific restraint, the more likely it is to be a
+false-positive. Column 1 shows the number of consistent restraints N, while
+each following column indicates the violation fractions of a specific
+restraint for complexes consistent with *at least* N restraints. Each row thus
+represents the fraction of all complexes consistent with *at least* N
+restraints that violated a particular restraint.
 
 * *accessible_interaction_space.mrc*: a density file in MRC format. The density
 represents the center of mass of the scanning chain conforming to the maximum
@@ -192,9 +193,13 @@ inspected by opening it together with the fixed chain in a molecular viewer
 (UCSF Chimera is recommended for its easier manipulation of density data, but
 also PyMol works).
 
-* *z-score.out*: a text file giving the Z-score for each restraint. The higher
+* *z-score.out*: a text file giving the z-score for each restraint. The higher
 the score, the more likely the restraint is a false-positive. Z-scores above
-1.0 are explicitly mentioned in the output.
+1.0 are explicitly mentioned in the output. The first column indicates the
+restraint; column 2 gives the average violation fraction, i.e. the average of
+the corresponding column in violations.out; column 3 represents the standard
+deviation of the average violation fraction; and column 4 finally gives the
+z-score.
 
 * *disvis.log*: a log file showing all the parameters used, together with date
 and time indications.
