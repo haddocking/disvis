@@ -1,48 +1,89 @@
 from __future__ import print_function, division
 import sys
-import matplotlib.pyplot as plt
-from numpy import argsort, asarray
+from argparse import ArgumentParser, FileType
+
+from numpy import argsort, asarray, savetxt
 from disvis.helpers import parse_interactions
 
 
+# default values
+DEFAULT_ACTIVE_CUTOFF = 1.0
+DEFAULT_PASSIVE_CUTOFF = 0.1
+DEFAULT_OUT = open('average-interactions.out', 'w')
+
+
+def parse_args():
+
+    p = ArgumentParser()
+
+    # positional
+    p.add_argument('f_inter', type=file,
+        help='Interaction file')
+
+    p.add_argument('nrestraints', type=int,
+        help='Number of consistent restraints')
+
+    # optional
+    p.add_argument('-ac', '--active-cutoff', dest='active_cutoff',
+        default=DEFAULT_ACTIVE_CUTOFF, type=float,
+        help="Minimum number of average interactions for a residue to be "
+        "considered 'active'.")
+
+    p.add_argument('-pc', '--passive-cutoff', dest='passive_cutoff',
+        default=DEFAULT_PASSIVE_CUTOFF, type=float,
+        help="Minimum number of average interactions for a residue to be considered 'passive'.")
+
+    p.add_argument('-o', '--out', dest='out', type=FileType('w'),
+        default=DEFAULT_OUT,
+        help='File name of output')
+
+    # flags
+    p.add_argument('-s', '--sort', dest='sort', action='store_true',
+        help='Sort the residues by most contacted')
+
+    args = p.parse_args()
+
+    if args.nrestraints < 0:
+         raise ValueError("Number of restraints should be > 0")
+
+    return args
+
+
 def main():
-    f = sys.argv[1]
-    nrestraints = int(sys.argv[2])
 
-    data = parse_interactions(f)
+    args = parse_args()
 
-    b_order = True
-    y = asarray(range(len(data[nrestraints]['interactions'])))
-    labels = asarray(data['residues'])
-    x = asarray(data[nrestraints]['interactions']) / data[nrestraints]['total']
-    if b_order:
-        order = argsort(x)
-        labels = labels[order]
-        x = x[order]
+    data = parse_interactions(args.f_inter.name)
 
-    active_res = labels[x >= 1]
-    passive_res = labels[(x > 0.25) & (x < 1)]
+    # extract data into arrays
+    residue_index = asarray(range(len(data[args.nrestraints]['interactions'])))
+    residue_id = asarray(data['residues'])
+    ave_interactions = asarray(data[args.nrestraints]['interactions']) /\
+        data[args.nrestraints]['total']
+
+    if args.sort:
+        order = argsort(ave_interactions)[::-1]
+        residue_id = residue_id[order]
+        ave_interactions = ave_interactions[order]
+
+    active_res = residue_id[ave_interactions >= args.active_cutoff]
+
+    passive_indices = (ave_interactions >= args.passive_cutoff) &\
+        (ave_interactions < args.active_cutoff)
+    passive_res = residue_id[passive_indices]
 
     print('Active residues ({:d}):'.format(active_res.size))
     print(str(list(active_res))[1: -1])
     print('Passive residues ({:d}):'.format(passive_res.size))
     print(str(list(passive_res))[1: -1])
 
+    with args.out as fh:
+        max_digits = str(len(str(residue_id.max())))
+        max_float = str(len(str(int(ave_interactions.max()))) + 3)
+        line = '{:<' + max_digits + 'd} {:>' + max_float + '.2f}\n'
+        for n in range(residue_id.size):
+            fh.write(line.format(residue_id[n], ave_interactions[n]))
 
-    fig = plt.figure(figsize=(190/25.4/3.0, 240/25.4))#, dpi=300)
-    ax1 = plt.gca()
-
-    ax1.barh(y, x, height=1.0, align='center')
-    ax1.set_ylabel('Residue')
-    ax1.set_yticks(y)
-    ax1.set_yticklabels(labels)
-    ax1.tick_params(axis='both', labelsize=7)
-    ax1.set_ylim([-0.5, x.shape[0] - 0.5])
-
-    ax1.set_xlabel('Number of interactions')
-
-    fig.tight_layout()
-    plt.show()
 
 if __name__=='__main__':
     main()
