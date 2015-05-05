@@ -1,12 +1,6 @@
 from __future__ import division
 import numpy as np
-try:
-    from scipy.ndimage import binary_erosion
-    SCIPY = True
-except ImportError:
-    from .libdisvis import binary_erosion
-    SCIPY = False
-from .libdisvis import rotate_image3d
+from .libdisvis import rotate_image3d, binary_erosion
 from .IO.mrc import to_mrc, parse_mrc
 
 class Volume(object):
@@ -72,9 +66,6 @@ def zeros_like(volume):
 def erode(volume, iterations, out=None):
     if out is None:
         out = zeros_like(volume)
-    if SCIPY:
-        binary_erosion(volume.array, iterations=iterations, output=out.array)
-    else:
         tmp = volume.array.copy()
         for i in range(iterations):
             binary_erosion(tmp, out.array)
