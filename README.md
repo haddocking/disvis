@@ -205,16 +205,24 @@ z-score.
 and time indications.
 
 
+### Visualizing the accessible interaction space
+
+The accessible interaction space consistent with at least N restraints can be
+visualized by opening the fixed and scanning chain used in the *disvis* run
+together with the *accessible_interaction_space.mrc* output file with UCSF
+Chimera. The density slider in Chimera can be adjusted to change N.
+
+
 Licensing
 ---------
 
 If this software was useful to your research please cite us
 
-**Van Zundert, G.C.P. and Bonvin, A.M.J.J.** (2015) DisVis: Visualizing and
-quantifying accessible interaction space of distance-restrained biomolecular
-complexes.  *Bioinformatics* (submitted).
+**G.C.P. van Zundert and A.M.J.J. Bonvin.** DisVis: Quantifying and visualizing
+accessible interaction space of distance-restrained biomolecular complexes.
+*Bioinformatics*, Advanced Online Publication (2015).
 
-MIT licence
+Apache Licence 2.0
 
 
 ## Tested platforms
