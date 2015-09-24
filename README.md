@@ -16,8 +16,8 @@ number of consistent restraints at every position in space.
 ## Requirements
 
 * Python2.7
-* NumPy
-* Cython
+* NumPy1.8+
+* C-compiler (e.g. GCC)
 
 Optional for faster CPU version
 
@@ -35,6 +35,7 @@ Recommended for installation
 
 * [git](https://git-scm.com/download)
 * [pip](https://pip.pypa.io/en/latest/installing.html)
+* Cython
 
 
 ## Installation
@@ -61,18 +62,14 @@ MacOSX.
 If Python2.7 is present on your system, use the following command on Ubuntu &
 Debian systems
 
-    sudo apt-get install git python-dev python-pip python-numpy
+    sudo apt-get install git python-dev python-numpy
 
 and for Fedora systems
 
-    sudo yum install git python-devel python-pip numpy 
+    sudo yum install git python-devel numpy 
 
-These commands will install *git*, the Python header files, the Python package
-manager *pip*, and NumPy. The final step to prepare you system is installing Cython.
-
-    sudo pip install cython
-
-Wait untill the installation is finished. Your system is now ready. Follow the
+These commands will install *git*, the Python header files and NumPy. Wait
+untill the installation is finished. Your system is now ready. Follow the
 general instructions above to install **DisVis**.
 
 
@@ -84,16 +81,9 @@ using *brew*
 
     brew install git
 
-Next, install [*pip*](https://pip.pypa.io/en/latest/installing.html), the
-official Python package manager. Either follow the link and install *pip*
-using their installation instructions or open a terminal and type
+Next, install NumPy by opening a terminal and type
 
-    sudo easy_install pip
-
-The final step to prepare your system, is installing the Python dependencies.
-In a terminal, type
-
-    sudo pip install numpy cython
+    sudo easy_install numpy
 
 Wait till the compilation and installation is finished. Your system is now
 properly prepared. Follow the general instructions above to install **DisVis**.
@@ -104,10 +94,9 @@ properly prepared. Follow the general instructions above to install **DisVis**.
 First install [*git*](https://git-scm.com/download) for Windows, as it also
 comes with a handy *bash* shell.
 
-For Windows it is easiest to install a Python distribution with NumPy and
-Cython (and many other) packages included, such as
-[Anaconda](https://continuum.io/downloads). Follow the installation
-instructions on their website.
+For Windows it is easiest to install a Python distribution with NumPy (and many
+other) packages included, such as [Anaconda](https://continuum.io/downloads).
+Follow the installation instructions on their website.
 
 Next open a *bash* shell that was shipped with *git*. Follow the general
 instructions above to install **DisVis**.

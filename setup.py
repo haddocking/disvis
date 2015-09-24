@@ -1,34 +1,54 @@
 #! env/bin/python
+from os.path import join
 from distutils.core import setup
 from distutils.extension import Extension
-from Cython.Distutils import build_ext
-from Cython.Build import cythonize
+try:
+    from Cython.Distutils import build_ext
+    from Cython.Build import cythonize
+    CYTHON = True
+except ImportError:
+    CYTHON = False
+
+# check numpy version
 import numpy
-import os.path
+np_major, np_minor, np_release = [int(x) for x in numpy.version.short_version.split('.')]
+if np_major < 1 or (np_major == 1 and np_minor < 8):
+    raise ImportError('PowerFit requires NumPy version 1.8 or ' \
+        'higher. You have version {:s}'.format(numpy.version.short_version))
 
-packages = ['disvis', 'disvis.IO']
+def main():
+    packages = ['disvis', 'disvis.IO']
+    requirements = ['numpy']
 
-ext_modules = [Extension("disvis.libdisvis",
-                  [os.path.join("src", "libdisvis.pyx")],
-                  include_dirs = [numpy.get_include()],
-              )]
+    ext = '.pyx' if CYTHON else '.c'
+    ext_modules = [Extension("disvis.libdisvis",
+                      [join("src", "libdisvis" + ext)],
+                      include_dirs = [numpy.get_include()],
+                  )]
 
-package_data = {'disvis': [os.path.join('data', '*.npy'), 
-                           os.path.join('IO', '*.py'),
-                           os.path.join('kernels', '*.cl')]}
+    cmdclass = {}
+    if CYTHON:
+        ext_modules = cythonize(ext_modules)
+        cmdclass = {'build_ext' : build_ext}
 
-scripts = [os.path.join('scripts', 'disvis')]
+    package_data = {'disvis': [join('data', '*.npy'), 
+                               join('kernels', '*.cl')]}
 
-setup(name="disvis",
-      version='1.0.0',
-      description='Quantifying and visualizing the interaction space of distance-constrainted macromolecular complexes',
-      author='Gydo C.P. van Zundert',
-      author_email='g.c.p.vanzundert@uu.nl',
-      packages=packages,
-      cmdclass = {'build_ext': build_ext},
-      ext_modules = cythonize(ext_modules),
-      package_data = package_data,
-      scripts=scripts,
-      requires=['numpy', 'cython'],
-      include_dirs=[numpy.get_include()],
-     )
+    scripts = [join('scripts', 'disvis')]
+
+    setup(name="disvis",
+          version='1.0.1',
+          description='Quantifying and visualizing the interaction space of distance-constrainted macromolecular complexes',
+          author='Gydo C.P. van Zundert',
+          author_email='g.c.p.vanzundert@uu.nl',
+          packages=packages,
+          cmdclass=cmdclass,
+          ext_modules=ext_modules,
+          package_data=package_data,
+          scripts=scripts,
+          requires=requirements,
+          include_dirs=[numpy.get_include()],
+         )
+
+if __name__ == '__main__':
+    main()
