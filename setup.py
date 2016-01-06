@@ -11,9 +11,9 @@ except ImportError:
 
 # check numpy version
 import numpy
-np_major, np_minor, np_release = [int(x) for x in numpy.version.short_version.split('.')]
+np_major, np_minor = [int(x) for x in numpy.version.short_version.split('.')[:2]]
 if np_major < 1 or (np_major == 1 and np_minor < 8):
-    raise ImportError('PowerFit requires NumPy version 1.8 or ' \
+    raise ImportError('DisVis requires NumPy version 1.8 or ' \
         'higher. You have version {:s}'.format(numpy.version.short_version))
 
 def main():
