@@ -23,6 +23,7 @@ class Volume(object):
     @property
     def voxelspacing(self):
         return self._voxelspacing
+
     @voxelspacing.setter
     def voxelspacing(self, voxelspacing):
         self._voxelspacing = voxelspacing
@@ -30,6 +31,7 @@ class Volume(object):
     @property
     def origin(self):
         return np.asarray(self._origin, dtype=np.float64)
+
     @origin.setter
     def origin(self, origin):
         self._origin = origin
@@ -45,6 +47,7 @@ class Volume(object):
     @property
     def start(self):
         return [x/self.voxelspacing for x in self.origin]
+
     @start.setter
     def start(self, start):
         self._origin = [x*self.voxelspacing for x in start]
