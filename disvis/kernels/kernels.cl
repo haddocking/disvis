@@ -1,6 +1,74 @@
-#define UMUL(a, b) ((a) * (b))
-#define UMAD(a, b, c) (UMUL((a), (b)) + (c))
 #define SQUARE(a) ((a) * (a))
+#define INTERACTION_CUTOFF 10
+#define INTERACTION_CUTOFF2 100
+
+kernel
+void count_interactions(
+        global int *inter_space, uint4 inter_space_shape,
+        global float4 *fixed_coor, uint fixed_coor_size,
+        global float4 *scanning_coor, uint scanning_coor_size,
+        global uint *inter_hist,
+        local uint *loc_inter_hist,
+        int nrestraints,
+        )
+{
+    // Count the number of interactions each residue makes for complexes
+    // consistent with nrestraints.
+
+    size_t lid = get_local_id(0);
+    size_t lstride = get_local_size(0);
+
+    int nz, ny, nx, i, j;
+    int2 inter_ind;
+    float dist2;
+
+    // Set local histogram to 0
+    if (lid < (scanning_coor_size + fixed_coor_size)) {
+        for (i = lid; i < (scanning_coor_size + fixed_coor_size); i += lstride)
+            loc_inter_hist[i] = 0;
+    }
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    // Loop over the interaction space, and count interactions for
+    // conformations that are consistent with nrestraints.
+    for (nz = get_global_id(0); nz < inter_space_shape.s0; nz += get_global_size(0)) {
+        inter_ind.s0 = nz * inter_space_shape.s0;
+        for (ny = get_global_id(1); ny < inter_space_shape.s1; ny += get_global_size(1)) {
+            inter_ind.s1 = inter_ind.s0 + ny * inter_space_shape.s2;
+            for (nx = get_global_id(2); nx < inter_space_shape.s2; nx += get_global_size(2)) {
+
+                // Only investigate conformations consistent with nrestraints
+                if (inter_space[inter_ind.s1 + nx] != nrestraints)
+                    continue;
+
+                // Calculate the number of interactions for each residue
+                for (i = 0; i < scanning_coor_size; i++) {
+                    coor.s0 = scanning_coor[i].s0 + nx;
+                    coor.s1 = scanning_coor[i].s1 + ny;
+                    coor.s2 = scanning_coor[i].s2 + nz;
+                    for (j = 0; j < fixed_coor_size; j++) {
+                        dist2 = SQUARE(coor.s0 - fixed_coor[j].s0) +
+                                SQUARE(coor.s1 - fixed_coor[j].s1) +
+                                SQUARE(coor.s2 - fixed_coor[j].s2);
+                        if (dist2 <= INTERACTION_CUTOFF2) {
+                            // Increase the counter using atomics
+                            atomic_inc(loc_inter_hist[j]);
+                            atomic_inc(loc_inter_hist[i + fixed_coor_size]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    // Combine the local histograms into the global memory
+    if (lid < (scanning_coor_size + fixed_coor_size)) {
+        offset = (scanning_coor_size + fixed_coor_size) * get_group_id(0);
+        for (i = lid; i < scanning_coor_size; i += lstride)
+            inter_hist[offset + i] += loc_inter_hist[i];
+    }
+}
 
 
 __kernel
@@ -208,9 +276,15 @@ void distance_restraint(__global float8 *restraints,
     for (i = 0; i < nrestraints; i++){
 
          // determine the center of the point that will be dilated
-         xligand = rotmat.s0 * restraints[i].s3 + rotmat.s1 * restraints[i].s4 + rotmat.s2 * restraints[i].s5;
-         yligand = rotmat.s3 * restraints[i].s3 + rotmat.s4 * restraints[i].s4 + rotmat.s5 * restraints[i].s5;
-         zligand = rotmat.s6 * restraints[i].s3 + rotmat.s7 * restraints[i].s4 + rotmat.s8 * restraints[i].s5;
+         xligand = rotmat.s0 * restraints[i].s3 + 
+                   rotmat.s1 * restraints[i].s4 + 
+                   rotmat.s2 * restraints[i].s5;
+         yligand = rotmat.s3 * restraints[i].s3 + 
+                   rotmat.s4 * restraints[i].s4 + 
+                   rotmat.s5 * restraints[i].s5;
+         zligand = rotmat.s6 * restraints[i].s3 + 
+                   rotmat.s7 * restraints[i].s4 + 
+                   rotmat.s8 * restraints[i].s5;
 
          xcenter = restraints[i].s0 - xligand;
          ycenter = restraints[i].s1 - yligand;
