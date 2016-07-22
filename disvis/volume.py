@@ -1,6 +1,8 @@
 from __future__ import division
+
 import numpy as np
-from .libdisvis import rotate_image3d, binary_erosion
+
+from .libdisvis import binary_erosion
 from .IO.mrc import to_mrc, parse_mrc
 
 class Volume(object):
@@ -91,11 +93,3 @@ def radix235(ninit):
             ninit += 1
         else:
             return ninit
-
-def rotate_volume(volume, vlength, rotmat, out=None):
-    if out is None:
-        out = zeros_like(volume)
-
-    rotate_image3d(volume, int(vlength/self.voxelspacing), rotmat, out)
-
-    return out

@@ -2,6 +2,27 @@
 #define INTERACTION_CUTOFF 10
 #define INTERACTION_CUTOFF2 100
 
+
+kernel
+void rotate_points(global float4 *in, uint in_size, float16 rotmat, global float4 *out)
+{
+
+    uint i;
+
+    for (i = get_global_id(0); i < in_size; i += get_global_size(0)) {
+        out[i].s0 = rotmat.s0 * in[i].s0 + 
+                    rotmat.s1 * in[i].s1 + 
+                    rotmat.s2 * in[i].s2;
+        out[i].s1 = rotmat.s3 * in[i].s0 + 
+                    rotmat.s4 * in[i].s1 + 
+                    rotmat.s5 * in[i].s2;
+        out[i].s2 = rotmat.s6 * in[i].s0 + 
+                    rotmat.s7 * in[i].s1 + 
+                    rotmat.s8 * in[i].s2;
+    }
+}
+
+
 kernel
 void count_interactions(
         global int *inter_space, uint4 inter_space_shape,
@@ -52,8 +73,8 @@ void count_interactions(
                                 SQUARE(coor.s2 - fixed_coor[j].s2);
                         if (dist2 <= INTERACTION_CUTOFF2) {
                             // Increase the counter using atomics
-                            atomic_inc(loc_inter_hist[j]);
-                            atomic_inc(loc_inter_hist[i + fixed_coor_size]);
+                            atomic_inc(loc_inter_hist + j);
+                            atomic_inc(loc_inter_hist + i + fixed_coor_size);
                         }
                     }
                 }
@@ -72,14 +93,14 @@ void count_interactions(
 
 
 __kernel
-void count_violations(__global float8 *restraints,
+void count_violations(global float8 *restraints,
                       float16 rotmat,
-                      __global int *access_interspace,
-                      __global float *viol_counter,
-                      __local float *loc_viol,
-                      __local float4 *restraints_center,
-                      __local float *mindist2,
-                      __local float *maxdist2,
+                      global int *access_interspace,
+                      global float *viol_counter,
+                      local float *loc_viol,
+                      local float4 *restraints_center,
+                      local float *mindist2,
+                      local float *maxdist2,
                       uint nrestraints, uint4 shape, float weight)
 {
     uint id = get_global_id(0);
@@ -153,57 +174,49 @@ void count_violations(__global float8 *restraints,
 }
 
 
-__kernel
-void copy_partial(__global float *part, __global float *full, int4 part_size, int4 full_size)
+kernel
+void histogram(global int *data,
+               global float *subhists,
+               local int *local_hist,
+               uint nrestraints,
+               float weight,
+               uint size)
 {
-    uint z, y, x, full_ind;
-    uint part_slice = part_size.s2*part_size.s1;
-    uint full_slice = full_size.s2*full_size.s1;
+    size_t lid = get_local_id(0);
+    size_t lsize = get_local_size(0);
+    size_t gsize = get_global_size(0);
+    size_t groupid = get_group_id(0);
+    int i, j, loffset, goffset, sum;
 
-    for (uint i = get_global_id(0); i < part_size.s3; i += get_global_size(0)) {
-        z = i/part_slice;
-        y = (i - z*part_slice)/part_size.s2;
-        x = i - z*part_slice - y*part_size.s2;
+    // Set the local histogram to zero
+    // Each local workitem has its own array of nrestraints to fill
+    for (i = 0; i < nrestraints; i++)
+        local_hist[lid + i * lsize] = 0;
 
-        full_ind = z * full_slice + y * full_size.s2 + x;
-        full[full_ind] = part[i];
-    }
-}
-
-
-__kernel
-void histogram(__global int *data,
-                 __global float *subhists,
-                 __local float *local_hist,
-                 uint nrestraints,
-                 float weight,
-                 uint size)
-{
-    uint lid = get_local_id(0);
-
-    for (uint i = 0; i < nrestraints; i++)
-        local_hist[lid + i * get_local_size(0)] = 0;
-
-    for (uint pos = get_global_id(0); pos < size; pos += get_global_size(0))
-        local_hist[lid + data[pos] * get_local_size(0)] += weight;
+    // Fill in the local histogram
+    for (i = get_global_id(0); i < size; i += gsize)
+        local_hist[lid + data[i] * lsize]++;
 
     barrier(CLK_LOCAL_MEM_FENCE);
 
+    // Move the local histogram to global memory
     if (lid < nrestraints) {
-        for (uint j =  lid; j < nrestraints; j += get_local_size(0)) {
+        goffset = groupid * nrestraints;
+        for (j = lid; j < nrestraints; j += lsize) {
 
-            float sum = 0;
-            int pos = get_local_size(0) * lid;
+            // Sum all complexes consistent with j restraints
+            sum = 0;
+            loffset = lsize * lid;
+            for (i = 0; i < lsize; i++)
+                sum += local_hist[loffset + i];
 
-            for (uint i = 0; i < get_local_size(0); i++)
-                sum += local_hist[pos + i];
-
-            subhists[get_group_id(0)*nrestraints + j] += sum;
+            subhists[goffset + j] += weight * sum;
         }
     }
 }
 
-__kernel
+
+kernel
 void rotate_image3d(sampler_t sampler,
                     read_only image3d_t image,
                     float16 rotmat,

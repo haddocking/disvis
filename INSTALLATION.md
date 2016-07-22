@@ -1,9 +1,11 @@
 # Installation instructions for DisVis
 
-This document shows how to prepare your system for GPU accelerated DisVis for MacOSX, using the OpenCL framework.
-Note though, that it requires a high-end graphics card to get a proper acceleration, else the speedup will be neglible.
-Practically this means that it should be either an AMD or NVIDIA GPU; 
-if it is a power efficient Intel card, usually present on laptops, installing the GPU version will most likely not help much. 
+This document shows how to prepare your system for GPU accelerated DisVis for
+MacOSX, using the OpenCL framework.  Note though, that it requires a high-end
+graphics card to get a proper acceleration, else the speedup will be neglible.
+Practically this means that it should be either an AMD or NVIDIA GPU; if it is
+a power efficient Intel card, usually present on laptops, installing the GPU
+version will most likely not help much. 
 
 ## Requirements
 
@@ -16,10 +18,12 @@ First install Python bindings to OpenCL with the pyopencl Python package
 
     pip install --upgrade pyopencl
 
-Note that this will upgrade all dependencies required for pyopencl, such as NumPy.
+Note that this will upgrade all dependencies required for pyopencl, such as
+NumPy.
 
-Next comes the somewhat more tedious part of installing a high-performance FFT library for GPU using the OpenCL framework clFFT.
-This requires the cmake program first
+Next comes the somewhat more tedious part of installing a high-performance FFT
+library for GPU using the OpenCL framework clFFT. This requires the cmake
+program first
 
     brew install cmake
 
@@ -33,10 +37,10 @@ Python bindings to to the clFFT library are provided with the gpyfft package
     git clone https://github.com/geggo/gpyfft.git
     cd gpyfft
 
-In the folder of gpyfft there is a file called setup.py. Open it with a text editor and change the directory that points to the clFFT directory.
-Then type
+In the folder of gpyfft there is a file called setup.py. Open it with a text
+editor and change the directory that points to the clFFT directory. Then type
 
     sudo python setup.py install
 
-If it all worked out, congratulations, your system is now ready for GPU calculations!
-
+If it all worked out, congratulations, your system is now ready for GPU
+calculations!

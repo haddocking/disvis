@@ -8,31 +8,28 @@ from libc.math cimport ceil, exp, floor, sqrt
 def count_interactions(np.ndarray[np.int32_t, ndim=3] interaction_space,
         np.ndarray[np.float64_t, ndim=2] r_inter_coor,
         np.ndarray[np.float64_t, ndim=2] l_inter_coor,
-        np.ndarray[np.float64_t, ndim=1] origin,
-        double voxelspacing,
         double interaction_distance,
         double weight,
         int interaction_restraint_cutoff,
         np.ndarray[np.float64_t, ndim=3] interaction_matrix):
 
-    cdef unsigned int x, y, z, i, j, n
-    cdef double interaction_distance2 = interaction_distance**2
-    cdef double dist2, lx, ly, lz
+    cdef:
+        int x, y, z, i, j, n
+        double interaction_distance2 = interaction_distance**2
+        double dist2, lx, ly, lz
 
     for z in range(interaction_space.shape[0]):
-
         for y in range(interaction_space.shape[1]):
-
             for x in range(interaction_space.shape[2]):
-
                 n = interaction_space[z, y, x]
                 if n < interaction_restraint_cutoff:
                     continue
-                
+
                 for j in range(l_inter_coor.shape[0]):
-                    lx = l_inter_coor[j, 0] + origin[0] + voxelspacing * x
-                    ly = l_inter_coor[j, 1] + origin[1] + voxelspacing * y
-                    lz = l_inter_coor[j, 2] + origin[2] + voxelspacing * z
+                    # Move the scanning coordinates
+                    lx = l_inter_coor[j, 0] + x
+                    ly = l_inter_coor[j, 1] + y
+                    lz = l_inter_coor[j, 2] + z
 
                     for i in range(r_inter_coor.shape[0]):
                         dist2 = (r_inter_coor[i, 0] - lx)**2 +\
@@ -40,7 +37,7 @@ def count_interactions(np.ndarray[np.int32_t, ndim=3] interaction_space,
                                 (r_inter_coor[i, 2] - lz)**2
 
                         if dist2 <= interaction_distance2:
-                            interaction_matrix[n - 1, j, i] += weight
+                            interaction_matrix[n - interaction_restraint_cutoff, j, i] += weight
 
 
 @cython.boundscheck(False)
@@ -52,8 +49,9 @@ def count_violations(np.ndarray[np.float64_t, ndim=2] points,
         double weight,
         np.ndarray[np.float64_t, ndim=2] violations):
 
-    cdef unsigned int x, y, z, i
-    cdef double distance2, mindis2, maxdis2
+    cdef:
+        unsigned int x, y, z, i
+        double distance2, mindis2, maxdis2
 
     for z in range(interspace.shape[0]):
         for y in range(interspace.shape[1]):
@@ -72,41 +70,23 @@ def count_violations(np.ndarray[np.float64_t, ndim=2] points,
                         violations[interspace[z, y, x] - 1, i] += weight
 
 
-
 @cython.boundscheck(False)
-@cython.wraparound(False)
-def longest_distance(np.ndarray[np.float64_t, ndim=2] coor):
+def rotate_grid_nearest(
+        np.ndarray[np.float64_t, ndim=3] grid,
+        int vlength,
+        np.ndarray[np.float64_t, ndim=2] rotmat,
+        np.ndarray[np.float64_t, ndim=3] out,
+        ):
+    """Rotate an array around the origin using nearest interpolation
 
-    cdef unsigned int i, j
-    cdef double dis2
-    cdef double maxdis2 = 0
-
-    for i in range(coor.shape[0] - 1):
-        for j in range(i + 1, coor.shape[0]):
-
-            dis2 = (coor[i, 0] - coor[j, 0])**2 +\
-                   (coor[i, 1] - coor[j, 1])**2 +\
-                   (coor[i, 2] - coor[j, 2])**2
-
-            if dis2 > maxdis2:
-                maxdis2 = dis2
-
-    return sqrt(maxdis2)
-
-@cython.boundscheck(False)
-def rotate_image3d(np.ndarray[np.float64_t, ndim=3] image,
-                   int vlength,
-                   np.ndarray[np.float64_t, ndim=2] rotmat,
-                   np.ndarray[np.float64_t, ndim=1] center,
-                   np.ndarray[np.float64_t, ndim=3] out,
-                   ):
-    """Rotate an array around the origin using trilinear interpolation
+    Actually the output array is rotated, meaning that the rotation matrix is
+    inverted (i.e. the transpose is used).
 
     Parameters
     ----------
-    image : ndarray
+    grid : ndarray
 
-    vlenght : unsigned integer
+    vlenght : integer
         Vertice length
 
     rotmat : ndarray
@@ -115,65 +95,34 @@ def rotate_image3d(np.ndarray[np.float64_t, ndim=3] image,
     out : ndarray
         Output array
     """
-    # looping
-    cdef int x, y, z
 
-    # rotation
-    cdef double xcoor_z, ycoor_z, zcoor_z
-    cdef double xcoor_yz, ycoor_yz, zcoor_yz
-    cdef double xcoor_xyz, ycoor_xyz, zcoor_xyz
-
-    # interpolation
-    cdef int x0, y0, z0, x1, y1, z1
-    cdef double dx, dy, dz, dx1, dy1, dz1
-    cdef double c00, c01, c10, c11
-    cdef double c0, c1, c
+    cdef: 
+        int x, y, z, x0, y0, z0 
+        double xcoor_z, ycoor_z, zcoor_z
+        double xcoor_yz, ycoor_yz, zcoor_yz
+        double xcoor_xyz, ycoor_xyz, zcoor_xyz
 
     for z in range(-vlength, vlength+1):
-
-        xcoor_z = rotmat[0, 2]*z
-        ycoor_z = rotmat[1, 2]*z
+        xcoor_z = rotmat[2, 0]*z
+        ycoor_z = rotmat[2, 1]*z
         zcoor_z = rotmat[2, 2]*z
 
         for y in range(-vlength, vlength+1):
-
-            xcoor_yz = rotmat[0, 1]*y + xcoor_z
+            xcoor_yz = rotmat[1, 0]*y + xcoor_z
             ycoor_yz = rotmat[1, 1]*y + ycoor_z
-            zcoor_yz = rotmat[2, 1]*y + zcoor_z
+            zcoor_yz = rotmat[1, 2]*y + zcoor_z
 
             for x in range(-vlength, vlength+1):
+                xcoor_xyz = rotmat[0, 0]*x + xcoor_yz
+                ycoor_xyz = rotmat[0, 1]*x + ycoor_yz
+                zcoor_xyz = rotmat[0, 2]*x + zcoor_yz
 
-                xcoor_xyz = rotmat[0, 0]*x + xcoor_yz + center[0]
-                ycoor_xyz = rotmat[1, 0]*x + ycoor_yz + center[1]
-                zcoor_xyz = rotmat[2, 0]*x + zcoor_yz + center[2]
+                x0 = <int> (round(xcoor_xyz))
+                y0 = <int> (round(ycoor_xyz))
+                z0 = <int> (round(zcoor_xyz))
 
-                # trilinear interpolation
-                x0 = <int> floor(xcoor_xyz)
-                y0 = <int> floor(ycoor_xyz)
-                z0 = <int> floor(zcoor_xyz)
+                out[z, y, x] = grid[z0, y0, x0]
 
-                x1 = x0 + 1
-                y1 = y0 + 1
-                z1 = z0 + 1
-
-                dx = xcoor_xyz - <double> x0
-                dy = ycoor_xyz - <double> y0
-                dz = zcoor_xyz - <double> z0
-                dx1 = 1 - dx
-                dy1 = 1 - dy
-                dz1 = 1 - dz
-
-                c00 = image[z0, y0, x0]*dx1 + image[z0, y0, x1]*dx
-                c10 = image[z0, y1, x0]*dx1 + image[z0, y1, x1]*dx
-                c01 = image[z1, y0, x0]*dx1 + image[z1, y0, x1]*dx
-                c11 = image[z1, y1, x0]*dx1 + image[z1, y1, x1]*dx
-
-                c0 = c00*dy1 + c10*dy
-                c1 = c01*dy1 + c11*dy
-
-                c = c0*dz1 + c1*dz
-
-                out[z, y, x] = c
 
 @cython.boundscheck(False)
 def dilate_points(np.ndarray[np.float64_t, ndim=2] points,
@@ -232,6 +181,7 @@ def dilate_points(np.ndarray[np.float64_t, ndim=2] points,
                         out[z,y,x] = 1.0
     return out
 
+
 @cython.boundscheck(False)
 def dilate_points_add(np.ndarray[np.float64_t, ndim=2] points,
                   np.ndarray[np.float64_t, ndim=1] radius,
@@ -281,6 +231,7 @@ def dilate_points_add(np.ndarray[np.float64_t, ndim=2] points,
 
     return out
 
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def binary_erosion(np.ndarray[np.float64_t, ndim=3] image,
@@ -327,28 +278,18 @@ def binary_erosion(np.ndarray[np.float64_t, ndim=3] image,
 
     return out
 
+
 @cython.boundscheck(False)
 def distance_restraint(np.ndarray[np.float64_t, ndim=2] points,
                   np.ndarray[np.float64_t, ndim=1] mindis,
                   np.ndarray[np.float64_t, ndim=1] maxdis,
                   np.ndarray[np.int32_t, ndim=3] out,
                   ):
-    """Creates a mask from the points into the volume
-
-    Parameters
-    ----------
-    points : ndarray
-
-    out : 3D-numpy array
-
-    Returns
-    -------
-    out
-    """
-    cdef unsigned int n
-    cdef int x, y, z, xmin, ymin, zmin, xmax, ymax, zmax
-    cdef double mindis2, maxdis2
-    cdef double z2, y2z2, x2y2z2
+    cdef:
+        unsigned int n
+        int x, y, z, xmin, ymin, zmin, xmax, ymax, zmax
+        double mindis2, maxdis2
+        double z2, y2z2, x2y2z2
 
     for n in range(points.shape[0]):
 

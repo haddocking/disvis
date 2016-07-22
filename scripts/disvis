@@ -1,7 +1,7 @@
 #! usr/bin/python
 from __future__ import print_function, division, absolute_import
 from os import remove
-from os.path import join
+from os.path import join, abspath
 from sys import stdout
 from time import time
 import multiprocessing as mp
@@ -9,12 +9,14 @@ from argparse import ArgumentParser
 import logging
 
 import numpy as np
+
 from disvis import DisVis, PDB, Volume
 from disvis.rotations import proportional_orientations, quat_to_rotmat
 from disvis.helpers import mkdir_p
 
 
 def parse_args():
+    """Parse the command-line arguments."""
 
     p = ArgumentParser()
 
@@ -55,7 +57,7 @@ def parse_args():
                  'stricter counting of complexes. '
                  'Default is 300 A^3.')
 
-    p.add_argument('-d', '--directory', dest='directory', type=str, default='.',
+    p.add_argument('-d', '--directory', dest='directory', type=abspath, default='.',
             help='Directory where results are written to. '
                  'Default is current directory.')
 
@@ -67,14 +69,27 @@ def parse_args():
                  'the CPU-version will be used with the given number '
                  'of processors.')
 
-    p.add_argument('-is', '--interaction_selection', dest='interaction_selection', type=file, default=None)
+    p.add_argument('-is', '--interaction-selection',
+            dest='interaction_selection', type=file, default=None)
 
-    p.add_argument('-ic', '--interaction_restraint_cutoff', dest='interaction_restraint_cutoff', type=int, default=None)
+    p.add_argument('-ic', '--interaction-restraints-cutoff',
+            dest='interaction_restraints_cutoff', type=int, default=None)
+
+    p.add_argument('-oa', '--occupancy-analysis', dest='occupancy_analysis',
+            action='store_true',
+            help=("Perform an occupancy analysis, ultimately providing "
+                  "a volume where each grid point represents the "
+                  "normalized probability of that spot being occupied by the ligand."
+                  )
+            )
+
 
     return p.parse_args()
 
 
 def parse_interaction_selection(fid, pdb1, pdb2):
+    """Parse the interaction selection file, i.e. all residues for which an
+    interaction analysis is performed."""
 
     resi1 = [int(x) for x in fid.readline().split()]
     resi2 = [int(x) for x in fid.readline().split()]
@@ -82,10 +97,14 @@ def parse_interaction_selection(fid, pdb1, pdb2):
     pdb1_sel = pdb1.select('name', 'CA').select('resi', resi1)
     pdb2_sel = pdb2.select('name', 'CA').select('resi', resi2)
 
+    print(pdb1_sel.natoms)
+    print(pdb2_sel.natoms)
+
     return pdb1_sel, pdb2_sel
 
 
 def parse_restraints(fid, pdb1, pdb2):
+    """Parse the restraints file."""
 
     dist_restraints = []
 
@@ -94,9 +113,12 @@ def parse_restraints(fid, pdb1, pdb2):
         line = line.strip()
         if line.startswith('#') or not line:
             continue
+
         chain1, resi1, name1, chain2, resi2, name2, mindis, maxdis = line.split()
-        pdb1_sel = pdb1.select('chain', chain1).select('resi', int(resi1)).select('name', name1).duplicate()
-        pdb2_sel = pdb2.select('chain', chain2).select('resi', int(resi2)).select('name', name2).duplicate()
+        pdb1_sel = pdb1.select('chain', chain1).select('resi',
+                int(resi1)).select('name', name1).duplicate()
+        pdb2_sel = pdb2.select('chain', chain2).select('resi',
+                int(resi2)).select('name', name2).duplicate()
 
         if pdb1_sel.natoms > 0 and pdb2_sel.natoms > 0:
             dist_restraints.append([pdb1_sel, pdb2_sel, float(mindis), float(maxdis)])
@@ -104,11 +126,26 @@ def parse_restraints(fid, pdb1, pdb2):
             raise ValueError("A restraint selection was not found in line:\n{:s}".format(str(line)))
 
     fid.close()
-
     return dist_restraints
 
 
-def run_disvis_instance(queue, receptor, ligand, distance_restraints, rotmat, weights, n, pdb1_sel, pdb2_sel, args):
+class Joiner(object):
+    def __init__(self, directory):
+        self.directory = directory
+    
+    def __call__(self, fname):
+        """Join fname with set directory."""
+        return join(self.directory, fname)
+
+
+class Results(object):
+    """Simple container"""
+    pass
+
+
+def run_disvis_instance(queue, receptor, ligand, distance_restraints, rotmat,
+        weights, n, pdb1_sel, pdb2_sel, args):
+    """Run a single DisVis instance."""
 
     dv = DisVis()
 
@@ -126,19 +163,28 @@ def run_disvis_instance(queue, receptor, ligand, distance_restraints, rotmat, we
     if args.interaction_selection is not None:
         dv.receptor_interaction_selection = pdb1_sel
         dv.ligand_interaction_selection = pdb2_sel
-        dv.interaction_restraint_cutoff = args.interaction_restraint_cutoff
+        dv.interaction_restraints_cutoff = args.interaction_restraints_cutoff
+    dv.occupancy_analysis = args.occupancy_analysis
 
-    results = dv.search()
+    dv.search()
 
-    results['accessible_interaction_space'].tofile(join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n)))
+    joiner = Joiner(args.directory)
+    fname = joiner('accessible_interaction_space_{:d}.mrc').format(n)
+    dv.accessible_interaction_space.tofile(fname)
+            
+    fname = joiner('violations_{:d}.npy').format(n)
+    np.save(fname, dv.violations)
 
-    np.save(join(args.directory, 'violations_{:d}.npy'.format(n)), results['violations'])
-    if results['interaction_matrix'] is not None:
-        np.save(join(args.directory, 'interaction_matrix_{:d}.npy'.format(n)), results['interaction_matrix'])
-    queue.put(results['accessible_complexes'])
+    if dv.interaction_matrix is not None:
+        fname = joiner('interaction_matrix_{:d}.npy'.format(n))
+        np.save(fname, dv.interaction_matrix)
+
+    queue.put(dv.accessible_complexes)
 
 
-def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints, pdb1_sel, pdb2_sel, args):
+def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
+        pdb1_sel, pdb2_sel, args):
+    """Run several DisVis instances, each with a subset of all rotations."""
 
     # multi-threaded CPU version
     try:
@@ -146,7 +192,7 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints, pdb1_s
         jobs = min(max_cpu, args.nproc)
     except NotImplementedError:
         jobs = args.nproc
-    # in case more processes are requiested than the number
+    # in case more processes are requested than the number
     # of rotations sampled
     nrot = rotmat.shape[0]
     if jobs > nrot:
@@ -159,8 +205,8 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints, pdb1_s
 
     queue = mp.Queue()
     processes = []
-    for n in range(jobs):
-
+    for n in xrange(jobs):
+        # Determine the rotations that each job needs to sample
         init_rot = n * nrot_per_job
         end_rot = (n + 1) * nrot_per_job
         if n == (jobs - 1):
@@ -169,55 +215,65 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints, pdb1_s
         sub_rotmat = rotmat[init_rot: end_rot]
         sub_weights = weights[init_rot: end_rot]
 
-        process = mp.Process(target=run_disvis_instance,
-            args=(queue, receptor, ligand, distance_restraints, sub_rotmat, sub_weights, n, pdb1_sel, pdb2_sel, args))
-
+        disvis_args = (queue, receptor, ligand, distance_restraints,
+                sub_rotmat, sub_weights, n, pdb1_sel, pdb2_sel, args)
+        process = mp.Process(target=run_disvis_instance, args=disvis_args)
         processes.append(process)
 
     write('Starting jobs')
-    for n in range(jobs):
-        processes[n].start()
+    for p in processes:
+        p.start()
     write('Waiting for jobs to finish')
 
-    for n in range(jobs):
-        processes[n].join()
-    write('Searching done. Combining results')
+    for p in processes:
+        p.join()
 
-    results = {}
+    write('Searching done. Combining results')
+    # Create dummy class with similar results attributes as DisVis class
+    results = Results()
+    joiner = Joiner(args.directory)
+
+    fname_interspace = joiner('accessible_interaction_space_{:d}.mrc')
+    fname_violations = joiner('violations_{:d}.npy')
+    fname_intermat = joiner('interaction_matrix_{:d}.npy')
 
     accessible_complexes = np.asarray(queue.get(), dtype=np.float64)
-    accessible_interaction_space = Volume.fromfile(join(args.directory, 'accessible_interaction_space_0.mrc'))
-    violations = np.load(join(args.directory, 'violations_0.npy'))
+    accessible_interaction_space = Volume.fromfile(fname_interspace.format(0))
+    violations = np.load(fname_violations.format(0))
     for n in range(1, jobs):
         accessible_complexes += np.asarray(queue.get(), dtype=np.float64)
         np.maximum(accessible_interaction_space.array,
-                Volume.fromfile(join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n))).array,
+                Volume.fromfile(fname_interspace.format(n)).array,
                 accessible_interaction_space.array)
-        violations += np.load(join(args.directory, 'violations_{:d}.npy'.format(n)))
+        violations += np.load(fname_violations.format(n))
+
+    # TODO
+    # Combine the occupancy grids
 
     # combine the interaction analysis
-    results['interaction_matrix'] = None
+    results.interaction_matrix = None
     if args.interaction_selection is not None:
-        interaction_matrix = np.load(join(args.directory, 'interaction_matrix_0.npy'))
+        interaction_matrix = np.load(fname_intermat.format(0))
         for n in range(1, jobs):
-            interaction_matrix += np.load(join(args.directory, 'interaction_matrix_{:d}.npy'.format(n)))
-        results['interaction_matrix'] = interaction_matrix
+            interaction_matrix += np.load(fname_intermat.format(n))
+        results.interaction_matrix = interaction_matrix
             
     write('Cleaning')
     for n in range(jobs):
-        remove(join(args.directory, 'accessible_interaction_space_{:d}.mrc'.format(n)))
-        remove(join(args.directory, 'violations_{:d}.npy'.format(n)))
+        remove(fname_interspace.format(n))
+        remove(fname_violations.format(n))
         if args.interaction_selection is not None:
-            remove(join(args.directory, 'interaction_matrix_{:d}.npy'.format(n)))
+            remove(fname_intermat.format(n))
 
-    results['accessible_interaction_space'] = accessible_interaction_space
-    results['accessible_complexes'] = accessible_complexes
-    results['violations'] = violations
+    results.accessible_interaction_space = accessible_interaction_space
+    results.accessible_complexes = accessible_complexes
+    results.violations = violations
 
     return results
 
 
-def run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints, pdb1_sel, pdb2_sel, args):
+def run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints,
+        pdb1_sel, pdb2_sel, args):
 
     dv = DisVis()
 
@@ -232,13 +288,15 @@ def run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints, pd
     dv.max_clash = args.max_clash
     dv.min_interaction = args.min_interaction
     dv.queue = queue
+    dv.occupancy_analysis = args.occupancy_analysis
 
     if not any([x is None for x in (pdb1_sel, pdb2_sel)]):
         dv.receptor_interaction_selection = pdb1_sel
         dv.ligand_interaction_selection = pdb2_sel
-        dv.interaction_restraint_cutoff = args.interaction_restraint_cutoff
+        dv.interaction_restraints_cutoff = args.interaction_restraints_cutoff
+    dv.search()
 
-    return dv.search()
+    return dv
 
 
 def write(line):
@@ -258,6 +316,13 @@ def main():
 
     time0 = time()
 
+    queue = None
+    if args.gpu:
+        from disvis.helpers import get_queue
+        queue = get_queue()
+        if queue is None:
+            raise ValueError("No GPU queue was found.")
+
     write('Reading fixed model from: {:s}'.format(args.receptor.name))
     receptor = PDB.fromfile(args.receptor)
     write('Reading scanning model from: {:s}'.format(args.ligand.name))
@@ -276,8 +341,10 @@ def main():
 
     pdb1_sel = pdb2_sel = None
     if args.interaction_selection is not None:
-        write('Reading in interaction selection from file: {:s}'.format(args.interaction_selection.name))
-        pdb1_sel, pdb2_sel = parse_interaction_selection(args.interaction_selection, receptor, ligand)
+        write('Reading in interaction selection from file: {:s}'
+                .format(args.interaction_selection.name))
+        pdb1_sel, pdb2_sel = parse_interaction_selection(
+                args.interaction_selection, receptor, ligand)
 
         write('Number of receptor residues: {:d}'.format(pdb1_sel.natoms))
         write('Number of ligand residues: {:d}'.format(pdb2_sel.natoms))
@@ -287,19 +354,14 @@ def main():
     write('Minimum required interaction volume: {:.2f}'.format(args.min_interaction))
     write('Maximum allowed volume of clashes: {:.2f}'.format(args.max_clash))
 
-    queue = None
-    if args.gpu:
-        from disvis.helpers import get_queue
-        queue = get_queue()
-
     if queue is None:
         # CPU-version
-        if args.gpu:
-            write('No GPU queue was found. Falling back on CPU implementation.')
         if args.nproc > 1:
-            results = mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints, pdb1_sel, pdb2_sel, args)
+            dv = mp_cpu_disvis(receptor, ligand, rotmat, weights,
+                    distance_restraints, pdb1_sel, pdb2_sel, args)
         else:
-            results = run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints, pdb1_sel, pdb2_sel, args)
+            dv = run_disvis(queue, receptor, ligand, rotmat, weights,
+                    distance_restraints, pdb1_sel, pdb2_sel, args)
     else:
         # GPU-version
         write('Using GPU accelerated search.')
@@ -307,16 +369,17 @@ def main():
                  run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints, args)
 
     # write out accessible interaction space
-    f_accessible_interaction_space = join(args.directory, 'accessible_interaction_space.mrc')
-    write('Writing accessible interaction space to: {:s}'.format(f_accessible_interaction_space))
-    results['accessible_interaction_space'].tofile(f_accessible_interaction_space)
+    joiner = Joiner(args.directory)
+    fname = joiner('accessible_interaction_space.mrc')
+    write('Writing accessible interaction space to: {:s}'.format(fname))
+    dv.accessible_interaction_space.tofile(fname)
 
     # write out accessible complexes
-    accessible_complexes = results['accessible_complexes']
+    accessible_complexes = dv.accessible_complexes
     norm = sum(accessible_complexes)
     digits = len(str(int(norm))) + 1
     cum_complexes = np.cumsum(np.asarray(accessible_complexes)[::-1])[::-1]
-    with open(join(args.directory, 'accessible_complexes.out'), 'w') as f_accessible_complexes:
+    with open(joiner('accessible_complexes.out'), 'w') as f_accessible_complexes:
         write('Writing number of accessible complexes to: {:s}'.format(f_accessible_complexes.name))
         header = '# consistent restraints | accessible complexes |' +\
                  'relative | cumulative accessible complexes | relative\n'
@@ -327,9 +390,9 @@ def main():
                     int(cum_complexes[n]), cum_complexes[n]/norm))
 
     # writing out violations
-    violations = results['violations']
+    violations = dv.violations
     cum_violations = violations[::-1].cumsum(axis=0)[::-1]
-    with open(join(args.directory, 'violations.out'), 'w') as f_viol:
+    with open(joiner('violations.out'), 'w') as f_viol:
         write('Writing violations to file: {:s}'.format(f_viol.name))
         num_violations = violations.sum(axis=1)
         nrestraints = num_violations.shape[0]
@@ -355,7 +418,10 @@ def main():
     while accessible_complexes[-n] == 0:
         n += 1
     if n > 1:
-        write('Not all restraints are consistent. Number of false-positive restraints present is at least: {:d}'.format(n - 1))
+        msg = ('Not all restraints are consistent. '
+               'Number of false-positive restraints present '
+               'is at least: {:d}'.format(n - 1))
+        write(msg)
 
     # next give possible false-positives based on the percentage of violations
     # and their associated Z-score
@@ -366,7 +432,8 @@ def main():
     percentage_violated = cum_violations[:n]/np.asarray(cum_complexes[1:n]).reshape(-1, 1)
     average_restraint_violation = percentage_violated.mean(axis=0)
     std_restraint_violation = percentage_violated.std(axis=0)
-    zscore_violations = (average_restraint_violation - average_restraint_violation.mean())/average_restraint_violation.std()
+    zscore_violations = ((average_restraint_violation - average_restraint_violation.mean())
+            / average_restraint_violation.std())
     ind_false_positives = np.flatnonzero(zscore_violations >= 1.0)
     nfalse_positives = ind_false_positives.size
     if nfalse_positives > 0:
@@ -374,23 +441,30 @@ def main():
         write(('Possible false-positive restraints (z-score > 1.0):' +\
                 ' {:d}'*nfalse_positives).format(*tuple(ind_false_positives)))
 
-    with open(join(args.directory, 'z-score.out'), 'w') as f:
+    with open(joiner('z-score.out'), 'w') as f:
         write('Writing z-score of each restraint to {:s}'.format(f.name))
         for n in xrange(zscore_violations.shape[0]):
             f.write('{:2d} {:6.3f} {:6.3f} {:6.3f}\n'.format(n+1,
-                    average_restraint_violation[n], std_restraint_violation[n], zscore_violations[n]))
+                    average_restraint_violation[n], std_restraint_violation[n],
+                    zscore_violations[n]))
+
+            
+    # Write all occupancy grids to MRC-files if requested
+    #if args.occupancy_analysis:
+    #    for n, vol in dv.occupancy_grids.iteritems()
+    #        vol.tofile(joiner('occupancy_{:d}.mrc'.format(n)))
 
     # write out interaction analysis
-    interaction_matrix = results['interaction_matrix']
+    interaction_matrix = dv.interaction_matrix
     if interaction_matrix is not None:
 
         # save interaction matrix
-        f = join(args.directory, 'interaction_matrix.npy')
+        f = joiner('interaction_matrix.npy')
         write('Writing interaction-matrix to: {:s}'.format(f))
         np.save(f, interaction_matrix)
 
         # save contacted receptor residue interaction
-        with open(join(args.directory, 'receptor_interactions.out'), 'w') as f:
+        with open(joiner('receptor_interactions.out'), 'w') as f:
             write('Writing contacted receptor residue interactions to: {:s}'.format(f.name))
 
             f.write('#consistent-restraints cumulative-complexes')
