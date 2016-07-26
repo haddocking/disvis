@@ -29,39 +29,40 @@ def parse_args():
     p.add_argument('restraints', type=file,
             help='File containing the distance restraints')
 
-    p.add_argument('-a', '--angle', dest='angle', type=float, default=15,
+    p.add_argument('-a', '--angle', dest='angle', type=float, default=15, metavar='<float>',
             help='Rotational sampling density in degrees. Default is 15 degrees.')
 
-    p.add_argument('-vs', '--voxelspacing', dest='voxelspacing',
+    p.add_argument('-vs', '--voxelspacing', dest='voxelspacing', metavar='<float>',
             type=float, default=1,
             help='Voxel spacing of search grid in angstrom. Default is 1A.')
 
     p.add_argument('-ir', '--interaction-radius',
-            dest='interaction_radius', type=float, default=3.0,
+            dest='interaction_radius', type=float, default=3.0, metavar='<float>',
             help='Radius of the interaction space for each atom in angstrom. '
                  'Atoms are thus considered interacting if the distance is '
                  'larger than the vdW radius and shorther than or equal to '
                  'vdW + interaction_radius. Default is 3A.')
 
-    p.add_argument('-cv', '--max_clash',
-            dest='max_clash', type=float, default=200,
+    p.add_argument('-cv', '--max-clash',
+            dest='max_clash', type=float, default=200, metavar='<float>',
             help='Maximum allowed volume of clashes. Increasing this '
                  'number results in more allowed complexes. '
                  'Default is 200 A^3.')
 
     p.add_argument('-iv', '--min-interaction',
-            dest='min_interaction', type=float, default=300,
+            dest='min_interaction', type=float, default=300, metavar='<float>',
             help='Minimal required interaction volume for a '
                  'conformation to be considered a '
                  'complex. Increasing this number results in a '
                  'stricter counting of complexes. '
                  'Default is 300 A^3.')
 
-    p.add_argument('-d', '--directory', dest='directory', type=abspath, default='.',
+    p.add_argument('-d', '--directory', dest='directory', metavar='<dir>',
+            type=abspath, default='.',
             help='Directory where results are written to. '
                  'Default is current directory.')
 
-    p.add_argument('-p', '--nproc', dest='nproc', type=int, default=1,
+    p.add_argument('-p', '--nproc', dest='nproc', type=int, default=1, metavar='<int>',
             help='Number of processors used during search.')
 
     p.add_argument('-g', '--gpu', dest='gpu', action='store_true',
@@ -69,11 +70,19 @@ def parse_args():
                  'the CPU-version will be used with the given number '
                  'of processors.')
 
-    p.add_argument('-is', '--interaction-selection',
-            dest='interaction_selection', type=file, default=None)
+    help_msg = ("File containing residue number for which interactions will be counted. "
+                "The first line holds the receptor residue, "
+                "and the second line the ligand residue numbers.")
+    p.add_argument('-is', '--interaction-selection', metavar='<file>',
+            dest='interaction_selection', type=file, default=None,
+            help=help_msg)
 
-    p.add_argument('-ic', '--interaction-restraints-cutoff',
-            dest='interaction_restraints_cutoff', type=int, default=None)
+    help_msg = ("Number of minimal consistent restraints for which an interaction "
+                "or occupancy analysis will be performed. "
+                "Default is number of restraints minus 1.")
+    p.add_argument('-ic', '--interaction-restraints-cutoff', metavar='<int>',
+            dest='interaction_restraints_cutoff', type=int, default=None,
+            help=help_msg)
 
     p.add_argument('-oa', '--occupancy-analysis', dest='occupancy_analysis',
             action='store_true',
@@ -82,7 +91,6 @@ def parse_args():
                   "normalized probability of that spot being occupied by the ligand."
                   )
             )
-
 
     return p.parse_args()
 
@@ -96,9 +104,6 @@ def parse_interaction_selection(fid, pdb1, pdb2):
 
     pdb1_sel = pdb1.select('name', 'CA').select('resi', resi1)
     pdb2_sel = pdb2.select('name', 'CA').select('resi', resi2)
-
-    print(pdb1_sel.natoms)
-    print(pdb2_sel.natoms)
 
     return pdb1_sel, pdb2_sel
 
@@ -120,10 +125,10 @@ def parse_restraints(fid, pdb1, pdb2):
         pdb2_sel = pdb2.select('chain', chain2).select('resi',
                 int(resi2)).select('name', name2).duplicate()
 
-        if pdb1_sel.natoms > 0 and pdb2_sel.natoms > 0:
-            dist_restraints.append([pdb1_sel, pdb2_sel, float(mindis), float(maxdis)])
-        else:
+        if not (pdb1_sel.natoms > 0 and pdb2_sel.natoms > 0):
             raise ValueError("A restraint selection was not found in line:\n{:s}".format(str(line)))
+
+        dist_restraints.append([pdb1_sel, pdb2_sel, float(mindis), float(maxdis)])
 
     fid.close()
     return dist_restraints
@@ -159,15 +164,16 @@ def run_disvis_instance(queue, receptor, ligand, distance_restraints, rotmat,
     dv.interaction_radius = args.interaction_radius
     dv.max_clash = args.max_clash
     dv.min_interaction = args.min_interaction
+    dv.interaction_restraints_cutoff = args.interaction_restraints_cutoff
 
     if args.interaction_selection is not None:
         dv.receptor_interaction_selection = pdb1_sel
         dv.ligand_interaction_selection = pdb2_sel
-        dv.interaction_restraints_cutoff = args.interaction_restraints_cutoff
     dv.occupancy_analysis = args.occupancy_analysis
 
     dv.search()
 
+    # Save results to file, to be combined later
     joiner = Joiner(args.directory)
     fname = joiner('accessible_interaction_space_{:d}.mrc').format(n)
     dv.accessible_interaction_space.tofile(fname)
@@ -178,6 +184,11 @@ def run_disvis_instance(queue, receptor, ligand, distance_restraints, rotmat,
     if dv.interaction_matrix is not None:
         fname = joiner('interaction_matrix_{:d}.npy'.format(n))
         np.save(fname, dv.interaction_matrix)
+
+    if dv.occupancy_analysis:
+        for key, value in dv.occupancy_grids.iteritems():
+            fname = joiner('occupancy_{:d}_{:d}.mrc'.format(key, n))
+            value.tofile(fname)
 
     queue.put(dv.accessible_complexes)
 
@@ -240,17 +251,28 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
     accessible_complexes = np.asarray(queue.get(), dtype=np.float64)
     accessible_interaction_space = Volume.fromfile(fname_interspace.format(0))
     violations = np.load(fname_violations.format(0))
-    for n in range(1, jobs):
+    for n in xrange(1, jobs):
         accessible_complexes += np.asarray(queue.get(), dtype=np.float64)
         np.maximum(accessible_interaction_space.array,
                 Volume.fromfile(fname_interspace.format(n)).array,
                 accessible_interaction_space.array)
         violations += np.load(fname_violations.format(n))
 
-    # TODO
     # Combine the occupancy grids
+    occupancy = None
+    if args.occupancy_analysis:
+        fname_occupancy = joiner('occupancy_{:d}_{:d}.mrc')
+        occupancy = {}
+        for consistent_restraints in xrange(args.interaction_restraints_cutoff, len(distance_restraints) + 1):
+            occupancy[consistent_restraints] = Volume.fromfile(
+                    fname_occupancy.format(consistent_restraints, 0))
+            for n in range(1, jobs):
+                np.maximum(occupancy[consistent_restraints].array,
+                        Volume.fromfile(fname_occupancy.format(consistent_restraints, n)).array,
+                        occupancy[consistent_restraints].array)
 
-    # combine the interaction analysis
+
+    # Combine the interaction analysis
     results.interaction_matrix = None
     if args.interaction_selection is not None:
         interaction_matrix = np.load(fname_intermat.format(0))
@@ -258,16 +280,21 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
             interaction_matrix += np.load(fname_intermat.format(n))
         results.interaction_matrix = interaction_matrix
             
+    # Remove the intermediate files
     write('Cleaning')
-    for n in range(jobs):
+    for n in xrange(jobs):
         remove(fname_interspace.format(n))
         remove(fname_violations.format(n))
         if args.interaction_selection is not None:
             remove(fname_intermat.format(n))
+        for consistent_restraints in xrange(
+                args.interaction_restraints_cutoff, len(distance_restraints) + 1):
+            remove(fname_occupancy.format(consistent_restraints, n))
 
     results.accessible_interaction_space = accessible_interaction_space
     results.accessible_complexes = accessible_complexes
     results.violations = violations
+    results.occupancy_grids = occupancy
 
     return results
 
@@ -289,11 +316,11 @@ def run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints,
     dv.min_interaction = args.min_interaction
     dv.queue = queue
     dv.occupancy_analysis = args.occupancy_analysis
+    dv.interaction_restraints_cutoff = args.interaction_restraints_cutoff
 
     if not any([x is None for x in (pdb1_sel, pdb2_sel)]):
         dv.receptor_interaction_selection = pdb1_sel
         dv.ligand_interaction_selection = pdb2_sel
-        dv.interaction_restraints_cutoff = args.interaction_restraints_cutoff
     dv.search()
 
     return dv
@@ -310,8 +337,9 @@ def main():
     args = parse_args()
 
     mkdir_p(args.directory)
+    joiner = Joiner(args.directory)
 
-    logging.basicConfig(filename=join(args.directory, 'disvis.log'),
+    logging.basicConfig(filename=joiner('disvis.log'),
             level=logging.INFO, format='%(asctime)s %(message)s')
 
     time0 = time()
@@ -369,7 +397,6 @@ def main():
                  run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints, args)
 
     # write out accessible interaction space
-    joiner = Joiner(args.directory)
     fname = joiner('accessible_interaction_space.mrc')
     write('Writing accessible interaction space to: {:s}'.format(fname))
     dv.accessible_interaction_space.tofile(fname)
@@ -411,8 +438,8 @@ def main():
                 f_viol.write('{:8.4f}'.format(percentage_violated))
             f_viol.write('\n')
 
-    # give user indication for false positives
-    # determine minimum number of false positives
+    # Give user indication for false positives.
+    # Determine minimum number of false positives.
     nrestraints = len(distance_restraints)
     n = 1
     while accessible_complexes[-n] == 0:
@@ -450,63 +477,43 @@ def main():
 
             
     # Write all occupancy grids to MRC-files if requested
-    #if args.occupancy_analysis:
-    #    for n, vol in dv.occupancy_grids.iteritems()
-    #        vol.tofile(joiner('occupancy_{:d}.mrc'.format(n)))
+    if args.occupancy_analysis:
+        for n, vol in dv.occupancy_grids.iteritems():
+            vol.tofile(joiner('occupancy_{:d}.mrc'.format(n)))
 
-    # write out interaction analysis
+    # Write out interaction analysis
     interaction_matrix = dv.interaction_matrix
     if interaction_matrix is not None:
 
-        # save interaction matrix
+        # Save interaction matrix
         f = joiner('interaction_matrix.npy')
         write('Writing interaction-matrix to: {:s}'.format(f))
         np.save(f, interaction_matrix)
 
-        # save contacted receptor residue interaction
-        with open(joiner('receptor_interactions.out'), 'w') as f:
-            write('Writing contacted receptor residue interactions to: {:s}'.format(f.name))
+        # Save contacted receptor and ligand residue interaction for each analyzed number
+        # of consistent restraints
+        write('Writing contacted receptor residue interactions to files.')
+        receptor_cum_interactions = interaction_matrix.sum(axis=1)[::-1].cumsum(axis=0)[::-1]
+        ligand_cum_interactions = interaction_matrix.sum(axis=2)[::-1].cumsum(axis=0)[::-1]
+        for consistent_restraints in xrange(args.interaction_restraints_cutoff, nrestraints + 1):
+            index = consistent_restraints - args.interaction_restraints_cutoff
 
-            f.write('#consistent-restraints cumulative-complexes')
-            for n in pdb1_sel.data['resi']:
-                f.write(' {:d}'.format(n))
-            f.write('\n')
-
-            cum_interactions = interaction_matrix.sum(axis=1)[::-1].cumsum(axis=0)[::-1]
-            for n in xrange(interaction_matrix.shape[0]):
-                # do not write out interactions that have not been analyzed
-                interactions = interaction_matrix[n].sum(axis=0)
-                if interactions.sum() == 0:
-                    continue
-
-                f.write('{:d} {:d}'.format(n + 1, int(cum_complexes[n + 1])))
-                for i in cum_interactions[n]:
-                    f.write(' {:d}'.format(int(i)))
-                f.write('\n')
-            
-        # save contacted ligand residue interactions
-        with open(join(args.directory, 'ligand_interactions.out'), 'w') as f:
-
-            write('Writing contacted ligand residue interactions to: {:s}'.format(f.name))
-
-            f.write('#consistent-restraints cumulative-complexes')
-            for n in pdb2_sel.data['resi']:
-                f.write(' {:d}'.format(n))
-            f.write('\n')
-
-            cum_interactions = interaction_matrix.sum(axis=2)[::-1].cumsum(axis=0)[::-1]
-            for n in xrange(interaction_matrix.shape[0]):
-
-                # do not write out interactions that have not been analyzed
-                interactions = interaction_matrix[n].sum(axis=1)
-                if interactions.sum() == 0:
-                    continue
-
-                f.write('{:d} {:d}'.format(n + 1, int(cum_complexes[n + 1])))
-                for i in cum_interactions[n]:
-                    f.write(' {:d}'.format(int(i)))
-                f.write('\n')
-
+            # Receptor
+            fname = joiner('receptor_interactions_{:d}.txt'.format(consistent_restraints))
+            with open(fname, 'w') as f:
+                tmp = zip(pdb1_sel.data['resi'].tolist(), receptor_cum_interactions[index].tolist())
+                for resi, interactions in tmp:
+                    relative_interactions = interactions / cum_complexes[consistent_restraints]
+                    f.write('{:d} {:.3f}\n'.format(resi, relative_interactions))
+                
+            # Ligand
+            fname = joiner('ligand_interactions_{:d}.txt'.format(consistent_restraints))
+            with open(fname, 'w') as f:
+                tmp = zip(pdb2_sel.data['resi'].tolist(), ligand_cum_interactions[index].tolist())
+                for resi, interactions in tmp:
+                    relative_interactions = interactions / cum_complexes[consistent_restraints]
+                    f.write('{:d} {:.3f}\n'.format(resi, relative_interactions))
+                
     # time indication
     seconds = int(round(time() - time0))
     m, s = divmod(seconds, 60)

@@ -1,7 +1,6 @@
 from __future__ import print_function, absolute_import, division
 from sys import stdout as _stdout
 from time import clock as _clock
-from collections import defaultdict
 
 import numpy as np
 from numpy.fft import rfftn as np_rfftn, irfftn as np_irfftn
@@ -82,11 +81,14 @@ class DisVis(object):
         self.violations = self._violations
 
         if self.occupancy_analysis:
+            self.occupancy_grids = {}
             for i in xrange(self._nrestraints + 1):
-                self.occupancy_grids = defaultdict(None)
-                occ_grid = self._occ_grid[i]
+                try:
+                    occ_grid = self._occ_grid[i]
+                except KeyError:
+                    occ_grid = None
                 if occ_grid is not None:
-                    self.occupancy_grids[i] = Volume(occ_grid, self.voxelspacing, self._origin)
+                    self.occupancy_grids[i] = volume.Volume(occ_grid, self.voxelspacing, self._origin)
 
         if self._interaction_analysis:
             self.interaction_matrix = self._interaction_matrix
@@ -160,7 +162,7 @@ class DisVis(object):
             self.interaction_restraints_cutoff = self._nrestraints - cutoff
 
         # Allocate an occupancy grid for all restraints that are being investigated
-        self._occ_grid = defaultdict(None)
+        self._occ_grid = {}
         if self.occupancy_analysis:
             for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
                 self._occ_grid[i] = np.zeros(self._shape, np.float64)
@@ -372,7 +374,9 @@ class DisVis(object):
         # Normalize the occupancy grids
         if self.occupancy_analysis:
             for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
-                self._occ_grid[i] /= self._consistent_complexes[i:].sum()
+                total_complexes = self._consistent_complexes[i:].sum()
+                if total_complexes > 0:
+                    self._occ_grid[i] /= total_complexes
         
     @staticmethod
     def _print_progress(n, total, time0):
