@@ -5,7 +5,7 @@ from collections import Iterable
 import numpy as np
 from .IO.pdb import parse_pdb, write_pdb
 from .IO.mmcif import parse_cif
-from .atompar import parameters as atompar
+from .elements import ELEMENTS
 
 class PDB(object):
 
@@ -34,7 +34,7 @@ class PDB(object):
     @property
     def atomnumber(self):
         elements, ind = np.unique(self.data['element'], return_inverse=True)
-        atomnumbers = np.asarray([atompar[e]['Z'] for e in elements], dtype=np.float64)
+        atomnumbers = np.asarray([ELEMENTS[e].number for e in elements], dtype=np.float64)
         return atomnumbers[ind]
 
 
@@ -77,7 +77,7 @@ class PDB(object):
     @property
     def mass(self):
         elements, ind = np.unique(self.data['element'], return_inverse=True)
-        mass = np.asarray([atompar[e]['mass'] for e in elements], dtype=np.float64)
+        mass = np.asarray([ELEMENTS[e].mass for e in elements], dtype=np.float64)
         return mass[ind]
 
 
@@ -148,5 +148,5 @@ class PDB(object):
     @property
     def vdw_radius(self):
         elements, ind = np.unique(self.data['element'], return_inverse=True)
-        rvdw = np.asarray([atompar[e]['rvdW'] for e in elements], dtype=np.float64)
+        rvdw = np.asarray([ELEMENTS[e].vdwrad for e in elements], dtype=np.float64)
         return rvdw[ind]

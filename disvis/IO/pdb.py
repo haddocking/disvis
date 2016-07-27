@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import numpy as np
 
 def parse_pdb(pdbfile):
@@ -10,80 +12,52 @@ def parse_pdb(pdbfile):
         raise TypeError('Input should either be a file or string.')
 
     ATOM = "ATOM "
+    HETATM = "HETATM"
     MODEL = "MODEL "
 
-    model = []
-    serial = []
-    name = []
-    alt_loc = []
-    res_name = []
-    chain_id = []
-    res_seq = []
-    i_code = []
-    x = []
-    y = []
-    z = []
-    occupancy = []
-    temp_factor = []
-    element = []
-    charge = []
+    pdb = defaultdict(list)
 
     model_number = 1
-
     for line in pdbfile:
 
         if line.startswith(MODEL):
             model_number = int(line[10:14])
 
-        elif line.startswith(ATOM):
+        elif line.startswith((ATOM, HETATM)):
 
-            model.append(model_number)
-            serial.append(int(line[6:11].strip()))
-            name.append(line[12:16].strip())
-            alt_loc.append(line[16])
-            res_name.append(line[17:20])
-            chain_id.append(line[21])
-            res_seq.append(int(line[22:26]))
-            i_code.append(line[26])
-            x.append(float(line[30:38]))
-            y.append(float(line[38:46]))
-            z.append(float(line[46:54]))
-            occupancy.append(float(line[54:60]))
-            temp_factor.append(float(line[60:66]))
+            pdb['model'].append(model_number)
+            pdb['atom_id'].append(int(line[6:11].strip()))
+            pdb['name'].append(line[12:16].strip())
+            pdb['alt_loc'].append(line[16])
+            pdb['resn'].append(line[17:20])
+            pdb['chain'].append(line[21])
+            pdb['resi'].append(int(line[22:26]))
+            pdb['i_code'].append(line[26])
+            pdb['x'].append(float(line[30:38]))
+            pdb['y'].append(float(line[38:46]))
+            pdb['z'].append(float(line[46:54]))
+            pdb['occupancy'].append(float(line[54:60]))
+            pdb['bfactor'].append(float(line[60:66]))
             e = line[76:78].strip()
             if not e:
                 e = line[12:16].strip()[0]
-            element.append(e)
-            charge.append(line[78:80])
+            pdb['element'].append(e)
+            pdb['charge'].append(line[78:80])
 
-            tmp = line[76:78].strip()
-            if not tmp:
-                tmp = line[12:16].strip()[0]
-
-    natoms = len(name)
+    natoms = len(pdb['name'])
     dtype = [('atom_id', np.int64), ('name', np.str_, 4), 
              ('resn', np.str_, 4), ('chain', np.str_, 1), 
              ('resi', np.int64), ('x', np.float64),
              ('y', np.float64), ('z', np.float64), 
              ('occupancy', np.float64), ('bfactor', np.float64),
              ('element', np.str_, 2), ('charge', np.str_, 2),
-             ('model', np.int64),
+             ('model', np.int64), ('i_code', np.str_, 1),
+             ('alt_loc', np.str_, 1)
              ]
              
     pdbdata = np.zeros(natoms, dtype=dtype)
-    pdbdata['atom_id'] = np.asarray(serial, dtype=np.int64)
-    pdbdata['name'] = name
-    pdbdata['resn'] = res_name
-    pdbdata['chain'] = chain_id
-    pdbdata['resi'] = res_seq
-    pdbdata['x'] = x
-    pdbdata['y'] = y
-    pdbdata['z'] = z
-    pdbdata['occupancy'] = occupancy
-    pdbdata['bfactor'] = temp_factor
-    pdbdata['element'] = element
-    pdbdata['charge'] = charge
-    pdbdata['model'] = model
+    for key, value in pdb.iteritems():
+        pdbdata[key] = value
 
     return pdbdata
 

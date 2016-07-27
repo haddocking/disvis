@@ -125,7 +125,7 @@ def parse_restraints(fid, pdb1, pdb2):
         pdb2_sel = pdb2.select('chain', chain2).select('resi',
                 int(resi2)).select('name', name2).duplicate()
 
-        if not (pdb1_sel.natoms > 0 and pdb2_sel.natoms > 0):
+        if pdb1_sel.natoms == 0 or pdb2_sel.natoms == 0:
             raise ValueError("A restraint selection was not found in line:\n{:s}".format(str(line)))
 
         dist_restraints.append([pdb1_sel, pdb2_sel, float(mindis), float(maxdis)])
@@ -287,9 +287,10 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
         remove(fname_violations.format(n))
         if args.interaction_selection is not None:
             remove(fname_intermat.format(n))
-        for consistent_restraints in xrange(
-                args.interaction_restraints_cutoff, len(distance_restraints) + 1):
-            remove(fname_occupancy.format(consistent_restraints, n))
+        if args.occupancy_analysis:
+            for consistent_restraints in xrange(
+                    args.interaction_restraints_cutoff, len(distance_restraints) + 1):
+                remove(fname_occupancy.format(consistent_restraints, n))
 
     results.accessible_interaction_space = accessible_interaction_space
     results.accessible_complexes = accessible_complexes

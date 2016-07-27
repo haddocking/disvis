@@ -111,8 +111,8 @@ The general pattern to invoke *disvis* is
 
     disvis <pdb1> <pdb2> <distance-restraints-file>
 
-where \<pdb1\> is the fixed chain, \<pdb2\> is the scanning chain and 
-\<distance-restraints-file\> is a text-file
+where `<pdb1>` is the fixed chain, `<pdb2>` is the scanning chain and 
+`<distance-restraints-file>` is a text-file
 containing the distance restraints in the following format
 
      <chainid 1> <resid 1> <atomname 1> <chainid 2> <resid 2> <atomname 2> <mindis> <maxdis>
@@ -182,6 +182,9 @@ quantifying accessible interaction space of distance restrained biomolecular com
 *Bioinformatics* (submitted).
 
 MIT licence
+
+The elements.py module is licenced under the MIT License, Copyright Christoph
+Gohlke.
 
 
 ## Tested platforms
