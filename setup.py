@@ -1,10 +1,11 @@
 #! env/bin/python
+import os.path
 from distutils.core import setup
 from distutils.extension import Extension
+
 from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 import numpy
-import os.path
 
 packages = ['disvis', 'disvis.IO']
 
@@ -14,8 +15,8 @@ ext_modules = [Extension("disvis.libdisvis",
               )]
 
 package_data = {'disvis': [os.path.join('data', '*.npy'), 
-                           os.path.join('IO', '*.py'),
-                           os.path.join('kernels', '*.cl')]}
+                           'kernels.cl'],
+                           }
 
 scripts = [os.path.join('scripts', 'disvis')]
 

@@ -1,194 +1,146 @@
-from __future__ import print_function
-import unittest
-import numpy as np
-from numpy.random import randint
+from unittest import TestCase, main
 
+import numpy as np
 import pyopencl as cl
 import pyopencl.array as cl_array
+
 from disvis.helpers import get_queue
 from disvis.kernels import Kernels
 
-class TestKernels(unittest.TestCase):
+class TestKernels(TestCase):
     
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         self.queue = get_queue()
-        self.kernels = Kernels(self.queue.context)
-        
-    def test_rotate_image3d_0(self):
-        
-        shape = (8, 6, 5)
-        np_image = np.zeros(shape, dtype=np.float32)
-        np_image[0, 0, 0] = 1
-        np_image[0, 0, 1] = 1
-        np_image[0, 0, 2] = 1
+        self.shape = (5, 4, 3)
+        self.size = 5 * 4 * 3
+        self.values = {'interaction_cutoff' : 1,
+                       'nrestraints': 3,
+                       'shape_x': self.shape[2],
+                       'shape_y': self.shape[1],
+                       'shape_z': self.shape[0],
+                       'llength': 1,
+                       'nreceptor_coor': 2,
+                       'nligand_coor': 2,
+                       }
+        self.p = Kernels(self.queue.context, self.values)
 
-        rotmat = [[1, 0, 0],
-                  [0, 1, 0],
-                  [0, 0, 1]]
+    def test_rotate_grid3d(self):
+        k = self.p.kernels.rotate_grid3d
+        rotmat = np.asarray([1, 0, 0, 0, 1, 0, 0, 0, 1] + [0] * 7, dtype=np.float32)
+        self.cl_grid = cl_array.zeros(self.queue, self.shape, dtype=np.float32)
+        self.cl_grid.fill(1)
+        self.cl_out = cl_array.zeros(self.queue, self.shape, dtype=np.float32)
+        args = (self.cl_grid.data, rotmat, self.cl_out.data)
+        gws = tuple([2 * self.values['llength'] + 1] * 3)
+        k(self.queue, gws, None, *args)
+        answer = [[[ 1.,  1.,  1.], [ 1.,  0.,  0.], [ 0.,  0.,  0.], [ 1.,  0.,  0.]], 
+                  [[ 1.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.]],
+                  [[ 0.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.]],
+                  [[ 0.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.]],
+                  [[ 1.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.]]]
 
-        np_out = np.zeros_like(np_image)
+        self.assertTrue(np.allclose(answer, self.cl_out.get()))
 
-        cl_image = cl.image_from_array(self.queue.context, np_image)
-        cl_out = cl_array.to_device(self.queue, np_out)
-        cl_sampler = cl.Sampler(self.queue.context, False, cl.addressing_mode.CLAMP, cl.filter_mode.LINEAR)
+    def test_dilate_point_add(self):
+        k = self.p.kernels.dilate_point_add
 
-        self.kernels.rotate_image3d(self.queue, cl_sampler, cl_image, rotmat, cl_out)
+        center = np.array([[0, 0, 0, 0], [0, 0, 0, 0], [2, 3, 4, 0]], dtype=np.float32)
 
-        self.assertTrue(np.allclose(np_image, cl_out.get()))
+        cl_center = cl_array.to_device(self.queue, center)
+        cl_mindis = cl_array.zeros(self.queue, 3, dtype=np.float32)
+        cl_maxdis = cl_array.to_device(self.queue,
+                np.array([1, 2, 1], dtype=np.float32))
+        cl_out = cl_array.zeros(self.queue, self.shape, dtype=np.int32)
 
-    def test_rotate_image3d_1(self):
-        
-        shape = (8, 6, 5)
-        np_image = np.zeros(shape, dtype=np.float32)
-        np_image[0, 0, 0] = 1
-        np_image[0, 0, 1] = 1
-        np_image[0, 0, 2] = 1
+        args = (cl_center.data, cl_mindis.data, cl_maxdis.data, np.int32(0), cl_out.data)
+        k(self.queue, (5, 5, 5), None, *args)
+        answer = [[[1, 1, 0], [1, 0, 0], [0, 0, 0], [0, 0, 0]],
+                  [[1, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+                  [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+                  [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+                  [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]]
+        self.assertTrue(np.allclose(answer, cl_out.get()))
 
-        # 90 degree rotation around z-axis
-        rotmat = [[0, 1, 0],
-                  [1, 0, 0],
-                  [0, 0, 1]]
+        args = (cl_center.data, cl_mindis.data, cl_maxdis.data, np.int32(1), cl_out.data)
+        k(self.queue, (5, 5, 5), None, *args)
+        answer = [[[2, 2, 1], [2, 1, 0], [1, 0, 0], [0, 0, 0]],
+                  [[2, 1, 0], [1, 1, 0], [0, 0, 0], [0, 0, 0]],
+                  [[1, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+                  [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+                  [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]]
+        self.assertTrue(np.allclose(answer, cl_out.get()))
 
-        np_out = np.zeros_like(np_image)
+        args = (cl_center.data, cl_mindis.data, cl_maxdis.data, np.int32(2), cl_out.data)
+        k(self.queue, (5, 5, 5), None, *args)
+        answer = [[[2, 2, 1], [2, 1, 0], [1, 0, 0], [0, 0, 0]],
+                  [[2, 1, 0], [1, 1, 0], [0, 0, 0], [0, 0, 0]],
+                  [[1, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
+                  [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 1]],
+                  [[0, 0, 0], [0, 0, 0], [0, 0, 1], [0, 1, 1]]]
+        self.assertTrue(np.allclose(answer, cl_out.get()))
 
-        expected = np.zeros_like(np_image)
-        expected[0, 0, 0] = 1
-        expected[0, 1, 0] = 1
-        expected[0, 2, 0] = 1
+    def test_histogram(self):
+        k = self.p.kernels.histogram
+        data = np.repeat(range(self.values['nrestraints'] + 1), 
+                self.size / (self.values['nrestraints'] + 1)).astype(np.int32)
+        cl_data = cl_array.to_device(self.queue, data)
+        cl_hist = cl_array.zeros(self.queue, self.values['nrestraints'], dtype=np.int32)
+        args = (cl_data.data, cl_hist.data)
+        k(self.queue, (12,), (12,), *args)
+        answer = [15, 15, 15]
+        self.assertTrue(np.allclose(answer, cl_hist.get()))
 
-        cl_image = cl.image_from_array(self.queue.context, np_image)
-        cl_out = cl_array.to_device(self.queue, np_out)
-        cl_sampler = cl.Sampler(self.queue.context, False, cl.addressing_mode.CLAMP, cl.filter_mode.LINEAR)
+    def test_count_violations(self):
+        k = self.p.kernels.count_violations
 
-        self.kernels.rotate_image3d(self.queue, cl_sampler, cl_image, rotmat, cl_out)
+        center = np.asarray([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=np.float32)
+        mindis2 = np.asarray([0, 0, 0], dtype=np.float32)
+        maxdis2 = np.asarray([1, 1, 1], dtype=np.float32)
+        interspace = np.zeros(self.shape, dtype=np.int32)
+        interspace[-1, 0, 0] = 1
+        interspace[-1, -1, 0] = 2
+        interspace[-1, -1, -1] = 2
 
-        self.assertTrue(np.allclose(expected, cl_out.get()))
+        cl_center = cl_array.to_device(self.queue, center)
+        cl_mindis2 = cl_array.to_device(self.queue, mindis2)
+        cl_maxdis2 = cl_array.to_device(self.queue, maxdis2)
+        cl_interspace = cl_array.to_device(self.queue, interspace)
+        cl_viol = cl_array.zeros(self.queue, self.values['nrestraints'] ** 2, dtype=np.int32)
 
-    def test_dilate_points_add_0(self):
-        
-        shape = (8, 7, 6)
+        args = (cl_center.data, cl_mindis2.data, cl_maxdis2.data,
+                cl_interspace.data, cl_viol.data)
+        gws = (10, 10, 10)
+        lws = (10, 1, 1)
+        k(self.queue, gws, lws, *args)
+        answer = [[1, 1, 1], [2, 2, 2], [0, 0, 0]]
+        self.assertTrue(np.allclose(answer, cl_viol.get().reshape(3, 3)))
 
-        np_constraints = np.asarray([[3, 3, 3, 0, 0, 0, 1, 0]], dtype=np.float32)
-        rotmat = [[1, 0, 0],
-                  [0, 1, 0],
-                  [0, 0, 1]]
-        np_out = np.zeros(shape, dtype=np.int32)
+    def test_count_interactions(self):
 
-        cl_constraints = cl_array.to_device(self.queue, np_constraints)
-        cl_out = cl_array.to_device(self.queue, np_out)
+        k = self.p.kernels.count_interactions
+        receptor = np.asarray([[0, 0, 0, 0], [1, 0, 0, 0]], dtype=np.float32)
+        ligand = np.asarray([[0, 0, 0, 0], [10, 0, 0, 0]], dtype=np.float32)
+        interspace = np.zeros(self.shape, dtype=np.int32)
+        nconsistent = np.int32(1)
+        hist = np.zeros(self.values['nreceptor_coor'] + self.values['nligand_coor'], 
+                dtype=np.int32)
 
-        self.kernels.dilate_points_add(self.queue, cl_constraints, rotmat, cl_out)
+        interspace[0, 0, 0] = 1
 
-        expected = np.zeros_like(np_out)
-        expected[3, 3, 2:5] = 1
-        expected[3, 2:5, 3] = 1
-        expected[2:5, 3, 3] = 1
+        cl_receptor = cl_array.to_device(self.queue, receptor)
+        cl_ligand = cl_array.to_device(self.queue, ligand)
+        cl_interspace = cl_array.to_device(self.queue, interspace)
+        cl_hist = cl_array.to_device(self.queue, hist)
 
-        self.assertTrue(np.allclose(expected, cl_out.get()))
-         
-    def test_dilate_points_add_1(self):
-        
-        shape = (8, 7, 6)
+        args = (cl_receptor.data, cl_ligand.data, cl_interspace.data,
+                nconsistent, cl_hist.data)
+        k(self.queue, (10, 10, 10), (10, 1, 1), *args)
 
-        np_constraints = np.asarray([[3, 3, 3, 1, 1, 1, 1, 0]], dtype=np.float32)
-        rotmat = [[1, 0, 0],
-                  [0, 1, 0],
-                  [0, 0, 1]]
-        np_out = np.zeros(shape, dtype=np.int32)
-
-        cl_constraints = cl_array.to_device(self.queue, np_constraints)
-        cl_out = cl_array.to_device(self.queue, np_out)
-
-        self.kernels.dilate_points_add(self.queue, cl_constraints, rotmat, cl_out)
-
-        expected = np.zeros_like(np_out)
-        expected[2, 2, 1:4] = 1
-        expected[2, 1:4, 2] = 1
-        expected[1:4, 2, 2] = 1
-
-        self.assertTrue(np.allclose(expected, cl_out.get()))
-
-    def test_dilate_points_add_2(self):
-        
-        SHAPE = (8, 7, 6)
-        CONSTRAINTS = [[3, 3, 3, 1, 1, 1, 1, 0],
-                       [3, 3, 3, 1, 1, 1, 1, 0]]
-
-        np_constraints = np.asarray(CONSTRAINTS, dtype=np.float32)
-        rotmat = [[1, 0, 0],
-                  [0, 1, 0],
-                  [0, 0, 1]]
-        np_out = np.zeros(SHAPE, dtype=np.int32)
-
-        cl_constraints = cl_array.to_device(self.queue, np_constraints)
-        cl_out = cl_array.to_device(self.queue, np_out)
-
-        self.kernels.dilate_points_add(self.queue, cl_constraints, rotmat, cl_out)
-
-        expected = np.zeros_like(np_out)
-        expected[2, 2, 1:4] = len(CONSTRAINTS)
-        expected[2, 1:4, 2] = len(CONSTRAINTS)
-        expected[1:4, 2, 2] = len(CONSTRAINTS)
-
-        self.assertTrue(np.allclose(expected, cl_out.get()))
-
-    def test_count_0(self):
-        
-        nrepeats = 3
-        shape = [5, 5, 5]
-
-        np_interspace = randint(2, size=shape).astype(np.int32)
-        np_access_interspace = randint(nrepeats, size=shape).astype(np.int32)
-        np_count = np.zeros([nrepeats] + shape, dtype=np.float32)
-        weight = 0.5
-
-        expected = np.zeros_like(np_count)
-        tmp = expected[0]
-        tmp[np_interspace == 1] += weight
-        for i in range(1, nrepeats):
-            tmp = expected[i]
-            tmp[np_access_interspace == i] += weight
+        answer = [1, 1, 2, 0]
+        test = np.allclose(answer, cl_hist.get())
+        self.assertTrue(test)
 
 
-        cl_interspace = cl_array.to_device(self.queue, np_interspace)
-        cl_access_interspace = cl_array.to_device(self.queue, np_access_interspace)
-        cl_count = cl_array.to_device(self.queue, np_count)
-
-        self.kernels.count(self.queue, cl_interspace, cl_access_interspace, weight, cl_count)
-
-        self.assertTrue(np.allclose(expected, cl_count.get()))
-
-    def test_count_1(self):
-        
-        nrepeats = 3
-        shape = [5, 5, 5]
-
-        np_interspace = randint(2, size=shape).astype(np.int32)
-        np_access_interspace = randint(nrepeats, size=shape).astype(np.int32)
-        np_count = np.ones([nrepeats] + shape, dtype=np.float32)
-        weight = 0.5
-
-        expected = np.ones_like(np_count)
-        tmp = expected[0]
-        tmp[np_interspace == 1] += weight
-        for i in range(1, nrepeats):
-            tmp = expected[i]
-            tmp[np_access_interspace == i] += weight
-
-
-        cl_interspace = cl_array.to_device(self.queue, np_interspace)
-        cl_access_interspace = cl_array.to_device(self.queue, np_access_interspace)
-        cl_count = cl_array.to_device(self.queue, np_count)
-
-        self.kernels.count(self.queue, cl_interspace, cl_access_interspace, weight, cl_count)
-
-        self.assertTrue(np.allclose(expected, cl_count.get()))
-
-
-if __name__=='__main__':
-    unittest.main()
-
-
-
-
-        
+if __name__ == '__main__':
+    main()
