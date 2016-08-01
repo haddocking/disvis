@@ -1,4 +1,5 @@
 import numpy as np
+import re
 
 def parse_pdb(pdbfile):
 
@@ -52,7 +53,7 @@ def parse_pdb(pdbfile):
             temp_factor.append(float(line[60:66]))
             e = line[76:78].strip()
             if not e:
-                e = line[12:16].strip()[0]
+                e = line[12:16][re.search("[a-z,A-Z]",line[12:16]).start()]
             element.append(e)
             charge.append(line[78:80])
 

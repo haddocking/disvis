@@ -175,7 +175,10 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints, args):
         processes[n].join()
     write('Searching done. Combining results')
 
-    # combine the results from all jobs
+    if queue.empty():
+        raise Queue.Empty
+
+    #combine the results from all jobs
     accessible_complexes = np.asarray(queue.get(), dtype=np.float64)
     accessible_interaction_space = Volume.fromfile(os.path.join(args.directory, 'accessible_interaction_space_0.mrc'))
     violations = np.load(os.path.join(args.directory, 'violations_0.npy'))
@@ -266,8 +269,12 @@ def main():
             write('No GPU queue was found. Falling back on CPU implementation.')
         # CPU-version
         if args.nproc > 1:
-            accessible_interaction_space, accessible_complexes, violations = \
+            try:
+                accessible_interaction_space, accessible_complexes, violations = \
                     mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints, args)
+            except Queue.Empty:
+                write('ERROR: Queue.Empty exception raised while processing job, stopping execution ...')
+                exit(-1)
         else:
             accessible_interaction_space, accessible_complexes, violations = \
                     run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints, args)
