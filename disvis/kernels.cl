@@ -316,8 +316,8 @@ void count_interactions(
     // consistent with nrestraints.
 
 
-    int x, y, z, ind_z, ind_zy, i, j;
-    local int l_hist[TOTAL_COOR];
+    int x, y, z, ind_z, ind_zy, i, j, k, offset;
+    local int l_hist[NRECEPTOR_COOR * NLIGAND_COOR];
     local float3 l_fixed_coor[NRECEPTOR_COOR];
     float3 coor;
     float dist2;
@@ -333,7 +333,7 @@ void count_interactions(
     size_t lstride = get_local_size(0);
 
     // Set local histogram to 0
-    for (i = lid; i < TOTAL_COOR; i += lstride)
+    for (i = lid; i < (NRECEPTOR_COOR * NLIGAND_COOR); i += lstride)
         l_hist[i] = 0;
     // Move fixed coor to local memory
     for (i = lid; i < NRECEPTOR_COOR; i += lstride)
@@ -358,25 +358,25 @@ void count_interactions(
                     coor.s0 = scanning_coor[i].s0 + x;
                     coor.s1 = scanning_coor[i].s1 + y;
                     coor.s2 = scanning_coor[i].s2 + z;
+                    offset = i * NLIGAND_COOR;
+
                     for (j = 0; j < NRECEPTOR_COOR; j++) {
                         dist2 = SQUARE(coor.s0 - l_fixed_coor[j].s0) +
                                 SQUARE(coor.s1 - l_fixed_coor[j].s1) +
                                 SQUARE(coor.s2 - l_fixed_coor[j].s2);
                         if (dist2 <= INTERACTION_CUTOFF2) {
                             // Increase the counter using atomics
-                            atomic_inc(l_hist + j);
-                            atomic_inc(l_hist + i + NRECEPTOR_COOR);
+                            atomic_inc(l_hist + offset + j);
                         }
                     }
                 }
             }
         }
     }
+    // Move counted interactions to global memory
+    for (k = lid; k < (NRECEPTOR_COOR * NLIGAND_COOR); k += lstride)
+        atomic_add(hist + k, l_hist[k]);
     barrier(CLK_LOCAL_MEM_FENCE);
-
-    // Combine the local histograms into the global memory
-    for (i = lid; i < TOTAL_COOR; i += lstride)
-        atomic_add(hist + i, l_hist[i]);
 }
 
 

@@ -179,8 +179,12 @@ class DisVis(object):
         if self._interaction_analysis:
             # Since calculating all interactions is costly, only analyze
             # solutions that are consistent with more than N restraints.
-            shape = (self._nrestraints - self.interaction_restraints_cutoff, 
-                    self._lgridcoor.shape[0], self._rgridcoor.shape[0])
+            self._lselect = (self.ligand_interaction_selection.coor -
+                    self.ligand_interaction_selection.center) / self.voxelspacing
+            self._rselect = (self.receptor_interaction_selection.coor -
+                    self._origin) / self.voxelspacing
+            shape = (self._nrestraints + 1 - self.interaction_restraints_cutoff, 
+                    self._lselect.shape[0], self._rselect.shape[0])
             self._interaction_matrix = np.zeros(shape, dtype=np.float64)
             self._sub_interaction_matrix = np.zeros(shape, dtype=np.int64)
 
@@ -238,9 +242,10 @@ class DisVis(object):
             setattr(self, "_" + arr, np.zeros(self._shape, np.bool))
 
         # Array for rotating points and restraint coordinates
-        self._rot_lgridcoor = np.zeros_like(self._lgridcoor)
         self._restraints_center = np.zeros_like(self._grid_restraints[:,3:6])
         self._rot_lrestraints = np.zeros_like(self._lrestraints)
+        if self._interaction_analysis:
+            self._rot_lselect = np.zeros_like(self._lselect)
 
         # Build the FFT's if we are using pyfftw
         if self._fftw:
@@ -314,10 +319,9 @@ class DisVis(object):
 
     def _get_interaction_matrix(self, rotmat, weight):
         # Rotate the ligand coordinates
-        #np.dot(self._lgridcoor, rotmat.T, self._rot_lgridcoor)
-        self._rot_lgridcoor = np.dot(self._lgridcoor, rotmat.T)
-        count_interactions(self._interspace, self._rgridcoor,
-                self._rot_lgridcoor, np.float64(self.interaction_distance / self.voxelspacing),
+        self._rot_lselect = np.dot(self._lselect, rotmat.T)
+        count_interactions(self._interspace, self._rselect,
+                self._rot_lselect, np.float64(self.interaction_distance / self.voxelspacing),
                 weight, np.int32(self.interaction_restraints_cutoff),
                 self._interaction_matrix)
 
@@ -448,7 +452,7 @@ class DisVis(object):
         self._cl_restraints_center = cl_array.zeros_like(self._cl_rrestraints)
 
         # kernels
-        kernel_constants = {'interaction_cutoff': 10, 
+        self._kernel_constants = {'interaction_cutoff': 10, 
                             'nrestraints': self._nrestraints,
                             'shape_x': self._shape[2],
                             'shape_y': self._shape[1],
@@ -481,27 +485,27 @@ class DisVis(object):
         # Interaction analysis
         if self._interaction_analysis:
             self._cl_interaction_hist = cl_array.zeros(self.queue,
-                    (self._rgridcoor.shape[0] + self._lgridcoor.shape[0]),
+                    (self._lselect.shape[0], self._rselect.shape[0]),
                     dtype=np.int32)
             self._cl_interaction_matrix = {}
-            shape = (self._rgridcoor.shape[0], self._lgridcoor.shape[0])
-            for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
-                self._cl_interaction_maxtrix[i] = cl_array.zeros(self.queue, shape,
+            shape = (self._lselect.shape[0], self._rselect.shape[0])
+            for i in xrange(self._nrestraints + 1 - self.interaction_restraints_cutoff):
+                self._cl_interaction_matrix[i] = cl_array.zeros(self.queue, shape,
                         dtype=np.float32)
             # Coordinate arrays
-            self._cl_rgridcoor = np.zeros((self._rgridcoor.shape[0], 4), dtype=np.float32)
-            self._cl_rgridcoor[:, :3] = self._rgridcoor
-            self._cl_rgridcoor = cl_array.to_device(q, self._cl_rgridcoor)
-            self._cl_lgridcoor = np.zeros((self._lgridcoor.shape[0], 4), dtype=np.float32)
-            self._cl_lgridcoor[:, :3] = self._lgridcoor
-            self._cl_lgridcoor = cl_array.to_device(q, self._cl_lgridcoor)
-            self._cl_rot_lgridcoor = cl_array.zeros_like(q, self._cl_lgridcoor)
+            self._cl_rselect = np.zeros((self._rselect.shape[0], 4), dtype=np.float32)
+            self._cl_rselect[:, :3] = self._rselect
+            self._cl_rselect = cl_array.to_device(q, self._cl_rselect)
+            self._cl_lselect = np.zeros((self._lselect.shape[0], 4), dtype=np.float32)
+            self._cl_lselect[:, :3] = self._lselect
+            self._cl_lselect = cl_array.to_device(q, self._cl_lselect)
+            self._cl_rot_lselect = cl_array.zeros_like(self._cl_lselect)
 
             # Update kernel constants
-            self._kernel_constants['nreceptor_coor'] = self._cl_rgrid_coor.shape[0]
-            self._kernel_constants['nligand_coor'] = self._cl_lgrid_coor.shape[0]
+            self._kernel_constants['nreceptor_coor'] = self._cl_rselect.shape[0]
+            self._kernel_constants['nligand_coor'] = self._cl_lselect.shape[0]
 
-        self._cl_kernels = Kernels(q.context, kernel_constants)
+        self._cl_kernels = Kernels(q.context, self._kernel_constants)
         self._cl_rfftn = pyclfft.RFFTn(q.context, self._shape)
         self._cl_irfftn = pyclfft.iRFFTn(q.context, self._shape)
 
@@ -572,14 +576,15 @@ class DisVis(object):
         self.queue.finish()
 
     def _cl_get_interaction_matrix(self, rotmat, weight):
-        self._cl_kernels.rotate_points(self._cl_lgridcoor, rotmat, self._cl_rot_lgridcoor)
-        for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
+        self._cl_kernels.rotate_points(self._cl_lselect, rotmat, self._cl_rot_lselect)
+        for nconsistent in np.arange(self.interaction_restraints_cutoff,
+                self._nrestraints + 1, dtype=np.int32):
             self._cl_interaction_hist.fill(self._CL_ZERO)
-            self._cl_kernels.count_interactions(self.queue, self._cl_rgridcoor,
-                    self._cl_rot_lgridcoor, self._cl_interspace, nconsistent,
+            self._cl_kernels.count_interactions(self.queue, self._cl_rselect,
+                    self._cl_rot_lselect, self._cl_interspace, nconsistent,
                     self._cl_interaction_hist)
-            self._cl_multiply_add(self._cl_interaction_hist, weight,
-                    self._cl_interaction_matrix[i])
+            self._cl_kernels.multiply_add(self._cl_interaction_hist, weight,
+                    self._cl_interaction_matrix[nconsistent - self.interaction_restraints_cutoff])
         self.queue.finish()
 
     def _cl_get_occupancy_grids(self, weight):
@@ -648,6 +653,9 @@ class DisVis(object):
             for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
                 self._occ_grid[i] = self._cl_occ_grid[i].get().astype(np.float64)
 
+        if self._interaction_analysis:
+            for i in xrange(self._nrestraints - self.interaction_restraints_cutoff):
+                self._interaction_matrix[i] = self._cl_interaction_matrix[i].get().astype(np.float64)
 
 def grid_restraints(restraints, voxelspacing, origin, lcenter):
 
