@@ -16,7 +16,7 @@ class Kernels():
 
         self.program = cl.Program(ctx, t).build()
         # Global and local workitems for all kernels
-        self._gws_rotate_grid3d = ((values['llength'] * 2 + 1) ** 3,)
+        self._gws_rotate_grid3d = (96, 64, 1)
         self._gws_dilate_point_add = (32, 32, 1)
 
         self._lws_histogram = (96,)

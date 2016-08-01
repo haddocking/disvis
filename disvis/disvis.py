@@ -511,8 +511,9 @@ class DisVis(object):
         self._cl_tot_complex = cl_array.sum(self._cl_interspace, dtype=np.dtype(np.float32))
 
     def _cl_rotate_lcore(self, rotmat):
-        k = self._cl_kernels
-        k.rotate_grid3d(self.queue, self._cl_lcore, rotmat, self._cl_rot_lcore)
+        self._cl_kernels.rotate_grid3d(self.queue, self._cl_lcore, rotmat,
+                self._cl_rot_lcore)
+        self.queue.finish()
 
     def _cl_get_interaction_space(self):
         k = self._cl_kernels
@@ -526,66 +527,74 @@ class DisVis(object):
         k.less_equal(self._cl_clashvol, self._cl_grid_max_clash, self._cl_not_clashing)
         k.greater_equal(self._cl_intervol, self._cl_grid_min_interaction, self._cl_interacting)
         k.logical_and(self._cl_not_clashing, self._cl_interacting, self._cl_interspace)
+        self.queue.finish()
 
     def _cl_get_restraints_center(self, rotmat):
         k = self._cl_kernels
         k.rotate_points(self._cl_lrestraints, rotmat, self._cl_rot_lrestraints)
         k.subtract(self._cl_rrestraints, self._cl_rot_lrestraints,
                 self._cl_restraints_center)
+        self.queue.finish()
 
     def _cl_get_restraint_space(self):
         k = self._cl_kernels
-        #self._cl_restspace.fill(self._CL_ZERO)
+        self._cl_restspace.fill(self._CL_ZERO)
         for n in xrange(self._nrestraints):
             k.dilate_point_add(self.queue, self._cl_restraints_center, self._cl_mindis,
                     self._cl_maxdis, n, self._cl_restspace)
+        self.queue.finish()
 
     def _cl_get_reduced_interspace(self):
         self._cl_kernels.multiply_int32(self._cl_restspace,
                 self._cl_interspace, self._cl_interspace)
+        self.queue.finish()
 
     def _cl_count_complexes(self, weight):
         self._cl_tot_complex += cl_array.sum(self._cl_interspace,
                 dtype=np.dtype(np.float32)) * weight
-        #self._cl_hist.fill(self._CL_ZERO)
+        self._cl_hist.fill(self._CL_ZERO)
         self._cl_kernels.histogram(self.queue, self._cl_interspace, self._cl_hist)
         self._cl_kernels.multiply_add(self._cl_hist, weight,
                 self._cl_consistent_complexes)
+        self.queue.finish()
 
     def _cl_count_violations(self, weight):
-        #self._cl_viol_hist.fill(self._CL_ZERO)
+        self._cl_viol_hist.fill(self._CL_ZERO)
         self._cl_kernels.count_violations(self.queue,
                 self._cl_restraints_center, self._cl_mindis2, self._cl_maxdis2,
                 self._cl_interspace, self._cl_viol_hist)
         self._cl_kernels.multiply_add(self._cl_viol_hist, weight, self._cl_violations)
+        self.queue.finish()
                 
     def _cl_get_access_interspace(self):
         cl_array.maximum(self._cl_interspace, self._cl_access_interspace,
                 self._cl_access_interspace)
+        self.queue.finish()
 
     def _cl_get_interaction_matrix(self, rotmat, weight):
         self._cl_kernels.rotate_points(self._cl_lgridcoor, rotmat, self._cl_rot_lgridcoor)
         for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
-            #self._cl_interaction_hist.fill(self._CL_ZERO)
+            self._cl_interaction_hist.fill(self._CL_ZERO)
             self._cl_kernels.count_interactions(self.queue, self._cl_rgridcoor,
                     self._cl_rot_lgridcoor, self._cl_interspace, nconsistent,
                     self._cl_interaction_hist)
             self._cl_multiply_add(self._cl_interaction_hist, weight,
                     self._cl_interaction_matrix[i])
+        self.queue.finish()
 
-    def _cl_get_occupancy_grids(self):
+    def _cl_get_occupancy_grids(self, weight):
         # Calculate an average occupancy grid to provide an average shape
         # for several number of consistent restraints
+        k = self._cl_kernels
         for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
             # Get a grid for all translations that are consistent with at least
             # N restraints
-            k.equal(self.queue, self._cl_interspace, np.int32(i),
-                    self._cl_tmp)
-            k.rfftn(self.queue, self._cl_tmp, self._cl_ft_tmp)
-            k.cmultiply(self._ft_tmp, self._ft_lcore, self._ft_tmp)
-            k.irfftn(self.queue, self._cl_ft_tmp, self._cl_tmp)
+            k.equal(self._cl_interspace, np.int32(i), self._cl_tmp)
+            self._cl_rfftn(self.queue, self._cl_tmp, self._cl_ft_tmp)
+            k.cmultiply(self._cl_ft_tmp, self._cl_ft_lcore, self._cl_ft_tmp)
+            self._cl_irfftn(self.queue, self._cl_ft_tmp, self._cl_tmp)
             k.multiply_add2(self._cl_tmp, weight, self._cl_occ_grid[i])
-
+        self.queue.finish()
 
     def _gpu_search(self):
 
@@ -616,7 +625,7 @@ class DisVis(object):
 
             # Optional analyses
             if self.occupancy_analysis:
-                self._cl_get_occupancy_grids()
+                self._cl_get_occupancy_grids(weight)
 
             if self._interaction_analysis:
                 self._cl_get_interaction_matrix(rotmat, weight)
@@ -626,6 +635,7 @@ class DisVis(object):
                 self._print_progress(n, self.rotations.shape[0], time0)
 
         self.queue.finish()
+        # Get the data from GPU
         self._accessible_complexes = self._cl_consistent_complexes.get()
         self._accessible_complexes = np.asarray([self._cl_tot_complex.get()] +
             self._accessible_complexes.tolist(), dtype=np.float64)
@@ -633,6 +643,10 @@ class DisVis(object):
 
         self._violations = self._cl_violations.get().astype(np.float64)
         self._cl_access_interspace.get(ary=self._access_interspace)
+
+        if self.occupancy_analysis:
+            for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
+                self._occ_grid[i] = self._cl_occ_grid[i].get().astype(np.float64)
 
 
 def grid_restraints(restraints, voxelspacing, origin, lcenter):
