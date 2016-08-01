@@ -268,7 +268,7 @@ void count_violations(
     // Prepare local memory
     for (i = lid; i < NRESTRAINTS2; i += lstride)
         local_viol[i] = 0;
-        // Move the centers and distances to local memory
+    // Move the centers and distances to local memory
     for (i = lid; i < NRESTRAINTS; i += lstride) {
             local_center[i] = center[i];
             local_maxdis2[i] = maxdis2[i];
@@ -285,7 +285,7 @@ void count_violations(
                 consistent = interspace[ind_zy + x];
                 // Do not process translations where there are no consistent
                 // restraints, or when all restraints are consistent. This is redundant.
-                if ((consistent == 0) || (consistent == NRESTRAINTS))
+                if ((consistent == 0))// || (consistent == NRESTRAINTS))
                     continue;
                 offset = (consistent - 1) * NRESTRAINTS;
                 for (i = 0; i < NRESTRAINTS; i++) {

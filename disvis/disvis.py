@@ -1,6 +1,6 @@
 from __future__ import print_function, absolute_import, division
 from sys import stdout as _stdout
-from time import clock as _clock
+from time import time as _time
 
 import numpy as np
 from numpy.fft import rfftn as np_rfftn, irfftn as np_irfftn
@@ -12,10 +12,9 @@ except ImportError:
     PYFFTW = False
 try:
     import pyopencl as cl
-    import disvis.pyclfft
-    from .kernels import Kernels
-    from disvis import pyclfft
     import pyopencl.array as cl_array
+    from . import pyclfft
+    from .kernels import Kernels
     PYOPENCL = True
 except ImportError:
     PYOPENCL = False
@@ -69,9 +68,9 @@ class DisVis(object):
         if self.queue is None:
             self._cpu_init()
             self._cpu_search()
-        #else:
-        #    self._gpu_init()
-        #    self._gpu_search()
+        else:
+            self._gpu_init()
+            self._gpu_search()
 
         # Set the results
         self.accessible_interaction_space = volume.Volume(
@@ -88,7 +87,8 @@ class DisVis(object):
                 except KeyError:
                     occ_grid = None
                 if occ_grid is not None:
-                    self.occupancy_grids[i] = volume.Volume(occ_grid, self.voxelspacing, self._origin)
+                    self.occupancy_grids[i] = volume.Volume(occ_grid,
+                            self.voxelspacing, self._origin)
 
         if self._interaction_analysis:
             self.interaction_matrix = self._interaction_matrix
@@ -148,8 +148,13 @@ class DisVis(object):
         self._nrestraints = len(self.distance_restraints)
         self._grid_restraints = grid_restraints(self.distance_restraints, 
                 self.voxelspacing, self._origin, self.ligand.center)
+        self._rrestraints = self._grid_restraints[:, 0:3]
+        self._lrestraints = self._grid_restraints[:, 3:6]
+        self._mindis = self._grid_restraints[:,6]
+        self._maxdis = self._grid_restraints[:,7]
 
         self._accessible_complexes = np.zeros(self._nrestraints + 1, dtype=np.float64)
+        self._access_interspace = np.zeros(self._shape, dtype=np.int32)
         self._violations = np.zeros((self._nrestraints, self._nrestraints), dtype=np.float64)
 
         # Calculate the average occupancy grid only for complexes consistent
@@ -173,11 +178,19 @@ class DisVis(object):
         self._interaction_analysis = any(x is not None for x in selection)
         if self._interaction_analysis:
             # Since calculating all interactions is costly, only analyze
-            # solutions that are consistent with more than N restraints. By
-            shape = (self.interaction_restraints_cutoff, 
+            # solutions that are consistent with more than N restraints.
+            shape = (self._nrestraints - self.interaction_restraints_cutoff, 
                     self._lgridcoor.shape[0], self._rgridcoor.shape[0])
             self._interaction_matrix = np.zeros(shape, dtype=np.float64)
             self._sub_interaction_matrix = np.zeros(shape, dtype=np.int64)
+
+        # Calculate the longest distance in the lcore. This helps in making the
+        # grid rotation faster, as less points need to be considered for
+        # rotation
+        self._llength = int(np.ceil(
+            np.linalg.norm(self._lgridcoor, axis=1).max() + 
+            self.ligand.vdw_radius.max() / self.voxelspacing
+            ))
 
     @staticmethod
     def _allocate_array(shape, dtype, fftw):
@@ -209,9 +222,10 @@ class DisVis(object):
         # Real arrays
         for arr in 'rot_lcore clashvol intervol tmp'.split():
             setattr(self, '_' + arr, self._allocate_array(self._shape, np.float64, self._fftw))
+
         # Complex arrays
         self._ft_shape = list(self._shape)[:-1] + [self._shape[-1] // 2 + 1]
-        for arr in 'lcore rcore rsurf tmp'.split():
+        for arr in 'lcore lcore_conj rcore rsurf tmp'.split():
             setattr(self, '_ft_' + arr,
                     self._allocate_array(self._ft_shape, np.complex128, self._fftw))
 
@@ -225,12 +239,8 @@ class DisVis(object):
 
         # Array for rotating points and restraint coordinates
         self._rot_lgridcoor = np.zeros_like(self._lgridcoor)
-        self._rrestraints = self._grid_restraints[:, 0:3]
-        self._lrestraints = self._grid_restraints[:, 3:6]
-        self._mindis = self._grid_restraints[:,6]
-        self._maxdis = self._grid_restraints[:,7]
-        self._rot_lrestraints = np.zeros_like(self._lrestraints)
         self._restraints_center = np.zeros_like(self._grid_restraints[:,3:6])
+        self._rot_lrestraints = np.zeros_like(self._lrestraints)
 
         # Build the FFT's if we are using pyfftw
         if self._fftw:
@@ -244,14 +254,6 @@ class DisVis(object):
         self._ft_rcore = self.rfftn(self._rcore, self._ft_rcore)
         self._ft_rsurf = self.rfftn(self._rsurf, self._ft_rsurf)
 
-        # Calculate the longest distance in the lcore. This helps in making the
-        # grid rotation faster, as less points need to be considered for
-        # rotation
-        self._llength = int(np.ceil(
-            np.linalg.norm(self._lgridcoor, axis=1).max() + 
-            self.ligand.vdw_radius.max() / self.voxelspacing
-            ))
-
         # Keep track of number of consistent complexes
         self._tot_complex = 0
         self._consistent_complexes = np.zeros(self._nrestraints + 1, dtype=np.float64)
@@ -263,10 +265,10 @@ class DisVis(object):
     def _get_interaction_space(self):
         # Calculate the clashing and interaction volume
         self._ft_lcore = self.rfftn(self._rot_lcore, self._ft_lcore)
-        np.conjugate(self._ft_lcore, self._ft_lcore)
-        np.multiply(self._ft_lcore, self._ft_rcore, self._ft_tmp)
+        np.conjugate(self._ft_lcore, self._ft_lcore_conj)
+        np.multiply(self._ft_lcore_conj, self._ft_rcore, self._ft_tmp)
         self._clashvol = self.irfftn(self._ft_tmp, self._clashvol)
-        np.multiply(self._ft_lcore, self._ft_rsurf, self._ft_tmp)
+        np.multiply(self._ft_lcore_conj, self._ft_rsurf, self._ft_tmp)
         self._intervol = self.irfftn(self._ft_tmp, self._intervol)
 
         # Determine the interaction space, i.e. all the translations where
@@ -314,9 +316,6 @@ class DisVis(object):
         # Rotate the ligand coordinates
         #np.dot(self._lgridcoor, rotmat.T, self._rot_lgridcoor)
         self._rot_lgridcoor = np.dot(self._lgridcoor, rotmat.T)
-        #print(self._lgridcoor.shape)
-        #print(rotmat.shape)
-        #print(self._rot_lgridcoor.shape)
         count_interactions(self._interspace, self._rgridcoor,
                 self._rot_lgridcoor, np.float64(self.interaction_distance / self.voxelspacing),
                 weight, np.int32(self.interaction_restraints_cutoff),
@@ -324,7 +323,7 @@ class DisVis(object):
 
     def _cpu_search(self):
 
-        time0 = _clock()
+        time0 = _time()
         for n in xrange(self.rotations.shape[0]):
             rotmat = self.rotations[n]
             weight = self.weights[n]
@@ -348,15 +347,15 @@ class DisVis(object):
             self._count_complexes(weight)
             self._count_violations(weight)
 
-            # Calculate an occupancy grid for complexes consistent with at
-            # least i restraints
-            if self.occupancy_analysis:
-                self._get_occupancy_grids(weight)
-
             # Calculate shapes for visual information, such as the highest
             # number of consisistent restraints found at each grid point
             np.maximum(self._interspace, self._access_interspace,
                     self._access_interspace)
+
+            # Calculate an occupancy grid for complexes consistent with at
+            # least i restraints
+            if self.occupancy_analysis:
+                self._get_occupancy_grids(weight)
 
             # Perform interaction analysis if required
             if self._interaction_analysis:
@@ -377,151 +376,263 @@ class DisVis(object):
                 total_complexes = self._consistent_complexes[i:].sum()
                 if total_complexes > 0:
                     self._occ_grid[i] /= total_complexes
+                else:
+                    self._occ_grid[i].fill(0)
         
     @staticmethod
     def _print_progress(n, total, time0):
         m = n + 1
         pdone = m/total
-        t = _clock() - time0
+        t = _time() - time0
         _stdout.write('\r{:d}/{:d} ({:.2%}, ETA: {:d}s)    '\
                 .format(m, total, pdone, 
                         int(t/pdone - t)))
         _stdout.flush()
 
-#    def _gpu_init(self):
-#
-#        self.gpu_data = {}
-#        g = self.gpu_data
-#        d = self.data
-#        q = self.queue
-#
-#        # Move arrays to GPU
-#        g['rcore'] = cl_array.to_device(q, float32array(d['rcore'].array))
-#        g['rsurf'] = cl_array.to_device(q, float32array(d['rsurf'].array))
-#        g['im_lsurf'] = cl.image_from_array(q.context, float32array(d['lsurf'].array))
-#        g['sampler'] = cl.Sampler(q.context, False, cl.addressing_mode.CLAMP,
-#                                  cl.filter_mode.LINEAR)
-#
-#        if self.distance_restraints:
-#            g['restraints'] = cl_array.to_device(q, float32array(d['restraints']))
-#
-#        # Allocate real arrays
-#        arr_names = ('lsurf clashvol intervol interspace restspace ' +
-#                'access_interspace best_access_interspace').split()
-#        arr_types = [np.float32] * 3 + [np.int32] * 4
-#        for arr_name, arr_type in zip(arr_names, arr_types):
-#            g[arr_name] = cl_array.zeros(q, d['shape'], dtype=arr_type)
-#
-#        # arrays for counting
-#        WORKGROUPSIZE = 32
-#        g['subhists'] = cl_array.zeros(q, 
-#                (g['rcore'].size, d['nrestraints'] + 1), 
-#                dtype=np.float32)
-#        g['viol_counter'] = cl_array.zeros(q, 
-#                (g['rcore'].size, d['nrestraints'], d['nrestraints']), 
-#                dtype=np.float32)
-#
-#        # Allocate complex arrays
-#        g['ft_shape'] = [d['shape'][0] // 2 + 1] + list(d['shape'][1:])
-#        g['ft_rcore'] = cl_array.zeros(q, g['ft_shape'], dtype=np.complex64)
-#        for arr_name in 'rsurf lsurf clashvol intervol'.split():
-#            g['ft_' + arr_name] = cl_array.zeros_like(q, g['ft_rcore'])
-#
-#        # kernels
-#        g['k'] = Kernels(q.context)
-#        g['k'].rfftn = pyclfft.RFFTn(q.context, d['shape'])
-#        g['k'].irfftn = pyclfft.iRFFTn(q.context, d['shape'])
-#
-#        g['k'].rfftn(q, g['rcore'], g['ft_rcore'])
-#        g['k'].rfftn(q, g['rsurf'], g['ft_rsurf'])
-#
-#        g['nrot'] = d['nrot']
-#        g['max_clash'] = d['max_clash']
-#        g['min_interaction'] = d['min_interaction']
-#
-#
-#    def _gpu_search(self):
-#        d = self.data
-#        g = self.gpu_data
-#        q = self.queue
-#        k = g['k']
-#
-#        tot_complexes = cl_array.sum(g['interspace'], dtype=np.float32)
-#
-#        time0 = _clock()
-#        for n in xrange(g['nrot']):
-#
-#            # Rotate the ligand
-#            k.rotate_image3d(q, g['sampler'], g['im_lsurf'],
-#                    self.rotations[n], g['lsurf'], d['im_center'])
-#
-#            # Calculate the clashing and interaction volume for each translation
-#            k.rfftn(q, g['lsurf'], g['ft_lsurf'])
-#            k.c_conj_multiply(q, g['ft_lsurf'], g['ft_rcore'], g['ft_clashvol'])
-#            k.irfftn(q, g['ft_clashvol'], g['clashvol'])
-#
-#            k.c_conj_multiply(q, g['ft_lsurf'], g['ft_rsurf'], g['ft_intervol'])
-#            k.irfftn(q, g['ft_intervol'], g['intervol'])
-#
-#            # Determine the translations where the subunits form a complex
-#            k.touch(q, g['clashvol'], g['max_clash'],
-#                    g['intervol'], g['min_interaction'],
-#                    g['interspace'])
-#
-#            # Determine for each translation how many restraints are consistent
-#            k.fill(q, g['restspace'], 0)
-#            k.distance_restraint(q, g['restraints'],
-#                    self.rotations[n], g['restspace'])
-#
-#            # Check for each complex how many restraints are consistent
-#            k.multiply(q, g['restspace'], g['interspace'], g['access_interspace'])
-#
-#            # TODO
-#            # Calculate an average occupancy grid to provide an average shape
-#            # for several number of consistent restraints
-#            #for i, cl_occ_grid in enumerate(self._cl_occ_grids):
-#            #    # Get a grid for all translations that are consistent with at least
-#            #    # N restraints
-#            #    k.equal_to(q, g['access_interspace'], np.int32(self.nrestraints - i),
-#            #            g['sub_access_interspace'])
-#            #    k.rfftn(q, g['sub_access_interspace'], g['ft_sub_access_interspace'])
-#            #    k.multiply(q, g['ft_lsurf'], g['ft_sub_access_interspace'], g['ft_occ_grid'])
-#            #    k.irfftn(q, g['ft_occ_grid'], g['occ_grid'])
-#            #    k.add(q, cl_occ_grid, self.weights[n], self._cl_occ_grid[i])
-#
-#
-#            # Perform some statistics on the data
-#            tot_complexes += (cl_array.sum(g['interspace'], dtype=np.float32) *
-#                             np.float32(self.weights[n]))
-#            cl_array.maximum(g['best_access_interspace'],
-#                    g['access_interspace'], g['best_access_interspace'])
-#
-#            # Count the number of complexes consistent with exactly N restraints
-#            k.histogram(q, g['access_interspace'], g['subhists'],
-#                    self.weights[n], d['nrestraints'])
-#
-#            # Count how often a restraint is violated for all complexes
-#            # consistent with exactly N restraints
-#            k.count_violations(q, g['restraints'], self.rotations[n], 
-#                    g['access_interspace'], g['viol_counter'], self.weights[n])
-#
-#            # TODO
-#            # Count the number of interactions each residue has for all
-#            # complexes consistent with exactly N restraints
-#
-#            if _stdout.isatty():
-#                self._print_progress(n, g['nrot'], time0)
-#
-#        self.queue.finish()
-#
-#        # Combine the subhistograms
-#        access_complexes = g['subhists'].get().sum(axis=0)
-#        access_complexes[0] = tot_complexes.get() - sum(access_complexes[1:])
-#        access_interaction_space = g['best_access_interspace'].get()
-#
-#        d['accessible_interaction_space'] = access_interaction_space 
-#        d['accessible_complexes'] = access_complexes
-#        d['violations'] = g['viol_counter'].get().sum(axis=0)
+    def _gpu_init(self):
+
+        q = self.queue
+
+        # Move arrays to GPU
+        self._cl_rcore = cl_array.to_device(q, self._rcore.astype(np.float32))
+        self._cl_rsurf = cl_array.to_device(q, self._rsurf.astype(np.float32))
+        self._cl_lcore = cl_array.to_device(q, self._lcore.astype(np.float32))
+
+        # Make the rotations float16 arrays
+        self._cl_rotations = np.zeros((self.rotations.shape[0], 16), dtype=np.float32)
+        self._cl_rotations[:, :9] = self.rotations.reshape(-1, 9)
+
+        # Allocate arrays
+        # Float32
+        self._cl_shape = tuple(self._shape)
+        arr_names = 'rot_lcore clashvol intervol tmp'.split()
+        for arr_name in arr_names:
+            setattr(self, '_cl_' + arr_name, 
+                    cl_array.zeros(q, self._cl_shape, dtype=np.float32)
+                    )
+
+        # Int32
+        arr_names = 'interspace restspace access_interspace'.split()
+        for arr_name in arr_names:
+            setattr(self, '_cl_' + arr_name, 
+                    cl_array.zeros(q, self._cl_shape, dtype=np.int32)
+                    )
+
+        # Boolean
+        arr_names = 'not_clashing interacting'.split()
+        for arr_name in arr_names:
+            setattr(self, '_cl_' + arr_name, 
+                    cl_array.zeros(q, self._cl_shape, dtype=np.int32)
+                    )
+
+        # Complex64
+        self._ft_shape = tuple([self._shape[0] // 2 + 1] + list(self._shape)[1:])
+        arr_names = 'lcore lcore_conj rcore rsurf tmp'.split()
+        for arr_name in arr_names:
+            setattr(self, '_cl_ft_' + arr_name, 
+                    cl_array.empty(q, self._ft_shape, dtype=np.complex64)
+                    )
+
+        # Restraints arrays
+        self._cl_rrestraints = np.zeros((self._nrestraints, 4), dtype=np.float32)
+        self._cl_rrestraints[:, :3] = self._rrestraints
+        self._cl_rrestraints = cl_array.to_device(q, self._cl_rrestraints)
+        self._cl_lrestraints = np.zeros((self._nrestraints, 4), dtype=np.float32)
+        self._cl_lrestraints[:, :3] = self._lrestraints
+        self._cl_lrestraints = cl_array.to_device(q, self._cl_lrestraints)
+        self._cl_mindis = cl_array.to_device(q, self._mindis.astype(np.float32))
+        self._cl_maxdis = cl_array.to_device(q, self._maxdis.astype(np.float32))
+        self._cl_mindis2 = cl_array.to_device(q, self._mindis.astype(np.float32) ** 2)
+        self._cl_maxdis2 = cl_array.to_device(q, self._maxdis.astype(np.float32) ** 2)
+        self._cl_rot_lrestraints = cl_array.zeros_like(self._cl_rrestraints)
+        self._cl_restraints_center = cl_array.zeros_like(self._cl_rrestraints)
+
+        # kernels
+        kernel_constants = {'interaction_cutoff': 10, 
+                            'nrestraints': self._nrestraints,
+                            'shape_x': self._shape[2],
+                            'shape_y': self._shape[1],
+                            'shape_z': self._shape[0],
+                            'llength': self._llength,
+                            'nreceptor_coor': 0,
+                            'nligand_coor': 0,
+                            }
+
+        # Counting arrays
+        self._cl_hist = cl_array.zeros(self.queue, self._nrestraints, dtype=np.int32)
+        self._cl_consistent_complexes = cl_array.zeros(self.queue,
+                self._nrestraints, dtype=np.float32)
+        self._cl_viol_hist = cl_array.zeros(self.queue, (self._nrestraints,
+            self._nrestraints), dtype=np.int32)
+        self._cl_violations = cl_array.zeros(self.queue, (self._nrestraints,
+            self._nrestraints), dtype=np.float32)
+
+        # Conversions
+        self._cl_grid_max_clash = np.float32(self._grid_max_clash)
+        self._cl_grid_min_interaction = np.float32(self._grid_min_interaction)
+        self._CL_ZERO = np.int32(0)
+
+        # Occupancy analysis
+        self._cl_occ_grid = {}
+        if self.occupancy_analysis:
+            for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
+                self._cl_occ_grid[i] = cl_array.zeros(self.queue, self._shape, dtype=np.float32)
+
+        # Interaction analysis
+        if self._interaction_analysis:
+            self._cl_interaction_hist = cl_array.zeros(self.queue,
+                    (self._rgridcoor.shape[0] + self._lgridcoor.shape[0]),
+                    dtype=np.int32)
+            self._cl_interaction_matrix = {}
+            shape = (self._rgridcoor.shape[0], self._lgridcoor.shape[0])
+            for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
+                self._cl_interaction_maxtrix[i] = cl_array.zeros(self.queue, shape,
+                        dtype=np.float32)
+            # Coordinate arrays
+            self._cl_rgridcoor = np.zeros((self._rgridcoor.shape[0], 4), dtype=np.float32)
+            self._cl_rgridcoor[:, :3] = self._rgridcoor
+            self._cl_rgridcoor = cl_array.to_device(q, self._cl_rgridcoor)
+            self._cl_lgridcoor = np.zeros((self._lgridcoor.shape[0], 4), dtype=np.float32)
+            self._cl_lgridcoor[:, :3] = self._lgridcoor
+            self._cl_lgridcoor = cl_array.to_device(q, self._cl_lgridcoor)
+            self._cl_rot_lgridcoor = cl_array.zeros_like(q, self._cl_lgridcoor)
+
+            # Update kernel constants
+            self._kernel_constants['nreceptor_coor'] = self._cl_rgrid_coor.shape[0]
+            self._kernel_constants['nligand_coor'] = self._cl_lgrid_coor.shape[0]
+
+        self._cl_kernels = Kernels(q.context, kernel_constants)
+        self._cl_rfftn = pyclfft.RFFTn(q.context, self._shape)
+        self._cl_irfftn = pyclfft.iRFFTn(q.context, self._shape)
+
+        # Initial calculations
+        self._cl_rfftn(q, self._cl_rcore, self._cl_ft_rcore)
+        self._cl_rfftn(q, self._cl_rsurf, self._cl_ft_rsurf)
+        self._cl_tot_complex = cl_array.sum(self._cl_interspace, dtype=np.dtype(np.float32))
+
+    def _cl_rotate_lcore(self, rotmat):
+        k = self._cl_kernels
+        k.rotate_grid3d(self.queue, self._cl_lcore, rotmat, self._cl_rot_lcore)
+
+    def _cl_get_interaction_space(self):
+        k = self._cl_kernels
+        self._cl_rfftn(self.queue, self._cl_rot_lcore, self._cl_ft_lcore)
+        k.conj(self._cl_ft_lcore, self._cl_ft_lcore_conj)
+        k.cmultiply(self._cl_ft_lcore_conj, self._cl_ft_rcore, self._cl_ft_tmp)
+        self._cl_irfftn(self.queue, self._cl_ft_tmp, self._cl_clashvol)
+        k.cmultiply(self._cl_ft_lcore_conj, self._cl_ft_rsurf, self._cl_ft_tmp)
+        self._cl_irfftn(self.queue, self._cl_ft_tmp, self._cl_intervol)
+
+        k.less_equal(self._cl_clashvol, self._cl_grid_max_clash, self._cl_not_clashing)
+        k.greater_equal(self._cl_intervol, self._cl_grid_min_interaction, self._cl_interacting)
+        k.logical_and(self._cl_not_clashing, self._cl_interacting, self._cl_interspace)
+
+    def _cl_get_restraints_center(self, rotmat):
+        k = self._cl_kernels
+        k.rotate_points(self._cl_lrestraints, rotmat, self._cl_rot_lrestraints)
+        k.subtract(self._cl_rrestraints, self._cl_rot_lrestraints,
+                self._cl_restraints_center)
+
+    def _cl_get_restraint_space(self):
+        k = self._cl_kernels
+        #self._cl_restspace.fill(self._CL_ZERO)
+        for n in xrange(self._nrestraints):
+            k.dilate_point_add(self.queue, self._cl_restraints_center, self._cl_mindis,
+                    self._cl_maxdis, n, self._cl_restspace)
+
+    def _cl_get_reduced_interspace(self):
+        self._cl_kernels.multiply_int32(self._cl_restspace,
+                self._cl_interspace, self._cl_interspace)
+
+    def _cl_count_complexes(self, weight):
+        self._cl_tot_complex += cl_array.sum(self._cl_interspace,
+                dtype=np.dtype(np.float32)) * weight
+        #self._cl_hist.fill(self._CL_ZERO)
+        self._cl_kernels.histogram(self.queue, self._cl_interspace, self._cl_hist)
+        self._cl_kernels.multiply_add(self._cl_hist, weight,
+                self._cl_consistent_complexes)
+
+    def _cl_count_violations(self, weight):
+        #self._cl_viol_hist.fill(self._CL_ZERO)
+        self._cl_kernels.count_violations(self.queue,
+                self._cl_restraints_center, self._cl_mindis2, self._cl_maxdis2,
+                self._cl_interspace, self._cl_viol_hist)
+        self._cl_kernels.multiply_add(self._cl_viol_hist, weight, self._cl_violations)
+                
+    def _cl_get_access_interspace(self):
+        cl_array.maximum(self._cl_interspace, self._cl_access_interspace,
+                self._cl_access_interspace)
+
+    def _cl_get_interaction_matrix(self, rotmat, weight):
+        self._cl_kernels.rotate_points(self._cl_lgridcoor, rotmat, self._cl_rot_lgridcoor)
+        for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
+            #self._cl_interaction_hist.fill(self._CL_ZERO)
+            self._cl_kernels.count_interactions(self.queue, self._cl_rgridcoor,
+                    self._cl_rot_lgridcoor, self._cl_interspace, nconsistent,
+                    self._cl_interaction_hist)
+            self._cl_multiply_add(self._cl_interaction_hist, weight,
+                    self._cl_interaction_matrix[i])
+
+    def _cl_get_occupancy_grids(self):
+        # Calculate an average occupancy grid to provide an average shape
+        # for several number of consistent restraints
+        for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
+            # Get a grid for all translations that are consistent with at least
+            # N restraints
+            k.equal(self.queue, self._cl_interspace, np.int32(i),
+                    self._cl_tmp)
+            k.rfftn(self.queue, self._cl_tmp, self._cl_ft_tmp)
+            k.cmultiply(self._ft_tmp, self._ft_lcore, self._ft_tmp)
+            k.irfftn(self.queue, self._cl_ft_tmp, self._cl_tmp)
+            k.multiply_add2(self._cl_tmp, weight, self._cl_occ_grid[i])
+
+
+    def _gpu_search(self):
+
+        time0 = _time()
+        for n in xrange(self.rotations.shape[0]):
+
+            rotmat = self._cl_rotations[n]
+            weight = np.float32(self.weights[n])
+
+            # Rotate the ligand
+            self._cl_rotate_lcore(rotmat)
+
+            # Calculate the clashing and interaction volume for each translation
+            self._cl_get_interaction_space()
+
+            # Rotate the restraints and determine the center point
+            self._cl_get_restraints_center(rotmat)
+
+            self._cl_get_restraint_space()
+
+            # Check for each complex how many restraints are consistent
+            self._cl_get_reduced_interspace()
+
+            # Do some analysis such as counting complexes and violations
+            self._cl_count_complexes(weight)
+            self._cl_count_violations(weight)
+            self._cl_get_access_interspace()
+
+            # Optional analyses
+            if self.occupancy_analysis:
+                self._cl_get_occupancy_grids()
+
+            if self._interaction_analysis:
+                self._cl_get_interaction_matrix(rotmat, weight)
+
+            # Print progress
+            if _stdout.isatty():
+                self._print_progress(n, self.rotations.shape[0], time0)
+
+        self.queue.finish()
+        self._accessible_complexes = self._cl_consistent_complexes.get()
+        self._accessible_complexes = np.asarray([self._cl_tot_complex.get()] +
+            self._accessible_complexes.tolist(), dtype=np.float64)
+        self._accessible_complexes[0] -= self._accessible_complexes[1:].sum()
+
+        self._violations = self._cl_violations.get().astype(np.float64)
+        self._cl_access_interspace.get(ary=self._access_interspace)
 
 
 def grid_restraints(restraints, voxelspacing, origin, lcenter):
@@ -540,7 +651,3 @@ def grid_restraints(restraints, voxelspacing, origin, lcenter):
         g_restraints[n, 7] = maxdis/voxelspacing
 
     return g_restraints
-
-
-def float32array(array_like):
-    return np.asarray(array_like, dtype=np.float32)

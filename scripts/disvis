@@ -394,8 +394,8 @@ def main():
     else:
         # GPU-version
         write('Using GPU accelerated search.')
-        accessible_interaction_space, accessible_complexes, violations = \
-                 run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints, args)
+        dv = run_disvis(queue, receptor, ligand, rotmat, weights,
+                         distance_restraints, pdb1_sel, pdb2_sel, args)
 
     # write out accessible interaction space
     fname = joiner('accessible_interaction_space.mrc')
