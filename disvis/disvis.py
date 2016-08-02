@@ -374,14 +374,6 @@ class DisVis(object):
         # for this.
         self._accessible_complexes[:] = self._consistent_complexes
         self._accessible_complexes[0] = self._tot_complex - self._accessible_complexes[1:].sum()
-        # Normalize the occupancy grids
-        if self.occupancy_analysis:
-            for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
-                total_complexes = self._consistent_complexes[i:].sum()
-                if total_complexes > 0:
-                    self._occ_grid[i] /= total_complexes
-                else:
-                    self._occ_grid[i].fill(0)
         
     @staticmethod
     def _print_progress(n, total, time0):

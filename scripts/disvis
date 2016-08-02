@@ -263,14 +263,14 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
     if args.occupancy_analysis:
         fname_occupancy = joiner('occupancy_{:d}_{:d}.mrc')
         occupancy = {}
-        for consistent_restraints in xrange(args.interaction_restraints_cutoff, len(distance_restraints) + 1):
+        for consistent_restraints in xrange(args.interaction_restraints_cutoff,
+                len(distance_restraints) + 1):
             occupancy[consistent_restraints] = Volume.fromfile(
                     fname_occupancy.format(consistent_restraints, 0))
             for n in range(1, jobs):
-                np.maximum(occupancy[consistent_restraints].array,
-                        Volume.fromfile(fname_occupancy.format(consistent_restraints, n)).array,
-                        occupancy[consistent_restraints].array)
-
+                occupancy[consistent_restraints]._array += (
+                        Volume.fromfile(fname_occupancy.format(consistent_restraints, n))._array
+                        )
 
     # Combine the interaction analysis
     results.interaction_matrix = None
