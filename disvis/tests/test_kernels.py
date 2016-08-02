@@ -20,13 +20,13 @@ class TestKernels(TestCase):
                        'shape_y': self.shape[1],
                        'shape_z': self.shape[0],
                        'llength': 1,
-                       'nreceptor_coor': 2,
+                       'nreceptor_coor': 3,
                        'nligand_coor': 2,
                        }
         self.p = Kernels(self.queue.context, self.values)
 
     def test_rotate_grid3d(self):
-        k = self.p.kernels.rotate_grid3d
+        k = self.p.program.rotate_grid3d
         rotmat = np.asarray([1, 0, 0, 0, 1, 0, 0, 0, 1] + [0] * 7, dtype=np.float32)
         self.cl_grid = cl_array.zeros(self.queue, self.shape, dtype=np.float32)
         self.cl_grid.fill(1)
@@ -43,7 +43,7 @@ class TestKernels(TestCase):
         self.assertTrue(np.allclose(answer, self.cl_out.get()))
 
     def test_dilate_point_add(self):
-        k = self.p.kernels.dilate_point_add
+        k = self.p.program.dilate_point_add
 
         center = np.array([[0, 0, 0, 0], [0, 0, 0, 0], [2, 3, 4, 0]], dtype=np.float32)
 
@@ -81,7 +81,7 @@ class TestKernels(TestCase):
         self.assertTrue(np.allclose(answer, cl_out.get()))
 
     def test_histogram(self):
-        k = self.p.kernels.histogram
+        k = self.p.program.histogram
         data = np.repeat(range(self.values['nrestraints'] + 1), 
                 self.size / (self.values['nrestraints'] + 1)).astype(np.int32)
         cl_data = cl_array.to_device(self.queue, data)
@@ -92,7 +92,7 @@ class TestKernels(TestCase):
         self.assertTrue(np.allclose(answer, cl_hist.get()))
 
     def test_count_violations(self):
-        k = self.p.kernels.count_violations
+        k = self.p.program.count_violations
 
         center = np.asarray([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=np.float32)
         mindis2 = np.asarray([0, 0, 0], dtype=np.float32)
@@ -118,15 +118,17 @@ class TestKernels(TestCase):
 
     def test_count_interactions(self):
 
-        k = self.p.kernels.count_interactions
-        receptor = np.asarray([[0, 0, 0, 0], [1, 0, 0, 0]], dtype=np.float32)
+        k = self.p.program.count_interactions
+        receptor = np.asarray([[0, 0, 0, 0], [1, 0, 0, 0], [2, 0, 0, 0]], dtype=np.float32)
         ligand = np.asarray([[0, 0, 0, 0], [10, 0, 0, 0]], dtype=np.float32)
         interspace = np.zeros(self.shape, dtype=np.int32)
         nconsistent = np.int32(1)
-        hist = np.zeros(self.values['nreceptor_coor'] + self.values['nligand_coor'], 
+        hist = np.zeros((self.values['nligand_coor'], self.values['nreceptor_coor']), 
                 dtype=np.int32)
 
         interspace[0, 0, 0] = 1
+        interspace[0, 0, 1] = 1
+        interspace[0, 0, 2] = 2
 
         cl_receptor = cl_array.to_device(self.queue, receptor)
         cl_ligand = cl_array.to_device(self.queue, ligand)
@@ -137,7 +139,8 @@ class TestKernels(TestCase):
                 nconsistent, cl_hist.data)
         k(self.queue, (10, 10, 10), (10, 1, 1), *args)
 
-        answer = [1, 1, 2, 0]
+        answer = [[2, 2, 1],
+                  [0, 0, 0]]
         test = np.allclose(answer, cl_hist.get())
         self.assertTrue(test)
 
