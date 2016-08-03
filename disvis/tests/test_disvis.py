@@ -59,7 +59,7 @@ class TestDisVis(TestCase):
         self.assertEqual(dv._mindis[0] , 0.5)
         self.assertEqual(dv._maxdis[0] , 2.25)
 
-    def test_rotate_ligand(self):
+    def test_rotate_lcore(self):
         dv = self.dv
 
         restraint = [self.receptor, self.ligand, 1, 4.5]
@@ -73,7 +73,7 @@ class TestDisVis(TestCase):
         dv._cpu_init()
 
         rotmat = dv.rotations[0]
-        dv._rotate_ligand(rotmat)
+        dv._rotate_lcore(rotmat)
 
         # Identity rotation
         self.assertTrue(np.allclose(dv._lcore, dv._rot_lcore))

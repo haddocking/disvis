@@ -263,7 +263,7 @@ class DisVis(object):
         self._tot_complex = 0
         self._consistent_complexes = np.zeros(self._nrestraints + 1, dtype=np.float64)
 
-    def _rotate_ligand(self, rotmat):
+    def _rotate_lcore(self, rotmat):
         rotate_grid_nearest(self._lcore, self._llength, rotmat,
                 self._rot_lcore)
         
@@ -332,7 +332,7 @@ class DisVis(object):
             rotmat = self.rotations[n]
             weight = self.weights[n]
             # Rotate the ligand grid
-            self._rotate_ligand(rotmat)
+            self._rotate_lcore(rotmat)
 
             self._get_interaction_space()
 

@@ -44,3 +44,31 @@ def parse_interactions(f):
             data[consistent_restraints]['interactions'] = [int(x) for x in words[2:]]
     return data
 
+
+def parse_restraints(fid, pdb1, pdb2):
+    """Parse the restraints file."""
+
+    if isinstance(fid, str):
+        fid = open(fid)
+
+    dist_restraints = []
+
+    for line in fid:
+        # ignore comments and empty lines
+        line = line.strip()
+        if line.startswith('#') or not line:
+            continue
+
+        chain1, resi1, name1, chain2, resi2, name2, mindis, maxdis = line.split()
+        pdb1_sel = pdb1.select('chain', chain1).select('resi',
+                int(resi1)).select('name', name1).duplicate()
+        pdb2_sel = pdb2.select('chain', chain2).select('resi',
+                int(resi2)).select('name', name2).duplicate()
+
+        if pdb1_sel.natoms == 0 or pdb2_sel.natoms == 0:
+            raise ValueError("A restraint selection was not found in line:\n{:s}".format(str(line)))
+
+        dist_restraints.append([pdb1_sel, pdb2_sel, float(mindis), float(maxdis)])
+
+    fid.close()
+    return dist_restraints
