@@ -103,19 +103,19 @@ def rotate_grid_nearest(
         double xcoor_xyz, ycoor_xyz, zcoor_xyz
 
     for z in range(-vlength, vlength+1):
-        xcoor_z = rotmat[2, 0]*z
-        ycoor_z = rotmat[2, 1]*z
+        xcoor_z = rotmat[0, 2]*z
+        ycoor_z = rotmat[1, 2]*z
         zcoor_z = rotmat[2, 2]*z
 
         for y in range(-vlength, vlength+1):
-            xcoor_yz = rotmat[1, 0]*y + xcoor_z
+            xcoor_yz = rotmat[0, 1]*y + xcoor_z
             ycoor_yz = rotmat[1, 1]*y + ycoor_z
-            zcoor_yz = rotmat[1, 2]*y + zcoor_z
+            zcoor_yz = rotmat[2, 1]*y + zcoor_z
 
             for x in range(-vlength, vlength+1):
                 xcoor_xyz = rotmat[0, 0]*x + xcoor_yz
-                ycoor_xyz = rotmat[0, 1]*x + ycoor_yz
-                zcoor_xyz = rotmat[0, 2]*x + zcoor_yz
+                ycoor_xyz = rotmat[1, 0]*x + ycoor_yz
+                zcoor_xyz = rotmat[2, 0]*x + zcoor_yz
 
                 x0 = <int> (round(xcoor_xyz))
                 y0 = <int> (round(ycoor_xyz))
@@ -321,7 +321,7 @@ def distance_restraint(np.ndarray[np.float64_t, ndim=2] points,
                         continue
 
                     x2y2z2 = (x - points[n, 0])**2 + y2z2
-                    if mindis2 < x2y2z2 <= maxdis2:
+                    if x2y2z2 <= maxdis2 and x2y2z2 >= mindis2:
                         out[z,y,x] += 1
 
     return out

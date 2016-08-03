@@ -273,8 +273,11 @@ class DisVis(object):
         np.conjugate(self._ft_lcore, self._ft_lcore_conj)
         np.multiply(self._ft_lcore_conj, self._ft_rcore, self._ft_tmp)
         self._clashvol = self.irfftn(self._ft_tmp, self._clashvol)
+        # Round up values, as they should be integers
+        np.round(self._clashvol, out=self._clashvol)
         np.multiply(self._ft_lcore_conj, self._ft_rsurf, self._ft_tmp)
         self._intervol = self.irfftn(self._ft_tmp, self._intervol)
+        np.round(self._intervol, out=self._intervol)
 
         # Determine the interaction space, i.e. all the translations where
         # the receptor and ligand are interacting and not clashing
@@ -282,7 +285,7 @@ class DisVis(object):
         np.greater_equal(self._intervol, self._grid_min_interaction, self._interacting)
         np.logical_and(self._not_clashing, self._interacting, self._interspace)
 
-    def _rotate_restraints(self, rotmat):
+    def _get_restraints_center(self, rotmat):
         """Rotate the restraints and determine the restraints center point"""
         np.dot(self._lrestraints, rotmat.T, self._rot_lrestraints)
         np.subtract(self._rrestraints, self._rot_lrestraints,
@@ -309,12 +312,17 @@ class DisVis(object):
                 self._maxdis, self._interspace, weight,
                 self._violations)
 
+    def _get_access_interspace(self):
+        np.maximum(self._interspace, self._access_interspace,
+                self._access_interspace)
+
     def _get_occupancy_grids(self, weight):
         for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
             np.equal(self._interspace, np.int32(i), self._tmp)
             self._ft_tmp = self.rfftn(self._tmp, self._ft_tmp)
             np.multiply(self._ft_tmp, self._ft_lcore, self._ft_tmp)
             self._tmp = self.irfftn(self._ft_tmp, self._tmp)
+            np.round(self._tmp, out=self._tmp)
             self._occ_grid[i] += weight * self._tmp
 
     def _get_interaction_matrix(self, rotmat, weight):
@@ -337,7 +345,7 @@ class DisVis(object):
             self._get_interaction_space()
 
             # Rotate the restraints
-            self._rotate_restraints(rotmat)
+            self._get_restraints_center(rotmat)
 
             # Determine the consistent restraint space
             self._get_restraint_space()
@@ -353,8 +361,7 @@ class DisVis(object):
 
             # Calculate shapes for visual information, such as the highest
             # number of consisistent restraints found at each grid point
-            np.maximum(self._interspace, self._access_interspace,
-                    self._access_interspace)
+            self._get_access_interspace()
 
             # Calculate an occupancy grid for complexes consistent with at
             # least i restraints
@@ -517,13 +524,15 @@ class DisVis(object):
         k.conj(self._cl_ft_lcore, self._cl_ft_lcore_conj)
         k.cmultiply(self._cl_ft_lcore_conj, self._cl_ft_rcore, self._cl_ft_tmp)
         self._cl_irfftn(self.queue, self._cl_ft_tmp, self._cl_clashvol)
+        k.round(self._cl_clashvol, self._cl_clashvol)
         k.cmultiply(self._cl_ft_lcore_conj, self._cl_ft_rsurf, self._cl_ft_tmp)
         self._cl_irfftn(self.queue, self._cl_ft_tmp, self._cl_intervol)
+        k.round(self._cl_intervol, self._cl_intervol)
 
         k.less_equal(self._cl_clashvol, self._cl_grid_max_clash, self._cl_not_clashing)
         k.greater_equal(self._cl_intervol, self._cl_grid_min_interaction, self._cl_interacting)
         k.logical_and(self._cl_not_clashing, self._cl_interacting, self._cl_interspace)
-        self.queue.finish()
+        #self.queue.finish()
 
     def _cl_get_restraints_center(self, rotmat):
         k = self._cl_kernels
@@ -590,6 +599,7 @@ class DisVis(object):
             self._cl_rfftn(self.queue, self._cl_tmp, self._cl_ft_tmp)
             k.cmultiply(self._cl_ft_tmp, self._cl_ft_lcore, self._cl_ft_tmp)
             self._cl_irfftn(self.queue, self._cl_ft_tmp, self._cl_tmp)
+            k.round(self._cl_tmp, self._cl_tmp)
             k.multiply_add2(self._cl_tmp, weight, self._cl_occ_grid[i])
         self.queue.finish()
 

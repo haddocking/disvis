@@ -66,6 +66,11 @@ class Kernels():
                 "out[i] = cfloat_mul(in1[i], in2[i]);",
                 )
 
+        self.round = ElementwiseKernel(ctx,
+                "float *in, float* out",
+                "out[i] = round(in[i]);",
+                )
+
         self.less_equal = ElementwiseKernel(ctx,
                 "float* array, float value, int *out",
                 "out[i] = (array[i] <= value) ? 1 : 0;",

@@ -72,3 +72,20 @@ def parse_restraints(fid, pdb1, pdb2):
 
     fid.close()
     return dist_restraints
+
+
+def parse_interaction_selection(fid, pdb1, pdb2):
+    """Parse the interaction selection file, i.e. all residues for which an
+    interaction analysis is performed."""
+    if isinstance(fid, str):
+        fid = open(fid)
+
+    resi1 = [int(x) for x in fid.readline().split()]
+    resi2 = [int(x) for x in fid.readline().split()]
+    fid.close()
+
+    pdb1_sel = pdb1.select('name', 'CA').select('resi', resi1)
+    pdb2_sel = pdb2.select('name', 'CA').select('resi', resi2)
+
+
+    return pdb1_sel, pdb2_sel

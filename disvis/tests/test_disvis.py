@@ -103,7 +103,7 @@ class TestDisVis(TestCase):
         self.assertTrue(np.allclose(dv._clashvol, np.logical_not(dv._not_clashing)))
         self.assertTrue(np.allclose(dv._interspace, dv._interacting - dv._clashvol))
 
-    def test_rotate_restraints(self):
+    def test_get_restraints_center(self):
         dv = self.dv
 
         # 90 degree rotation around Z-axis
@@ -115,7 +115,7 @@ class TestDisVis(TestCase):
         dv._restraints_center = np.zeros_like(dv._lrestraints)
         dv._rrestraints = np.asarray([[1, 0, 0]], dtype=np.float64)
 
-        dv._rotate_restraints(rotmat)
+        dv._get_restraints_center(rotmat)
         self.assertTrue(np.allclose(dv._rot_lrestraints, np.array([[0, 2, 0]])))
         self.assertTrue(np.allclose(dv._restraints_center, np.array([[1, -2, 0]])))
 
