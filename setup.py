@@ -1,35 +1,46 @@
 #! env/bin/python
 import os.path
-from distutils.core import setup
-from distutils.extension import Extension
+from setuptools import setup
+from setuptools.extension import Extension
 
-from Cython.Distutils import build_ext
-from Cython.Build import cythonize
 import numpy
+try:
+    from Cython.Distutils import build_ext
+    from Cython.Build import cythonize
+    CYTHON = True
+except ImportError:
+    CYTHON = False
+
+description = ('Quantifying and visualizing the interaction space '
+               'of distance-constrainted macromolecular complexes')
 
 packages = ['disvis', 'disvis.IO']
+package_data = {'disvis': [os.path.join('data', '*.npy'), 'kernels.cl']}
 
+ext = '.pyx' if CYTHON else '.c'
 ext_modules = [Extension("disvis.libdisvis",
-                  [os.path.join("src", "libdisvis.pyx")],
-                  include_dirs = [numpy.get_include()],
-              )]
-
-package_data = {'disvis': [os.path.join('data', '*.npy'), 
-                           'kernels.cl'],
-                           }
+                  [os.path.join("src", "libdisvis" + ext)],
+                  include_dirs=[numpy.get_include()],
+                  extra_compile_args=['-ffast-math']),
+              ]
+cmdclass = {}
+if CYTHON:
+    ext_modules = cythonize(ext_modules)
+    cmdclass['build_ext'] = build_ext
 
 scripts = [os.path.join('scripts', 'disvis')]
+requirements = ["numpy",]
 
 setup(name="disvis",
       version='1.0.0',
-      description='Quantifying and visualizing the interaction space of distance-constrainted macromolecular complexes',
+      description=description,
+      url="https://github.com/haddocking/disvis",
       author='Gydo C.P. van Zundert',
-      author_email='g.c.p.vanzundert@uu.nl',
+      author_email='gvanzundert51@gmail.com',
       packages=packages,
-      cmdclass = {'build_ext': build_ext},
-      ext_modules = cythonize(ext_modules),
+      cmdclass = cmdclass,
+      ext_modules=ext_modules,
       package_data = package_data,
       scripts=scripts,
-      requires=['numpy', 'cython'],
-      include_dirs=[numpy.get_include()],
+      install_requires=requirements,
      )

@@ -16,7 +16,6 @@ to the highest number of consistent restraints at every position in space.
 
 * Python2.7
 * NumPy
-* Cython
 
 Optional for faster CPU version
 
@@ -34,6 +33,7 @@ Recommended for installation
 
 * [git](https://git-scm.com/download)
 * [pip](https://pip.pypa.io/en/latest/installing.html)
+* Cython
 
 
 ## Installation
