@@ -2,7 +2,7 @@
 from __future__ import print_function, division, absolute_import
 from os import remove
 from os.path import join, abspath
-from sys import stdout
+from sys import stdout, exit
 from time import time
 import multiprocessing as mp
 from argparse import ArgumentParser
@@ -239,7 +239,13 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
     for p in processes:
         p.join()
 
+    # Check whether the queue is empty, this indicates failure to run on
+    # multi-processor runs.
+    if queue.empty():
+        raise Queue.Empty
+
     write('Searching done. Combining results')
+
     # Create dummy class with similar results attributes as DisVis class
     results = Results()
     joiner = Joiner(args.directory)
@@ -386,8 +392,14 @@ def main():
     if queue is None:
         # CPU-version
         if args.nproc > 1:
-            dv = mp_cpu_disvis(receptor, ligand, rotmat, weights,
-                    distance_restraints, pdb1_sel, pdb2_sel, args)
+            try:
+                dv = mp_cpu_disvis(receptor, ligand, rotmat, weights,
+                        distance_restraints, pdb1_sel, pdb2_sel, args)
+            except Queue.Empty:
+                msg = ('ERROR: Queue.Empty exception raised while processing job, '
+                       'stopping execution ...')
+                write(msg)
+                exit(-1)
         else:
             dv = run_disvis(queue, receptor, ligand, rotmat, weights,
                     distance_restraints, pdb1_sel, pdb2_sel, args)
