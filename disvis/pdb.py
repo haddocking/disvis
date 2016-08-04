@@ -2,8 +2,10 @@ from __future__ import absolute_import, print_function, division
 import os.path
 import operator
 from collections import Iterable
+
 import numpy as np
-from .IO.pdb import parse_pdb, write_pdb
+
+from .IO.pdb import parse_pdb
 from .IO.mmcif import parse_cif
 from .elements import ELEMENTS
 
@@ -26,10 +28,8 @@ class PDB(object):
         else:
             raise ValueError("Format of file is not recognized")
 
-
     def __init__(self, pdbdata):
         self.data = pdbdata
-
 
     @property
     def atomnumber(self):
@@ -37,42 +37,34 @@ class PDB(object):
         atomnumbers = np.asarray([ELEMENTS[e].number for e in elements], dtype=np.float64)
         return atomnumbers[ind]
 
-
     @property
     def coor(self):
         return np.asarray([self.data['x'], self.data['y'], self.data['z']]).T
-
 
     @coor.setter
     def coor(self, coor_array):
         self.data['x'], self.data['y'], self.data['z'] = coor_array.T
         
-
     @property
     def center(self):
         return self.coor.mean(axis=0)
-
 
     @property
     def center_of_mass(self):
         mass = self.mass.reshape(-1, 1)
         return (self.coor * mass).sum(axis=0)/mass.sum()
 
-
     @property
     def chain_list(self):
         return np.unique(self.data['chain'])
-
 
     @property
     def com(self):
         return self.center_of_mass
 
-
     @property
     def elements(self):
         return self.data['element']
-
 
     @property
     def mass(self):
@@ -80,40 +72,32 @@ class PDB(object):
         mass = np.asarray([ELEMENTS[e].mass for e in elements], dtype=np.float64)
         return mass[ind]
 
-
     @property
     def natoms(self):
         return self.data.shape[0]
-
 
     @property
     def sequence(self):
         resids, indices = np.unique(self.data['resi'], return_index=True)
         return self.data['resn'][indices]
 
-
     def combine(self, pdb):
         return PDB(np.hstack((self.data, pdb.data)))
-
 
     def duplicate(self):
         return PDB(self.data.copy())
 
-
     def rmsd(self, pdb):
         return np.sqrt(((self.coor - pdb.coor)**2).mean()*3)
-
 
     def rotate(self, rotmat):
         self.data['x'], self.data['y'], self.data['z'] =\
              np.mat(rotmat) * np.mat(self.coor).T
 
-
     def translate(self, vector):
         self.data['x'] += vector[0]
         self.data['y'] += vector[1]
         self.data['z'] += vector[2]
-
 
     def select(self, identifier, values, loperator='=='):
         """A simple and probably pretty inefficient way of selection atoms"""
@@ -139,11 +123,6 @@ class PDB(object):
                 selection |= oper(self.data[identifier], v)
 
         return PDB(self.data[selection])
-
-
-    def tofile(self, fid):
-        write_pdb(fid, self.data)
-
 
     @property
     def vdw_radius(self):
