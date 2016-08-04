@@ -142,7 +142,6 @@ class TestKernels(TestCase):
         answer = [[2, 2, 1],
                   [0, 0, 0]]
         test = np.allclose(answer, cl_hist.get())
-        print cl_hist.get()
         self.assertTrue(test)
 
 
