@@ -116,15 +116,12 @@ class TestCPUvsGPU(TestCase):
             test = np.all(self.dv._occ_grid[i] == self.gdv._cl_occ_grid[i].get())
             self.assertTrue(test)
 
-        #self.dv._get_interaction_matrix(c_rotmat, weight)
-        #self.gdv._cl_get_interaction_matrix(g_rotmat, weight)
-        #c_im = self.dv._interaction_matrix[2]
-        #g_im = self.gdv._cl_interaction_matrix[2]
-        #for i in range(c_im.shape[1]):
-        #    print c_im[i, :]
-        #    print g_im[i, :]
-        #test = np.all(c_im == g_im.get())
-        #self.assertTrue(test)
+        self.dv._get_interaction_matrix(c_rotmat, weight)
+        self.gdv._cl_get_interaction_matrix(g_rotmat, weight)
+        c_im = self.dv._interaction_matrix[2]
+        g_im = self.gdv._cl_interaction_matrix[2]
+        test = np.all(c_im == g_im.get())
+        self.assertTrue(test)
         
 
         c_rotmat = self.dv.rotations[1]

@@ -16,6 +16,7 @@ class Kernels():
 
         self.program = cl.Program(ctx, t).build()
         # Global and local workitems for all kernels
+        self._gws_rotate_points3d = (8 * 32 * 8 * 8,)
         self._gws_rotate_grid3d = (96, 64, 1)
         self._gws_dilate_point_add = (32, 32, 1)
 
@@ -25,8 +26,8 @@ class Kernels():
         self._lws_count_violations = (96, 1, 1)
         self._gws_count_violations = (96, 64, 1)
 
-        self._lws_count_interactions = (96, 1, 1)
-        self._gws_count_interactions = (96, 64, 1)
+        self._lws_count_interactions = (48, 1, 1)
+        self._gws_count_interactions = (96, 96, 1)
 
 
         # Simple elementwise kernels
@@ -91,20 +92,10 @@ class Kernels():
                 "out[i] = ((in1[i] == 1) && (in2[i] == 1)) ? 1 : 0;",
                 )
 
-        self.rotate_points = ElementwiseKernel(ctx,
-                "float3 *in, float16 rotmat, float3 *out",
-                """out[i].s0 = rotmat.s0 * in[i].s0 +
-                               rotmat.s1 * in[i].s1 +
-                               rotmat.s2 * in[i].s2;
-                   out[i].s1 = rotmat.s3 * in[i].s0 +
-                               rotmat.s4 * in[i].s1 +
-                               rotmat.s5 * in[i].s2;
-                   out[i].s2 = rotmat.s6 * in[i].s0 +
-                               rotmat.s7 * in[i].s1 +
-                               rotmat.s8 * in[i].s2;
-                 """,
-                 )
 
+    def rotate_points3d(self, queue, points, rotmat, out):
+        args = (points.data, rotmat, out.data)
+        self.program.rotate_points3d(queue, self._gws_rotate_points3d, None, *args)
 
     def rotate_grid3d(self, queue, grid, rotmat, out):
         args = (grid.data, rotmat, out.data)

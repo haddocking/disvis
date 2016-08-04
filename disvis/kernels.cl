@@ -20,6 +20,26 @@
 #define SIZE ((SHAPE_Z * SLICE))
 #define TOTAL_COOR ((NRECEPTOR_COOR + NLIGAND_COOR))
 
+kernel
+void rotate_points3d(global float3 *in, float16 rotmat, global float3 *out) 
+{
+    int id = get_global_id(0);
+    int stride = get_global_size(0);
+    int i;
+
+    for (i = id; i < NLIGAND_COOR; i += stride) {
+        out[i].s0 = rotmat.s0 * in[i].s0 +
+                    rotmat.s1 * in[i].s1 +
+                    rotmat.s2 * in[i].s2;
+        out[i].s1 = rotmat.s3 * in[i].s0 +
+                    rotmat.s4 * in[i].s1 +
+                    rotmat.s5 * in[i].s2;
+        out[i].s2 = rotmat.s6 * in[i].s0 +
+                    rotmat.s7 * in[i].s1 +
+                    rotmat.s8 * in[i].s2;
+    }
+}
+
 
 kernel
 void rotate_grid3d(
@@ -315,11 +335,12 @@ void count_interactions(
     // Count the number of interactions each residue makes for complexes
     // consistent with nrestraints.
 
-
-    int x, y, z, ind_z, ind_zy, i, j, k, offset;
+    int x, y, z, ind_z, ind_zy, i, j;//, offset;
+    global int * offset;
     local int l_hist[NRECEPTOR_COOR];
     local float3 l_fixed_coor[NRECEPTOR_COOR];
-    float3 dist2, diff;
+    float dist2;
+    float3 coor, moved_coor;
 
     size_t zid = get_global_id(0);
     size_t yid = get_global_id(1);
@@ -338,40 +359,42 @@ void count_interactions(
 
     // Loop over the interaction space, and count interactions for
     // conformations that are consistent with nrestraints.
-    for (i = 0, offset = 0; i < NLIGAND_COOR; i++, offset += NRECEPTOR_COOR) {
+    for (i = 0, offset = hist; i < NLIGAND_COOR; i++, offset += NRECEPTOR_COOR) {
+        coor = scanning_coor[i];
         // Set local histogram to 0
         for (j = lid; j < NRECEPTOR_COOR; j += lstride)
             l_hist[j] = 0;
         barrier(CLK_LOCAL_MEM_FENCE);
 
-        for (j = 0; j < NRECEPTOR_COOR; j++) {
-            diff.s0 = scanning_coor[i].s0 - fixed_coor[j].s0;
-            diff.s1 = scanning_coor[i].s1 - fixed_coor[j].s1;
-            diff.s2 = scanning_coor[i].s2 - fixed_coor[j].s2;
-            for (z = zid; z < SHAPE_Z; z += zstride) {
-                ind_z = z * SLICE;
-                dist2.s2 = SQUARE(diff.s2 + z);
-                for (y = yid; y < SHAPE_Y; y += ystride) {
-                    ind_zy = y * SHAPE_X + ind_z;
-                    dist2.s1 = dist2.s2 + SQUARE(diff.s1 + y);
-                    for (x = xid; x < SHAPE_X; x += xstride) {
+        for (z = zid; z < SHAPE_Z; z += zstride) {
+            moved_coor.s2 = coor.s2 + z;
+            ind_z = z * SLICE;
+            for (y = yid; y < SHAPE_Y; y += ystride) {
+                moved_coor.s1 = coor.s1 + y;
+                ind_zy = y * SHAPE_X + ind_z;
+                for (x = xid; x < SHAPE_X; x += xstride) {
 
-                        // Only investigate conformations consistent with nconsistent
-                        if (inter_space[ind_zy + x] != nconsistent)
-                            continue;
-                        dist2.s0 = dist2.s1 + SQUARE(diff.s0 + x);
-
-                        if (dist2.s0 <= INTERACTION_CUTOFF2)
-                        // Increase the counter using atomics
+                    // Only investigate conformations consistent with nconsistent
+                    if (inter_space[ind_zy + x] != nconsistent)
+                        continue;
+                    moved_coor.s0 = coor.s0 + x;
+                    for (j = 0; j < NRECEPTOR_COOR; j++) {
+                        //dist = fast_distance(moved_coor, l_fixed_coor[j]); 
+                        dist2 = SQUARE(moved_coor.s0 - l_fixed_coor[j].s0) +
+                                SQUARE(moved_coor.s1 - l_fixed_coor[j].s1) +
+                                SQUARE(moved_coor.s2 - l_fixed_coor[j].s2);
+                        if (dist2 <= INTERACTION_CUTOFF2)
                             atomic_inc(l_hist + j);
                     }
+
                 }
             }
         }
         barrier(CLK_LOCAL_MEM_FENCE);
+
         // Move counted interactions to global memory
         for (j = lid; j < NRECEPTOR_COOR; j += lstride)
-            atomic_add(hist + offset + j, l_hist[j]);
+            atomic_add(offset + j, l_hist[j]);
         barrier(CLK_LOCAL_MEM_FENCE);
     }
 }

@@ -536,7 +536,7 @@ class DisVis(object):
 
     def _cl_get_restraints_center(self, rotmat):
         k = self._cl_kernels
-        k.rotate_points(self._cl_lrestraints, rotmat, self._cl_rot_lrestraints)
+        k.rotate_points3d(self.queue, self._cl_lrestraints, rotmat, self._cl_rot_lrestraints)
         k.subtract(self._cl_rrestraints, self._cl_rot_lrestraints,
                 self._cl_restraints_center)
         self.queue.finish()
@@ -577,7 +577,8 @@ class DisVis(object):
         self.queue.finish()
 
     def _cl_get_interaction_matrix(self, rotmat, weight):
-        self._cl_kernels.rotate_points(self._cl_lselect, rotmat, self._cl_rot_lselect)
+        self._cl_kernels.rotate_points3d(self.queue, self._cl_lselect, rotmat,
+                self._cl_rot_lselect)
         for nconsistent in np.arange(self.interaction_restraints_cutoff,
                 self._nrestraints + 1, dtype=np.int32):
             self._cl_interaction_hist.fill(self._CL_ZERO)
