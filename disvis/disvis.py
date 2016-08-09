@@ -318,7 +318,7 @@ class DisVis(object):
 
     def _get_occupancy_grids(self, weight):
         for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
-            np.equal(self._interspace, np.int32(i), self._tmp)
+            np.greater_equal(self._interspace, np.int32(i), self._tmp)
             self._ft_tmp = self.rfftn(self._tmp, self._ft_tmp)
             np.multiply(self._ft_tmp, self._ft_lcore, self._ft_tmp)
             self._tmp = self.irfftn(self._ft_tmp, self._tmp)

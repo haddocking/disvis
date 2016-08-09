@@ -505,6 +505,8 @@ def main():
     # Write all occupancy grids to MRC-files if requested
     if args.occupancy_analysis:
         for n, vol in dv.occupancy_grids.iteritems():
+            # Normalize the occupancy grid
+            vol._array /= cum_complexes[n]
             vol.tofile(joiner('occupancy_{:d}.mrc'.format(n)))
 
     # Write out interaction analysis
