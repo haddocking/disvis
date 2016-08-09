@@ -105,6 +105,11 @@ def parse_interaction_selection(fid, pdb1, pdb2):
     pdb1_sel = pdb1.select('name', 'CA').select('resi', resi1)
     pdb2_sel = pdb2.select('name', 'CA').select('resi', resi2)
 
+    if (len(resi1) != pdb1_sel.natoms) or (len(resi2) != pdb2_sel.natoms):
+        msg = ("Some selected residues where not found in the PDB file. Please "
+               "check your input residues.")
+        raise ValueError(msg)
+
     return pdb1_sel, pdb2_sel
 
 
@@ -394,6 +399,8 @@ def main():
     write('Interaction radius set to: {:.2f}'.format(args.interaction_radius))
     write('Minimum required interaction volume: {:.2f}'.format(args.min_interaction))
     write('Maximum allowed volume of clashes: {:.2f}'.format(args.max_clash))
+    if args.occupancy_analysis:
+        write('Performing occupancy analysis')
 
     if queue is None:
         # CPU-version
@@ -504,10 +511,10 @@ def main():
     interaction_matrix = dv.interaction_matrix
     if interaction_matrix is not None:
 
-        # Save interaction matrix
-        f = joiner('interaction_matrix.npy')
-        write('Writing interaction-matrix to: {:s}'.format(f))
-        np.save(f, interaction_matrix)
+        ## Save interaction matrix
+        #f = joiner('interaction_matrix.npy')
+        #write('Writing interaction-matrix to: {:s}'.format(f))
+        #np.save(f, interaction_matrix)
 
         # Save contacted receptor and ligand residue interaction for each analyzed number
         # of consistent restraints
@@ -560,6 +567,7 @@ def main():
     seconds = int(round(time() - time0))
     m, s = divmod(seconds, 60)
     write('Total time passed: {:d}m {:2d}s'.format(m, s))
+
 
 if __name__=='__main__':
     main()

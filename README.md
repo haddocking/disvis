@@ -145,31 +145,74 @@ To perform a 9.72 degree rotational search with 16 processors and a voxel spacin
 
     disvis O14250.pdb Q9UT97.pdb restraints.dat -a 9.72 -p 16 -vs 2
 
-Finally, to offload computations to the GPU and increase the maximum allowed volume of clashes 
-and decrease the minimum required volume of interaction, and set the interaction radius to 2A
+To offload computations to the GPU (if the requirements are met) and increase
+the maximum allowed volume of clashes as well as the minimum required volume of
+interaction, and set the interaction radius to 2A
 
     disvis 1wcm_A.pdb 1wcm_E.pdb restraints.dat -g -cv 6000 -iv 7000 -ir 2
 
-These examples have shown all the 9 available options.
+To perform a grid occupancy analysis for complexes consistent with at least N
+restraints, include the `-oa` or `--occupancy-analysis` flag to the command. By
+default, the analysis is only performed on complexes consistent with
+either *all* and *all - 1* restraints. If you want to perform an occupancy
+analysis for complexes consistent with a lower number of restraints, use the
+`-ic` or `--interaction-restraints-cutoff` option, followed by the minimum
+number of required consistent restraints. Thus the command
+
+    disvis 1wcm_A.pdb 1wcm_E.pdb restraints.dat -oa -ic 5
+
+will make an occupancy grid for complexes consistent with at least 5
+restraints, and higher.
+
+Finally, to perform an interaction analysis to determine which residues
+are most likely at the interface, the `-is` or `--interaction-selection`
+options can be used with an additional file giving the residue numbers of the
+receptor and ligand for which the interaction analysis will be performed. The
+input file consists of two lines, where the two lines are a space separated
+sequence of residue numbers for the receptor and ligand, respectively. As the
+interaction analysis is particularly expensive, only complexes consistent with
+*all*, or *all - 1* are considered. To lower the barrier, the `-ic` option can
+again be used. Also limit the selected residues to only the solvent accessible
+ones. A simple example for the selection-file
+
+    1 2 3 4
+    101 302 888
+
+This will select residue numbers 1, 2, 3, and 4 for the receptor, and 101, 302,
+and 888 for the ligand.
 
 
 ### Output
 
-*disvis* outputs 5 files:
+Standard *disvis* outputs 5 files:
 
-* *accessible_complexes.out*: a text file containing the number of complexes consistent with
-a number of restraints. 
-* *violations.out*: a text file showing how often a specific restraint is violated for each number
-of consistent restraints. This helps in identifying which restraint is most likely a false-positive
-if any.
-* *accessible_interaction_space.mrc*: a density file in MRC format. The density represents the
-center of mass of the scanning chain conforming to the maximum found consistent restraints at
-every position in space. The density can be inspected by opening it together with the
-fixed chain in a molecular viewer (UCSF Chimera is recommended for its easier manipulation of density
-data, but also PyMol works).
-* *z-score.out*: a text file giving the Z-score for each restraint. The higher the score, the more
-likely the restraint is a false-positive. Z-scores above 1.0 are explicitly mentioned in the output.
-* *disvis.log*: a log file showing all the parameters used, together with date and time indications.
+* *accessible_complexes.out*: a text file containing the number of complexes
+  consistent with a number of restraints. 
+* *violations.out*: a text file showing how often a specific restraint is
+  violated for each number of consistent restraints. This helps in identifying
+  which restraint is most likely a false-positive if any.
+* *accessible_interaction_space.mrc*: a density file in MRC format. The density
+  represents the center of mass of the scanning chain conforming to the maximum
+  found consistent restraints at every position in space. The density can be
+  inspected by opening it together with the fixed chain in a molecular viewer
+  (UCSF Chimera is recommended for its easier manipulation of density
+  data, but also PyMol works).
+* *z-score.out*: a text file giving the Z-score for each restraint. The higher
+  the score, the more likely the restraint is a false-positive. Z-scores above
+  1.0 are explicitly mentioned in the output.
+* *disvis.log*: a log file showing all the parameters used, together with date
+  and time indications.
+
+If an occupancy and/or interaction analysis was requested, *disvis* also
+outputs the following files:
+
+* *occupancy_N.mrc*: a volume file giving a normalized indication of how
+  frequent a grid point is occupied by the ligand, where *N* indicates the minimal
+  required number of consistent restraints that resulted in the occupancy grid.
+* *[receptor|ligand]_interactions.txt*: a text file containing the average
+  number of interactions per complex each selected residue made, for both the
+  receptor and ligand molecule. Each column denotes the minimal number of
+  consistent restraints of each complex for which interactions were counted.
 
 
 Licensing
@@ -179,7 +222,7 @@ If this software was useful to your research please cite us
 
 **Van Zundert, G.C.P. and Bonvin, A.M.J.J.** (2015) DisVis: Visualizing and
 quantifying accessible interaction space of distance restrained biomolecular complexes.
-*Bioinformatics* (submitted).
+*Bioinformatics 31*, 3222-3224.
 
 MIT licence
 
