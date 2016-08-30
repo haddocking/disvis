@@ -552,7 +552,7 @@ def main():
                 f.write(' {:>6d}'.format(consistent_restraints))
             f.write('\n')
 
-            for n, resi in enumerate(pdb1_sel.data['resi']):
+            for n, resi in enumerate(pdb2_sel.data['resi']):
                 f.write('{:<5d}'.format(resi))
                 for consistent_restraints in xrange(args.interaction_restraints_cutoff, nrestraints + 1):
                     index = consistent_restraints - args.interaction_restraints_cutoff
