@@ -71,60 +71,6 @@ def count_violations(np.ndarray[np.float64_t, ndim=2] points,
 
 
 @cython.boundscheck(False)
-def rotate_grid_nearest(
-        np.ndarray[np.float64_t, ndim=3] grid,
-        int vlength,
-        np.ndarray[np.float64_t, ndim=2] rotmat,
-        np.ndarray[np.float64_t, ndim=3] out,
-        ):
-    """Rotate an array around the origin using nearest interpolation
-
-    Actually the output array is rotated, meaning that the rotation matrix is
-    inverted (i.e. the transpose is used).
-
-    Parameters
-    ----------
-    grid : ndarray
-
-    vlenght : integer
-        Vertice length
-
-    rotmat : ndarray
-        Rotation matrix.
-
-    out : ndarray
-        Output array
-    """
-
-    cdef: 
-        int x, y, z, x0, y0, z0 
-        double xcoor_z, ycoor_z, zcoor_z
-        double xcoor_yz, ycoor_yz, zcoor_yz
-        double xcoor_xyz, ycoor_xyz, zcoor_xyz
-
-    for z in range(-vlength, vlength+1):
-        xcoor_z = rotmat[0, 2]*z
-        ycoor_z = rotmat[1, 2]*z
-        zcoor_z = rotmat[2, 2]*z
-
-        for y in range(-vlength, vlength+1):
-            xcoor_yz = rotmat[0, 1]*y + xcoor_z
-            ycoor_yz = rotmat[1, 1]*y + ycoor_z
-            zcoor_yz = rotmat[2, 1]*y + zcoor_z
-
-            for x in range(-vlength, vlength+1):
-                xcoor_xyz = rotmat[0, 0]*x + xcoor_yz
-                ycoor_xyz = rotmat[1, 0]*x + ycoor_yz
-                zcoor_xyz = rotmat[2, 0]*x + zcoor_yz
-
-                x0 = <int> (round(xcoor_xyz))
-                y0 = <int> (round(ycoor_xyz))
-                z0 = <int> (round(zcoor_xyz))
-
-                out[z, y, x] = grid[z0, y0, x0]
-
-
-@cython.boundscheck(False)
 def dilate_points(np.ndarray[np.float64_t, ndim=2] points,
                   np.ndarray[np.float64_t, ndim=1] radius,
                   np.ndarray[np.float64_t, ndim=3] out,
@@ -296,29 +242,27 @@ def distance_restraint(np.ndarray[np.float64_t, ndim=2] points,
         mindis2 = mindis[n]**2
         maxdis2 = maxdis[n]**2
 
-        xmin = <int> ceil(points[n, 0] - maxdis[n])
-        ymin = <int> ceil(points[n, 1] - maxdis[n])
-        zmin = <int> ceil(points[n, 2] - maxdis[n])
+        xmin = max(<int> ceil(points[n, 0] - maxdis[n]), 0)
+        ymin = max(<int> ceil(points[n, 1] - maxdis[n]), 0)
+        zmin = max(<int> ceil(points[n, 2] - maxdis[n]), 0)
 
-        xmax = <int> floor(points[n, 0] + maxdis[n])
-        ymax = <int> floor(points[n, 1] + maxdis[n])
-        zmax = <int> floor(points[n, 2] + maxdis[n])
+        xmax = min(<int> floor(points[n, 0] + maxdis[n]), out.shape[2] - 1)
+        ymax = min(<int> floor(points[n, 1] + maxdis[n]), out.shape[1] - 1)
+        zmax = min(<int> floor(points[n, 2] + maxdis[n]), out.shape[0] - 1)
 
         for z in range(zmin, zmax+1):
-            if (z >= out.shape[0]) or (z < 0):
-                continue
 
             z2 = (z - points[n, 2])**2
+            if z2 > maxdis2:
+                continue
 
             for y in range(ymin, ymax+1):
-                if (y >= out.shape[1]) or (y < 0):
-                    continue
 
                 y2z2 = (y - points[n, 1])**2 + z2
+                if y2z2 > maxdis2:
+                    continue
 
                 for x in range(xmin, xmax+1):
-                    if (x >= out.shape[2]) or (x < 0):
-                        continue
 
                     x2y2z2 = (x - points[n, 0])**2 + y2z2
                     if x2y2z2 <= maxdis2 and x2y2z2 >= mindis2:
