@@ -38,7 +38,7 @@ scripts = [os.path.join('scripts', 'disvis')]
 requirements = ["numpy",]
 
 setup(name="disvis",
-      version='1.0.0',
+      version='2.0.0',
       description=description,
       url="https://github.com/haddocking/disvis",
       author='Gydo C.P. van Zundert',
