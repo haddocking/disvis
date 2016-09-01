@@ -102,8 +102,13 @@ def parse_interaction_selection(fid, pdb1, pdb2):
     resi1 = [int(x) for x in fid.readline().split()]
     resi2 = [int(x) for x in fid.readline().split()]
 
-    pdb1_sel = pdb1.select('name', 'CA').select('resi', resi1)
-    pdb2_sel = pdb2.select('name', 'CA').select('resi', resi2)
+    pdb1_sel = pdb1.select('name', ('CA', "O3'")).select('resi', resi1)
+    pdb2_sel = pdb2.select('name', ('CA', "O3'")).select('resi', resi2)
+
+    if (len(resi1) != pdb1_sel.natoms) or (len(resi2) != pdb2_sel.natoms):
+        msg = ("Some selected residues where not found in the PDB file. Please "
+               "check your input residues.")
+        raise ValueError(msg)
 
     return pdb1_sel, pdb2_sel
 
@@ -394,6 +399,8 @@ def main():
     write('Interaction radius set to: {:.2f}'.format(args.interaction_radius))
     write('Minimum required interaction volume: {:.2f}'.format(args.min_interaction))
     write('Maximum allowed volume of clashes: {:.2f}'.format(args.max_clash))
+    if args.occupancy_analysis:
+        write('Performing occupancy analysis')
 
     if queue is None:
         # CPU-version
@@ -498,16 +505,18 @@ def main():
     # Write all occupancy grids to MRC-files if requested
     if args.occupancy_analysis:
         for n, vol in dv.occupancy_grids.iteritems():
+            # Normalize the occupancy grid
+            vol._array /= cum_complexes[n]
             vol.tofile(joiner('occupancy_{:d}.mrc'.format(n)))
 
     # Write out interaction analysis
     interaction_matrix = dv.interaction_matrix
     if interaction_matrix is not None:
 
-        # Save interaction matrix
-        f = joiner('interaction_matrix.npy')
-        write('Writing interaction-matrix to: {:s}'.format(f))
-        np.save(f, interaction_matrix)
+        ## Save interaction matrix
+        #f = joiner('interaction_matrix.npy')
+        #write('Writing interaction-matrix to: {:s}'.format(f))
+        #np.save(f, interaction_matrix)
 
         # Save contacted receptor and ligand residue interaction for each analyzed number
         # of consistent restraints
@@ -543,7 +552,7 @@ def main():
                 f.write(' {:>6d}'.format(consistent_restraints))
             f.write('\n')
 
-            for n, resi in enumerate(pdb1_sel.data['resi']):
+            for n, resi in enumerate(pdb2_sel.data['resi']):
                 f.write('{:<5d}'.format(resi))
                 for consistent_restraints in xrange(args.interaction_restraints_cutoff, nrestraints + 1):
                     index = consistent_restraints - args.interaction_restraints_cutoff
@@ -560,6 +569,7 @@ def main():
     seconds = int(round(time() - time0))
     m, s = divmod(seconds, 60)
     write('Total time passed: {:d}m {:2d}s'.format(m, s))
+
 
 if __name__=='__main__':
     main()

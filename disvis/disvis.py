@@ -22,9 +22,9 @@ except ImportError:
 from disvis import volume
 from .pdb import PDB
 from .libdisvis import (
-        rotate_grid_nearest, dilate_points, distance_restraint,
-        count_violations, count_interactions
+        dilate_points, distance_restraint, count_violations, count_interactions
         )
+from ._extensions import rotate_grid3d
 
 class DisVis(object):
 
@@ -264,8 +264,8 @@ class DisVis(object):
         self._consistent_complexes = np.zeros(self._nrestraints + 1, dtype=np.float64)
 
     def _rotate_lcore(self, rotmat):
-        rotate_grid_nearest(self._lcore, self._llength, rotmat,
-                self._rot_lcore)
+        rotate_grid3d(self._lcore, rotmat, self._llength,
+                self._rot_lcore, True)
         
     def _get_interaction_space(self):
         # Calculate the clashing and interaction volume
@@ -318,7 +318,7 @@ class DisVis(object):
 
     def _get_occupancy_grids(self, weight):
         for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
-            np.equal(self._interspace, np.int32(i), self._tmp)
+            np.greater_equal(self._interspace, np.int32(i), self._tmp)
             self._ft_tmp = self.rfftn(self._tmp, self._ft_tmp)
             np.multiply(self._ft_tmp, self._ft_lcore, self._ft_tmp)
             self._tmp = self.irfftn(self._ft_tmp, self._tmp)

@@ -22,7 +22,13 @@ ext_modules = [Extension("disvis.libdisvis",
                   [os.path.join("src", "libdisvis" + ext)],
                   include_dirs=[numpy.get_include()],
                   extra_compile_args=['-ffast-math']),
+               Extension("disvis._extensions",
+                  [os.path.join("src", "_extensions.c")],
+                  include_dirs=[numpy.get_include()],
+                  extra_compile_args=['-ffast-math'],
+                  ),
               ]
+
 cmdclass = {}
 if CYTHON:
     ext_modules = cythonize(ext_modules)
@@ -32,7 +38,7 @@ scripts = [os.path.join('scripts', 'disvis')]
 requirements = ["numpy",]
 
 setup(name="disvis",
-      version='1.0.0',
+      version='2.0.0',
       description=description,
       url="https://github.com/haddocking/disvis",
       author='Gydo C.P. van Zundert',
