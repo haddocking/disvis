@@ -1,4 +1,4 @@
-from __future__ import print_function, absolute_import, division
+from __future__ import absolute_import, division
 from sys import stdout as _stdout
 from time import time as _time
 
@@ -194,7 +194,7 @@ class DisVis(object):
         self._llength = int(np.ceil(
             np.linalg.norm(self._lgridcoor, axis=1).max() + 
             self.ligand.vdw_radius.max() / self.voxelspacing
-            ))
+            )) + 1
 
     @staticmethod
     def _allocate_array(shape, dtype, fftw):
@@ -234,7 +234,7 @@ class DisVis(object):
                     self._allocate_array(self._ft_shape, np.complex128, self._fftw))
 
         # Integer arrays
-        for arr in 'interspace access_interspace restspace'.split():
+        for arr in 'interspace red_interspace access_interspace restspace'.split():
             setattr(self, "_" + arr, np.zeros(self._shape, np.int32))
 
         # Boolean arrays
@@ -298,27 +298,28 @@ class DisVis(object):
                 self._restspace)
 
     def _get_reduced_interspace(self):
-        np.multiply(self._interspace, self._restspace, self._interspace)
+        np.multiply(self._interspace, self._restspace, self._red_interspace)
 
     def _count_complexes(self, weight):
         self._tot_complex += weight * self._interspace.sum()
         self._consistent_complexes += weight *\
-                    np.bincount(self._interspace.ravel(),
+                    np.bincount(self._red_interspace.ravel(),
                             minlength=(max(2, self._nrestraints + 1))
                             )
 
     def _count_violations(self, weight):
+        # Count all sampled complexes
         count_violations(self._restraints_center, self._mindis,
-                self._maxdis, self._interspace, weight,
+                self._maxdis, self._red_interspace, weight,
                 self._violations)
 
     def _get_access_interspace(self):
-        np.maximum(self._interspace, self._access_interspace,
+        np.maximum(self._red_interspace, self._access_interspace,
                 self._access_interspace)
 
     def _get_occupancy_grids(self, weight):
         for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
-            np.greater_equal(self._interspace, np.int32(i), self._tmp)
+            np.greater_equal(self._red_interspace, np.int32(i), self._tmp)
             self._ft_tmp = self.rfftn(self._tmp, self._ft_tmp)
             np.multiply(self._ft_tmp, self._ft_lcore, self._ft_tmp)
             self._tmp = self.irfftn(self._ft_tmp, self._tmp)
@@ -328,7 +329,7 @@ class DisVis(object):
     def _get_interaction_matrix(self, rotmat, weight):
         # Rotate the ligand coordinates
         self._rot_lselect = np.dot(self._lselect, rotmat.T)
-        count_interactions(self._interspace, self._rselect,
+        count_interactions(self._red_interspace, self._rselect,
                 self._rot_lselect, np.float64(self.interaction_distance / self.voxelspacing),
                 weight, np.int32(self.interaction_restraints_cutoff),
                 self._interaction_matrix)
@@ -415,7 +416,7 @@ class DisVis(object):
                     )
 
         # Int32
-        arr_names = 'interspace restspace access_interspace'.split()
+        arr_names = 'interspace red_interspace restspace access_interspace'.split()
         for arr_name in arr_names:
             setattr(self, '_cl_' + arr_name, 
                     cl_array.zeros(q, self._cl_shape, dtype=np.int32)
@@ -532,47 +533,49 @@ class DisVis(object):
         k.less_equal(self._cl_clashvol, self._cl_grid_max_clash, self._cl_not_clashing)
         k.greater_equal(self._cl_intervol, self._cl_grid_min_interaction, self._cl_interacting)
         k.logical_and(self._cl_not_clashing, self._cl_interacting, self._cl_interspace)
-        #self.queue.finish()
+        self.queue.finish()
 
     def _cl_get_restraints_center(self, rotmat):
         k = self._cl_kernels
-        k.rotate_points3d(self.queue, self._cl_lrestraints, rotmat, self._cl_rot_lrestraints)
+        k.rotate_points3d(self.queue, self._cl_lrestraints, rotmat,
+                self._cl_rot_lrestraints)
         k.subtract(self._cl_rrestraints, self._cl_rot_lrestraints,
                 self._cl_restraints_center)
         self.queue.finish()
 
     def _cl_get_restraint_space(self):
         k = self._cl_kernels
-        self._cl_restspace.fill(self._CL_ZERO)
-        for n in xrange(self._nrestraints):
-            k.dilate_point_add(self.queue, self._cl_restraints_center, self._cl_mindis,
-                    self._cl_maxdis, n, self._cl_restspace)
+        k.set_to_i32(np.int32(0), self._cl_restspace)
+        k.dilate_point_add(self.queue, self._cl_restraints_center, self._cl_mindis,
+                self._cl_maxdis, self._cl_restspace)
         self.queue.finish()
 
     def _cl_get_reduced_interspace(self):
         self._cl_kernels.multiply_int32(self._cl_restspace,
-                self._cl_interspace, self._cl_interspace)
+                self._cl_interspace, self._cl_red_interspace)
         self.queue.finish()
 
     def _cl_count_complexes(self, weight):
+        # Count all sampled complexes
         self._cl_tot_complex += cl_array.sum(self._cl_interspace,
                 dtype=np.dtype(np.float32)) * weight
-        self._cl_hist.fill(self._CL_ZERO)
-        self._cl_kernels.histogram(self.queue, self._cl_interspace, self._cl_hist)
+        self._cl_kernels.set_to_i32(np.int32(0), self._cl_hist)
+
+        self._cl_kernels.histogram(self.queue, self._cl_red_interspace, self._cl_hist)
         self._cl_kernels.multiply_add(self._cl_hist, weight,
                 self._cl_consistent_complexes)
         self.queue.finish()
 
     def _cl_count_violations(self, weight):
-        self._cl_viol_hist.fill(self._CL_ZERO)
+        self._cl_kernels.set_to_i32(np.int32(0), self._cl_viol_hist)
         self._cl_kernels.count_violations(self.queue,
                 self._cl_restraints_center, self._cl_mindis2, self._cl_maxdis2,
-                self._cl_interspace, self._cl_viol_hist)
+                self._cl_red_interspace, self._cl_viol_hist)
         self._cl_kernels.multiply_add(self._cl_viol_hist, weight, self._cl_violations)
         self.queue.finish()
                 
     def _cl_get_access_interspace(self):
-        cl_array.maximum(self._cl_interspace, self._cl_access_interspace,
+        cl_array.maximum(self._cl_red_interspace, self._cl_access_interspace,
                 self._cl_access_interspace)
         self.queue.finish()
 
@@ -581,9 +584,9 @@ class DisVis(object):
                 self._cl_rot_lselect)
         for nconsistent in np.arange(self.interaction_restraints_cutoff,
                 self._nrestraints + 1, dtype=np.int32):
-            self._cl_interaction_hist.fill(self._CL_ZERO)
+            self._cl_kernels.set_to_i32(np.int32(0), self._cl_interaction_hist)
             self._cl_kernels.count_interactions(self.queue, self._cl_rselect,
-                    self._cl_rot_lselect, self._cl_interspace, nconsistent,
+                    self._cl_rot_lselect, self._cl_red_interspace, nconsistent,
                     self._cl_interaction_hist)
             self._cl_kernels.multiply_add(self._cl_interaction_hist, weight,
                     self._cl_interaction_matrix[nconsistent - self.interaction_restraints_cutoff])
@@ -596,7 +599,7 @@ class DisVis(object):
         for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
             # Get a grid for all translations that are consistent with at least
             # N restraints
-            k.equal(self._cl_interspace, np.int32(i), self._cl_tmp)
+            k.greater_equal_iif(self._cl_red_interspace, np.int32(i), self._cl_tmp)
             self._cl_rfftn(self.queue, self._cl_tmp, self._cl_ft_tmp)
             k.cmultiply(self._cl_ft_tmp, self._cl_ft_lcore, self._cl_ft_tmp)
             self._cl_irfftn(self.queue, self._cl_ft_tmp, self._cl_tmp)
@@ -644,6 +647,7 @@ class DisVis(object):
 
         self.queue.finish()
         # Get the data from GPU
+
         self._accessible_complexes = self._cl_consistent_complexes.get()
         self._accessible_complexes = np.asarray([self._cl_tot_complex.get()] +
             self._accessible_complexes.tolist(), dtype=np.float64)

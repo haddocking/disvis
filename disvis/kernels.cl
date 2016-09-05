@@ -1,7 +1,4 @@
 #define SQUARE(a) ((a) * (a))
-//#define IMAGE_OFFSET 0.5
-//#define MIN((a), (b)) ((a) < (b) ? (a) : (b))
-//#define MAX((a), (b)) ((a) > (b) ? (a) : (b))
 
 // To be defined on compile time
 #define INTERACTION_CUTOFF $interaction_cutoff
@@ -21,13 +18,13 @@
 #define TOTAL_COOR ((NRECEPTOR_COOR + NLIGAND_COOR))
 
 kernel
-void rotate_points3d(global float3 *in, float16 rotmat, global float3 *out) 
+void rotate_points3d(global float3 *in, int npoints, float16 rotmat, global float3 *out) 
 {
     int id = get_global_id(0);
     int stride = get_global_size(0);
     int i;
 
-    for (i = id; i < NLIGAND_COOR; i += stride) {
+    for (i = id; i < npoints; i += stride) {
         out[i].s0 = rotmat.s0 * in[i].s0 +
                     rotmat.s1 * in[i].s1 +
                     rotmat.s2 * in[i].s2;
@@ -62,8 +59,8 @@ void rotate_grid3d(
 
     for (z = zid - LLENGTH; z <= LLENGTH; z += zstride) {
         dist2.s2 = SQUARE(z);
-        coor_z.s0 = rotmat.s2 * z;
-        coor_z.s1 = rotmat.s5 * z;
+        coor_z.s0 = rotmat.s6 * z;
+        coor_z.s1 = rotmat.s7 * z;
         coor_z.s2 = rotmat.s8 * z;
 
         index.s0 = z * SLICE;
@@ -73,9 +70,9 @@ void rotate_grid3d(
 
         for (y = yid - LLENGTH; y <= LLENGTH; y += ystride) {
             dist2.s1 = SQUARE(y) + dist2.s2;
-            coor_zy.s0 = rotmat.s1 * y + coor_z.s0;
+            coor_zy.s0 = rotmat.s3 * y + coor_z.s0;
             coor_zy.s1 = rotmat.s4 * y + coor_z.s1;
-            coor_zy.s2 = rotmat.s7 * y + coor_z.s2;
+            coor_zy.s2 = rotmat.s5 * y + coor_z.s2;
 
             index.s1 = index.s0 + y * SHAPE_X;
             // Wraparound the y-coordinate
@@ -88,8 +85,8 @@ void rotate_grid3d(
                     continue;
 
                 coor.s0 = (int) round(rotmat.s0 * x + coor_zy.s0);
-                coor.s1 = (int) round(rotmat.s3 * x + coor_zy.s1);
-                coor.s2 = (int) round(rotmat.s6 * x + coor_zy.s2);
+                coor.s1 = (int) round(rotmat.s1 * x + coor_zy.s1);
+                coor.s2 = (int) round(rotmat.s2 * x + coor_zy.s2);
 
                 index.s2 = index.s1 + x;
                 if (x < 0)
@@ -111,71 +108,9 @@ void rotate_grid3d(
 }
 
 
-//kernel
-//void rotate_image3d(
-//        read_only image3d_t image, sampler_t sampler, 
-//        float16 rotmat, global float *out
-//        )
-//{
-//    // Rotate image around the origin. Only grid points within LLENGTH of the
-//    // origin are rotated.
-//
-//    int z, y, x;
-//    float3 dist2, coor_z, coor_zy, coor_zyx;
-//    int3 index;
-//
-//    int zid = get_global_id(0);
-//    int yid = get_global_id(1);
-//    int xid = get_global_id(2);
-//    int zstride = get_global_size(0);
-//    int ystride = get_global_size(1);
-//    int xstride = get_global_size(2);
-//
-//    for (z = zid - LLENGTH; z <= LLENGTH; z += zstride) {
-//        dist2.s2 = SQUARE(z);
-//        coor_z.s0 = rotmat.s2 * z + IMAGE_OFFSET;
-//        coor_z.s1 = rotmat.s5 * z + IMAGE_OFFSET;
-//        coor_z.s2 = rotmat.s8 * z + IMAGE_OFFSET;
-//
-//        index.s0 = z * SLICE;
-//        // Wraparound the z-coordinate
-//        if (z < 0)
-//            index.s0 += SIZE;
-//
-//        for (y = yid - LLENGTH; y <= LLENGTH; y += ystride) {
-//            dist2.s1 = SQUARE(y) + dist2.s2;
-//            coor_zy.s0 = rotmat.s1 * y + coor_z.s0;
-//            coor_zy.s1 = rotmat.s4 * y + coor_z.s1;
-//            coor_zy.s2 = rotmat.s7 * y + coor_z.s2;
-//
-//            index.s1 = index.s0 + y * SHAPE_X;
-//            // Wraparound the y-coordinate
-//            if (y < 0)
-//                index.s1 += SLICE;
-//
-//            for (x = xid - LLENGTH; x <= LLENGTH; x += xstride) {
-//                dist2.s0 = SQUARE(x) + dist2.s1;
-//                if (dist2.s0 > LLENGTH2)
-//                    continue;
-//
-//                coor_zyx.s0 = rotmat.s0 * x + coor_zy.s0;
-//                coor_zyx.s1 = rotmat.s3 * x + coor_zy.s1;
-//                coor_zyx.s2 = rotmat.s6 * x + coor_zy.s2;
-//
-//                index.s2 = index.s1 + x;
-//                if (x < 0)
-//                    index.s2 += SHAPE_X;
-//
-//                out[index.s2] = read_imagef(image, sampler, coor_zyx);
-//            }
-//        }
-//    }
-//}
-
-
 kernel
 void dilate_point_add(
-        global float3 *gcenter, global float *gmindis, global float *gmaxdis, int n,
+        global float4 *gcenter, global float *gmindis, global float *gmaxdis,
         global int *restspace
         )
 {
@@ -189,35 +124,37 @@ void dilate_point_add(
     int ystride = get_global_size(1);
     int xstride = get_global_size(2);
 
-    int x, y, z, ind_z, ind_zy;
-    float dis2_z, dis2_zy, dis2_zyx, mindis, maxdis;
-    float3 center;
+    int n, x, y, z, ind_z, ind_zy;
+    int xmin, xmax, ymin, ymax, zmin, zmax;
+    float dis2_z, dis2_zy, dis2_zyx, mindis, maxdis, mindis2, maxdis2;
+    float4 center;
 
-    center.s0 = gcenter[n].s0;
-    center.s1 = gcenter[n].s1;
-    center.s2 = gcenter[n].s2;
-    maxdis = gmaxdis[n];
-    mindis = gmindis[n];
+    for (n = 0; n < NRESTRAINTS; n++) {
 
-    int xmin = max((int) floor(center.s0 - maxdis), 0);
-    int xmax = min((int) ceil(center.s0 + maxdis), SHAPE_X - 1);
-    int ymin = max((int) floor(center.s1 - maxdis), 0);
-    int ymax = min((int) ceil(center.s1 + maxdis), SHAPE_Y - 1);
-    int zmin = max((int) floor(center.s2 - maxdis), 0);
-    int zmax = min((int) ceil(center.s2 + maxdis), SHAPE_Z - 1);
-    float mindis2 = SQUARE(mindis);
-    float maxdis2 = SQUARE(maxdis);
+        center = gcenter[n];
+        maxdis = gmaxdis[n];
+        mindis = gmindis[n];
 
-    for (z = zmin + zid; z <= zmax; z += zstride) {
-        ind_z = z * SLICE;
-        dis2_z = SQUARE(z - center.s2);
-        for (y = ymin + yid; y <= ymax; y += ystride) {
-            ind_zy = y * SHAPE_X + ind_z;
-            dis2_zy = SQUARE(y - center.s1) + dis2_z;
-            for (x = xmin + xid; x <= xmax; x += xstride) {
-                dis2_zyx = dis2_zy + SQUARE(x - center.s0);
-                if ((dis2_zyx <= maxdis2) && (dis2_zyx >= mindis2))
-                    restspace[ind_zy + x] += 1;
+        xmin = max((int) floor(center.s0 - maxdis), 0);
+        xmax = min((int) ceil(center.s0 + maxdis), SHAPE_X - 1);
+        ymin = max((int) floor(center.s1 - maxdis), 0);
+        ymax = min((int) ceil(center.s1 + maxdis), SHAPE_Y - 1);
+        zmin = max((int) floor(center.s2 - maxdis), 0);
+        zmax = min((int) ceil(center.s2 + maxdis), SHAPE_Z - 1);
+        mindis2 = SQUARE(mindis);
+        maxdis2 = SQUARE(maxdis);
+
+        for (z = zmin + zid; z <= zmax; z += zstride) {
+            ind_z = z * SLICE;
+            dis2_z = SQUARE(z - center.s2);
+            for (y = ymin + yid; y <= ymax; y += ystride) {
+                ind_zy = y * SHAPE_X + ind_z;
+                dis2_zy = SQUARE(y - center.s1) + dis2_z;
+                for (x = xmin + xid; x <= xmax; x += xstride) {
+                    dis2_zyx = dis2_zy + SQUARE(x - center.s0);
+                    if ((dis2_zyx <= maxdis2) && (dis2_zyx >= mindis2))
+                        atomic_inc(restspace + ind_zy + x);
+                }
             }
         }
     }

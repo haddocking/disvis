@@ -82,6 +82,11 @@ class Kernels():
                 "out[i] = (array[i] >= value) ? 1 : 0;",
                 )
 
+        self.greater_equal_iif = ElementwiseKernel(ctx,
+                "int* array, int value, float *out",
+                "out[i] = (array[i] >= value) ? 1.0f : 0;",
+                )
+
         self.equal = ElementwiseKernel(ctx,
                 "int *x, int y, float *z",
                 "z[i] = (x[i] == y) ? 1.0f : 0;",
@@ -91,18 +96,27 @@ class Kernels():
                 "int* in1, int *in2, int *out",
                 "out[i] = ((in1[i] == 1) && (in2[i] == 1)) ? 1 : 0;",
                 )
+        
+        self.set_to_f32 = ElementwiseKernel(ctx,
+                "float value, float *out",
+                "out[i] = value;",
+                )
 
+        self.set_to_i32 = ElementwiseKernel(ctx,
+                "int value, int *out",
+                "out[i] = value;",
+                )
 
     def rotate_points3d(self, queue, points, rotmat, out):
-        args = (points.data, rotmat, out.data)
+        args = (points.data, np.int32(points.shape[0]), rotmat, out.data)
         self.program.rotate_points3d(queue, self._gws_rotate_points3d, None, *args)
 
     def rotate_grid3d(self, queue, grid, rotmat, out):
         args = (grid.data, rotmat, out.data)
         self.program.rotate_grid3d(queue, self._gws_rotate_grid3d, None, *args)
 
-    def dilate_point_add(self, queue, centers, mindis, maxdis, n, restspace):
-        args = (centers.data, mindis.data, maxdis.data, np.int32(n), restspace.data)
+    def dilate_point_add(self, queue, centers, mindis, maxdis, restspace):
+        args = (centers.data, mindis.data, maxdis.data, restspace.data)
         self.program.dilate_point_add(queue, self._gws_dilate_point_add, None, *args)
 
     def histogram(self, queue, data, hist):
