@@ -3,7 +3,7 @@ dependencies/
 env/
 test-cases/
 dist/
-disvis.egg.info/
+disvis.egg-info/
 
 *.c
 *.pyc
