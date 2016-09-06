@@ -27,6 +27,7 @@ class TestKernels(TestCase):
 
     def test_rotate_grid3d(self):
         k = self.p.program.rotate_grid3d
+        # Identity rotation
         rotmat = np.asarray([1, 0, 0, 0, 1, 0, 0, 0, 1] + [0] * 7, dtype=np.float32)
         self.cl_grid = cl_array.zeros(self.queue, self.shape, dtype=np.float32)
         self.cl_grid.fill(1)
@@ -41,6 +42,22 @@ class TestKernels(TestCase):
                   [[ 1.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.]]]
 
         self.assertTrue(np.allclose(answer, self.cl_out.get()))
+
+        # 90 degree rotation around z-axis
+        rotmat = np.asarray([0, -1, 0, 1, 0, 0, 0, 0, 1] + [0] * 7, dtype=np.float32)
+        grid = np.zeros(self.shape, dtype=np.float32)
+        grid[0, 0, 0] = 1
+        grid[0, 0, 1] = 1
+        self.cl_grid = cl_array.to_device(self.queue, grid)
+        self.cl_out.fill(0)
+        args = (self.cl_grid.data, rotmat, self.cl_out.data)
+        k(self.queue, gws, None, *args)
+
+        answer = np.zeros_like(grid)
+        answer[0, 0, 0] = 1
+        answer[0, 1, 0] = 1
+        self.assertTrue(np.allclose(answer, self.cl_out.get()))
+
 
     def test_dilate_point_add(self):
         k = self.p.program.dilate_point_add

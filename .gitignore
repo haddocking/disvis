@@ -2,6 +2,8 @@ build/
 dependencies/
 env/
 test-cases/
+dist/
+disvis.egg.info/
 
 *.c
 *.pyc
