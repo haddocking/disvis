@@ -217,7 +217,7 @@ class DisVis(object):
         if self._fftw:
             out_arr = self._irfftn(in_arr, out_arr)
         else:
-            out_arr = self._irfftn(in_arr)
+            out_arr = self._irfftn(in_arr, s=self._shape)
         return out_arr
 
     def _cpu_init(self):
