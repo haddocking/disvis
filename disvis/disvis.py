@@ -480,15 +480,15 @@ class DisVis(object):
         self._cl_occ_grid = {}
         if self.occupancy_analysis:
             for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
-                self._cl_occ_grid[i] = cl_array.zeros(self.queue, self._shape, dtype=np.float32)
+                self._cl_occ_grid[i] = cl_array.zeros(self.queue,
+                        self._cl_shape, dtype=np.float32)
 
         # Interaction analysis
         if self._interaction_analysis:
-            self._cl_interaction_hist = cl_array.zeros(self.queue,
-                    (self._lselect.shape[0], self._rselect.shape[0]),
+            shape = (self._lselect.shape[0], self._rselect.shape[0])
+            self._cl_interaction_hist = cl_array.zeros(self.queue, shape,
                     dtype=np.int32)
             self._cl_interaction_matrix = {}
-            shape = (self._lselect.shape[0], self._rselect.shape[0])
             for i in xrange(self._nrestraints + 1 - self.interaction_restraints_cutoff):
                 self._cl_interaction_matrix[i] = cl_array.zeros(self.queue, shape,
                         dtype=np.float32)
