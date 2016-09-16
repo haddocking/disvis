@@ -247,7 +247,7 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
     # Check whether the queue is empty, this indicates failure to run on
     # multi-processor runs.
     if queue.empty():
-        raise Queue.Empty
+        raise mp.Queue.Empty
 
     write('Searching done. Combining results')
 
@@ -512,6 +512,13 @@ def main():
 
     # Write out interaction analysis
     interaction_matrix = dv.interaction_matrix
+    # the interaction_matrix gives the number of interactions between each
+    # residue of the receptor and ligand for complexes consistent with exactly
+    # N restraints.
+    # Take the cumsum in order to give the number of interactions for complexes
+    # with at least N restraints.
+    interaction_matrix = np.cumsum(interaction_matrix[::-1], axis=0)[::-1]
+
     if interaction_matrix is not None:
 
         ## Save interaction matrix

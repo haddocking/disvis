@@ -302,7 +302,7 @@ void count_interactions(
             for (x = xid; x < SHAPE_X; x += xstride) {
 
                 // Only investigate conformations consistent with nconsistent
-                if (inter_space[ind_zy + x] < nconsistent)
+                if (inter_space[ind_zy + x] != nconsistent)
                     continue;
 
                 for (i = 0; i < NLIGAND_COOR; i++) {

@@ -217,7 +217,7 @@ class DisVis(object):
         if self._fftw:
             out_arr = self._irfftn(in_arr, out_arr)
         else:
-            out_arr = self._irfftn(in_arr)
+            out_arr = self._irfftn(in_arr, s=self._shape)
         return out_arr
 
     def _cpu_init(self):
@@ -480,15 +480,15 @@ class DisVis(object):
         self._cl_occ_grid = {}
         if self.occupancy_analysis:
             for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
-                self._cl_occ_grid[i] = cl_array.zeros(self.queue, self._shape, dtype=np.float32)
+                self._cl_occ_grid[i] = cl_array.zeros(self.queue,
+                        self._cl_shape, dtype=np.float32)
 
         # Interaction analysis
         if self._interaction_analysis:
-            self._cl_interaction_hist = cl_array.zeros(self.queue,
-                    (self._lselect.shape[0], self._rselect.shape[0]),
+            shape = (self._lselect.shape[0], self._rselect.shape[0])
+            self._cl_interaction_hist = cl_array.zeros(self.queue, shape,
                     dtype=np.int32)
             self._cl_interaction_matrix = {}
-            shape = (self._lselect.shape[0], self._rselect.shape[0])
             for i in xrange(self._nrestraints + 1 - self.interaction_restraints_cutoff):
                 self._cl_interaction_matrix[i] = cl_array.zeros(self.queue, shape,
                         dtype=np.float32)
@@ -582,6 +582,7 @@ class DisVis(object):
     def _cl_get_interaction_matrix(self, rotmat, weight):
         self._cl_kernels.rotate_points3d(self.queue, self._cl_lselect, rotmat,
                 self._cl_rot_lselect)
+
         for nconsistent in np.arange(self.interaction_restraints_cutoff,
                 self._nrestraints + 1, dtype=np.int32):
             self._cl_kernels.set_to_i32(np.int32(0), self._cl_interaction_hist)
@@ -661,7 +662,7 @@ class DisVis(object):
                 self._occ_grid[i] = self._cl_occ_grid[i].get().astype(np.float64)
 
         if self._interaction_analysis:
-            for i in xrange(self._nrestraints - self.interaction_restraints_cutoff):
+            for i in xrange(self._nrestraints + 1 - self.interaction_restraints_cutoff):
                 self._interaction_matrix[i] = self._cl_interaction_matrix[i].get().astype(np.float64)
 
 def grid_restraints(restraints, voxelspacing, origin, lcenter):
