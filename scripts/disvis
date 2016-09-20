@@ -511,14 +511,10 @@ def main():
             vol.tofile(joiner('occupancy_{:d}.mrc'.format(n)))
 
     # Write out interaction analysis
-    interaction_matrix = dv.interaction_matrix
     # the interaction_matrix gives the number of interactions between each
     # residue of the receptor and ligand for complexes consistent with exactly
     # N restraints.
-    # Take the cumsum in order to give the number of interactions for complexes
-    # with at least N restraints.
-    interaction_matrix = np.cumsum(interaction_matrix[::-1], axis=0)[::-1]
-
+    interaction_matrix = dv.interaction_matrix
     if interaction_matrix is not None:
 
         ## Save interaction matrix
@@ -529,6 +525,8 @@ def main():
         # Save contacted receptor and ligand residue interaction for each analyzed number
         # of consistent restraints
         write('Writing contacted receptor residue interactions to files.')
+        # Take the cumsum in order to give the number of interactions for complexes
+        # with at least N restraints.
         receptor_cum_interactions = interaction_matrix.sum(axis=1)[::-1].cumsum(axis=0)[::-1]
         ligand_cum_interactions = interaction_matrix.sum(axis=2)[::-1].cumsum(axis=0)[::-1]
         fname = joiner('receptor_interactions.txt')
