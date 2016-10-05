@@ -90,7 +90,7 @@ def random_rotation():
     return [[a11, a12, a13], [a21, a22, a23], [a31, a32, a33]]
 
 
-def proportional_orientations(angle):
+def proportional_orientations(value, metric='angle'):
     
     # orientation sets available: name of file: (Norientations, degree)
     rot_sets = {'E.npy': (1, 360.0),
@@ -119,8 +119,11 @@ def proportional_orientations(angle):
     # determine the apropiate set to use
     smallestdiff = None
     for s, n in rot_sets.iteritems():
-        alpha = n[1]
-        diff = abs(angle - alpha)
+	if metric == 'number':
+            alpha = n[0]
+        else:
+            alpha = n[1]
+        diff = abs(value- alpha)
         if diff < smallestdiff or smallestdiff is None:
             smallestdiff = diff
             fname = s
@@ -131,6 +134,9 @@ def proportional_orientations(angle):
 
     quat = quat_weights[:, :4]
     weights = quat_weights[:, -1]
-    alpha = rot_sets[fname][1]
+    if metric == 'number':
+        alpha = rot_sets[fname][0]
+    else:
+        alpha = rot_sets[fname][1]
 
     return quat, weights, alpha

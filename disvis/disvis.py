@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division
 from sys import stdout as _stdout
 from time import time as _time
+from os.path import join as _join
 
 import numpy as np
 from numpy.fft import rfftn as np_rfftn, irfftn as np_irfftn
@@ -49,6 +50,9 @@ class DisVis(object):
         self.queue = None
         self._fftw = fftw and PYFFTW
         self.print_callback = print_callback
+	self.save = False
+	self.save_job = 0
+	self.save_directory = '.'
 
         # Output attributes
         # Array containing number of complexes consistent with EXACTLY n
@@ -372,6 +376,12 @@ class DisVis(object):
             # Perform interaction analysis if required
             if self._interaction_analysis:
                 self._get_interaction_matrix(rotmat, weight)
+
+	    # Write reduced accessible interaction space to file, if required
+	    if self.save:
+		fname = _join(self.save_directory, 
+		    'red_interspace_{:d}_{:d}.mrc'.format(self.save_job, n))
+	        volume.Volume(self._red_interspace, self.voxelspacing, self._origin).tofile(fname)
 
             if self.print_callback is not None:
                 #self.print_callback(n, total, time0)

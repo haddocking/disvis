@@ -91,6 +91,8 @@ def parse_args():
                   "normalized probability of that spot being occupied by the ligand."
                   )
             )
+    p.add_argument('-s', '--save', dest='save', action='store_true',
+            help="Save the whole reduced interaction space, to generate all solutions.")
 
     return p.parse_args()
 
@@ -170,6 +172,9 @@ def run_disvis_instance(queue, receptor, ligand, distance_restraints, rotmat,
     dv.max_clash = args.max_clash
     dv.min_interaction = args.min_interaction
     dv.interaction_restraints_cutoff = args.interaction_restraints_cutoff
+    dv.save = args.save
+    dv.save_directory = self.directory
+    dv.save_job = n
 
     if args.interaction_selection is not None:
         dv.receptor_interaction_selection = pdb1_sel
@@ -329,6 +334,8 @@ def run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints,
     dv.queue = queue
     dv.occupancy_analysis = args.occupancy_analysis
     dv.interaction_restraints_cutoff = args.interaction_restraints_cutoff
+    dv.save = args.save
+    dv.save_directory = args.directory
 
     if not any([x is None for x in (pdb1_sel, pdb2_sel)]):
         dv.receptor_interaction_selection = pdb1_sel
