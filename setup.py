@@ -34,7 +34,6 @@ if CYTHON:
     ext_modules = cythonize(ext_modules)
     cmdclass['build_ext'] = build_ext
 
-scripts = [os.path.join('scripts', 'disvis')]
 requirements = ["numpy",]
 
 setup(name="disvis",
@@ -47,6 +46,10 @@ setup(name="disvis",
       cmdclass = cmdclass,
       ext_modules=ext_modules,
       package_data = package_data,
-      scripts=scripts,
+      entry_points={
+              'console_scripts': [
+                  'disvis = disvis.disvis:main',
+                  ]
+              },
       install_requires=requirements,
      )
