@@ -45,7 +45,7 @@ def parse_pdb(pdbfile):
                 for e in name:
                     if e.isalpha():
                         break
-            pdb['element'].append(e)
+            pdb['element'].append(e.title())
             pdb['charge'].append(line[78:80])
 
     natoms = len(pdb['name'])

@@ -45,7 +45,7 @@ def parse_cif(infile):
     cifdata['z'] = atom_site['Cartn_z']
     cifdata['occupancy'] = atom_site['occupancy']
     cifdata['bfactor'] = atom_site['B_iso_or_equiv']
-    cifdata['element'] = atom_site['type_symbol']
+    cifdata['element'] = atom_site['type_symbol'].title()
     cifdata['charge'] = atom_site['pdbx_formal_charge']
     cifdata['model'] = atom_site['pdbx_PDB_model_num']
 
