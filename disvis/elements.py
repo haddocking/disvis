@@ -1741,6 +1741,17 @@ SERIES = {
     9: 'Lanthanides',
     10: 'Actinides'}
 
+def element_from_name(name, hetatm=False):
+    i=iter(name)
+    for c in i:
+        if c.isalpha():
+            if hetatm:
+                c2=(c+next(i,'')).title()
+                if c2.isalpha() and c2 in ELEMENTS:
+                    return c2
+            if c.upper() in ELEMENTS:
+                return c.upper()
+    return 'C'
 
 def _descriptions(symbol):
     """Delay load descriptions."""
