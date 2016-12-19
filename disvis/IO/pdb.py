@@ -43,7 +43,7 @@ def parse_pdb(pdbfile):
             e = line[76:78].strip()
             # Be forgiving if element is not given
             if not e:
-                e = element_from_name(name, line.startswith(HETATM))
+                e = element_from_name(line[12:16], line.startswith(HETATM))
             pdb['element'].append(e.title())
             pdb['charge'].append(line[78:80])
 

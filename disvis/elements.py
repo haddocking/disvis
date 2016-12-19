@@ -1742,15 +1742,21 @@ SERIES = {
     10: 'Actinides'}
 
 def element_from_name(name, hetatm=False):
-    i=iter(name)
-    for c in i:
+    # Parse HETATM based on Position (eg. CA vs. Ca)
+    if hetatm:
+        # element should occupy first two columns
+        e=name[0:2].strip()
+        # if not identifiable by this approach the first alphabetical character will be tried (as for ATOM entries)
+        if e.isalpha() and e.title() in ELEMENTS:
+            print(e.title())
+            return e.title()
+    # Assume first alphabetical character is the elment
+    for c in name:
         if c.isalpha():
-            if hetatm:
-                c2=(c+next(i,'')).title()
-                if c2.isalpha() and c2 in ELEMENTS:
-                    return c2
             if c.upper() in ELEMENTS:
                 return c.upper()
+            else:
+                break
     return 'C'
 
 def _descriptions(symbol):
