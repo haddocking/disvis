@@ -1748,7 +1748,6 @@ def element_from_name(name, hetatm=False):
         e=name[0:2].strip()
         # if not identifiable by this approach the first alphabetical character will be tried (as for ATOM entries)
         if e.isalpha() and e.title() in ELEMENTS:
-            print(e.title())
             return e.title()
     # Assume first alphabetical character is the elment
     for c in name:
