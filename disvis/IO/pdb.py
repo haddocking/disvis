@@ -1,4 +1,5 @@
 from collections import defaultdict
+from ..elements import element_from_name
 
 import numpy as np
 
@@ -42,10 +43,8 @@ def parse_pdb(pdbfile):
             e = line[76:78].strip()
             # Be forgiving if element is not given
             if not e:
-                for e in name:
-                    if e.isalpha():
-                        break
-            pdb['element'].append(e)
+                e = element_from_name(line[12:16], line.startswith(HETATM))
+            pdb['element'].append(e.title())
             pdb['charge'].append(line[78:80])
 
     natoms = len(pdb['name'])
