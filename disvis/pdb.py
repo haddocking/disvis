@@ -114,7 +114,7 @@ class PDB(object):
         elif loperator == '!=':
             oper = operator.ne
 
-        if not isinstance(values, Iterable):
+        if not isinstance(values, Iterable) or isinstance(values, basestring):
             values = (values,)
         selection = oper(self.data[identifier], values[0])
 
