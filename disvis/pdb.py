@@ -120,7 +120,10 @@ class PDB(object):
 
         if len(values) > 1:
             for v in values[1:]:
-                selection |= oper(self.data[identifier], v)
+                if loperator == '!=':
+                    selection &= oper(self.data[identifier], v)
+                else:
+                    selection |= oper(self.data[identifier], v)
 
         return PDB(self.data[selection])
 
