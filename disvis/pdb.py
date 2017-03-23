@@ -114,13 +114,16 @@ class PDB(object):
         elif loperator == '!=':
             oper = operator.ne
 
-        if not isinstance(values, Iterable):
+        if not isinstance(values, Iterable) or isinstance(values, basestring):
             values = (values,)
         selection = oper(self.data[identifier], values[0])
 
         if len(values) > 1:
             for v in values[1:]:
-                selection |= oper(self.data[identifier], v)
+                if loperator == '!=':
+                    selection &= oper(self.data[identifier], v)
+                else:
+                    selection |= oper(self.data[identifier], v)
 
         return PDB(self.data[selection])
 
