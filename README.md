@@ -224,7 +224,7 @@ If this software was useful to your research please cite us
 quantifying accessible interaction space of distance restrained biomolecular complexes.
 *Bioinformatics 31*, 3222-3224.
 
-MIT licence
+Apache License Version 2.0
 
 The elements.py module is licenced under the MIT License, Copyright Christoph
 Gohlke.
