@@ -1,212 +1,210 @@
 #include "Python.h"
 #define NPY_NO_DEPRECATED_API NPY_1_8_API_VERSION
 #include "numpy/arrayobject.h"
-#include <complex.h>
+
+#define SQUARE(x) ((x) * (x))
+#define MIN(a, b) ((a) > (b) ? (b) : (a))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 
-static PyObject *rotate_grid3d(PyObject *dummy, PyObject *args)
+static int modulo(npy_intp x, npy_intp N)
 {
-    // Argument variables
-    PyObject *arg1=NULL, *arg2=NULL, *arg4=NULL;
-    int radius, nearest;
-    PyArrayObject *py_grid=NULL, *py_rotmat=NULL, *py_out=NULL;
-
-    // Pointers
-    double *grid, *rotmat, *out;
-    npy_intp *out_shape, *grid_shape;
-
-    npy_intp out_size, out_slice, grid_size, grid_slice;
-    int z, y, x, radius2, x0, y0, z0, dist2_z, dist2_zy, dist2_zyx, 
-        out_z, out_zy, out_zyx, grid_zyx;
-    double xcoor_z, ycoor_z, zcoor_z, xcoor_zy, ycoor_zy, zcoor_zy,
-           xcoor_zyx, ycoor_zyx, zcoor_zyx;
-    // Trilinear interpolation
-    int x1, y1, z1, offset0, offset1;
-    double dx, dy, dz, dx1, dy1, dz1, c00, c10, c01, c11, c0, c1, c;
-
-    // Parse arguments
-    if (!PyArg_ParseTuple(args, "OOiOi", &arg1, &arg2, &radius, &arg4, &nearest))
-        return NULL;
-
-    py_grid = (PyArrayObject *) PyArray_FROM_OTF(arg1, NPY_FLOAT64, NPY_ARRAY_IN_ARRAY);
-    if (py_grid == NULL)
-        goto fail;
-    py_rotmat = (PyArrayObject *) PyArray_FROM_OTF(arg2, NPY_FLOAT64, NPY_ARRAY_IN_ARRAY);
-    if (py_rotmat == NULL)
-        goto fail;
-    py_out = (PyArrayObject *) PyArray_FROM_OTF(arg4, NPY_FLOAT64, NPY_ARRAY_OUT_ARRAY);
-    if (py_out == NULL)
-        goto fail;
-
-    // Get pointers to arrays and shape info
-    grid = (double *) PyArray_DATA(py_grid);
-    rotmat = (double *) PyArray_DATA(py_rotmat);
-    out = (double *) PyArray_DATA(py_out);
-
-    out_shape = PyArray_DIMS(py_out);
-    out_slice = out_shape[2] * out_shape[1];
-    out_size = PyArray_SIZE(py_out);
-    grid_shape = PyArray_DIMS(py_grid);
-    grid_slice = grid_shape[2] * grid_shape[1];
-    grid_size = PyArray_SIZE(py_grid);
-
-    radius2 = radius * radius;
-
-    for (z = -radius; z <= radius; z++) {
-        dist2_z = z * z;
-        if (dist2_z > radius2)
-            continue;
-        // Rotate points
-        xcoor_z = rotmat[6] * z;
-        ycoor_z = rotmat[7] * z;
-        zcoor_z = rotmat[8] * z;
-
-        // Indices
-        out_z = z * out_slice;
-        if (z < 0)
-            out_z += out_size;
-
-        for (y = -radius; y <= radius; y++) {
-            dist2_zy = dist2_z + y * y;
-            if (dist2_zy > radius2)
-                continue;
-
-            xcoor_zy = xcoor_z + rotmat[3] * y;
-            ycoor_zy = ycoor_z + rotmat[4] * y;
-            zcoor_zy = zcoor_z + rotmat[5] * y;
-
-            out_zy = out_z + y * out_shape[2];
-            if (y < 0)
-                out_zy += out_slice;
-
-            for (x = -radius; x <= radius; x++) {
-                dist2_zyx = dist2_zy + x * x;
-                if (dist2_zyx > radius2)
-                    continue;
-
-                xcoor_zyx = xcoor_zy + rotmat[0] * x;
-                ycoor_zyx = ycoor_zy + rotmat[1] * x;
-                zcoor_zyx = zcoor_zy + rotmat[2] * x;
-                // Indices
-                out_zyx = out_zy + x;
-                if (x < 0)
-                    out_zyx += out_shape[2];
-
-                if (nearest > 0) {
-                    // Nearest interpolation
-                    x0 = (int) round(xcoor_zyx);
-                    y0 = (int) round(ycoor_zyx);
-                    z0 = (int) round(zcoor_zyx);
-
-                    // Grid index
-                    grid_zyx = z0 * grid_slice + y0 * grid_shape[2] + x0;
-                    if (x0 < 0)
-                        grid_zyx += grid_shape[2];
-                    if (y0 < 0)
-                        grid_zyx += grid_slice;
-                    if (z0 < 0)
-                        grid_zyx += grid_size;
-
-                    out[out_zyx] = grid[grid_zyx];
-                } else {
-                    // Tri-linear interpolation
-                    //
-                    x0 = (int) floor(xcoor_zyx);
-                    y0 = (int) floor(ycoor_zyx);
-                    z0 = (int) floor(zcoor_zyx);
-                    x1 = x0 + 1;
-                    y1 = y0 + 1;
-                    z1 = z0 + 1;
-
-                    // Grid index
-                    grid_zyx = z0 * grid_slice + y0 * grid_shape[2] + x0;
-                    if (x0 < 0)
-                        grid_zyx += grid_shape[2];
-                    if (y0 < 0)
-                        grid_zyx += grid_slice;
-                    if (z0 < 0)
-                        grid_zyx += grid_size;
-
-                    dx = xcoor_zyx - x0;
-                    dy = ycoor_zyx - y0;
-                    dz = zcoor_zyx - z0;
-                    dx1 = 1 - dx;
-                    dy1 = 1 - dy;
-                    dz1 = 1 - dz;
-
-                    offset1 = 1;
-                    if (x1 == 0)
-                        offset1 -= grid_shape[2];
-                    c00 = grid[grid_zyx] * dx1 + 
-                          grid[grid_zyx + offset1] * dx;
-
-                    offset0 = grid_shape[2];
-                    if (y1 == 0)
-                        offset0 -= grid_slice;
-                    offset1 = offset0 + 1;
-                    if (x1 == 0)
-                        offset1 -= grid_shape[2];
-
-                    c10 = grid[grid_zyx + offset0] * dx1 + 
-                          grid[grid_zyx + offset1] * dx;
-
-                    offset0 = grid_slice;
-                    if (z1 == 0)
-                        offset0 -= grid_size;
-                    offset1 = offset0 + 1;
-                    if (x1 == 0)
-                        offset1 -= grid_shape[2];
-                    c01 = grid[grid_zyx + offset0] * dx1 + 
-                          grid[grid_zyx + offset1] * dx;
-
-                    offset0 = grid_slice + grid_shape[2];
-                    if (z1 == 0)
-                        offset0 -= grid_size;
-                    if (y1 == 0)
-                        offset0 -= grid_slice;
-                    offset1 = offset0 + 1;
-                    if (x1 == 0)
-                        offset1 -= grid_shape[2];
-                    c11 = grid[grid_zyx + offset0] * dx1 + 
-                          grid[grid_zyx + offset1] * dx;
-
-                    c0 = c00 * dy1 + c10 * dy;
-                    c1 = c01 * dy1 + c11 * dy;
-
-                    c = c0 * dz1 + c1 * dz;
-
-                    out[out_zyx] = c;
-                }
-            }
-        }
-    }
-    // Clean up objects
-    Py_DECREF(py_grid);
-    Py_DECREF(py_rotmat);
-    Py_DECREF(py_out);
-    Py_INCREF(Py_None);
-    return Py_None;
-
-fail:
-    // Clean up objects
-    Py_XDECREF(py_grid);
-    Py_XDECREF(py_rotmat);
-    PyArray_XDECREF_ERR(py_out);
-    return NULL;
+  npy_intp ret = x % N;
+  if (ret < 0)
+    ret += N;
+  return ret;
 }
 
 
+static void dilate_points(
+    PyArrayObject *pypoints, PyArrayObject *pyradii, double value, 
+    PyArrayObject *pyout)
+{
+  double *points = (double *) PyArray_DATA(pypoints);
+  double *radii = (double *) PyArray_DATA(pyradii);
+  double *out = (double *) PyArray_DATA(pyout);
+
+  npy_intp *points_shape = PyArray_DIMS(pypoints);
+  npy_intp *out_shape = PyArray_DIMS(pyout);
+  npy_intp out_slice = out_shape[2] * out_shape[1];
+  npy_intp out_size = out_shape[0] * out_slice;
+
+  for (npy_intp n = 0; n < points_shape[1]; ++n) {
+    double center_x = points[n];
+    double center_y = points[n + points_shape[1]];
+    double center_z = points[n + 2 * points_shape[1]];
+    double radius_max = radii[n];
+    double radius2_max = SQUARE(radius_max);
+    int zmin = (int) ceil(center_z - radius_max);
+    int ymin = (int) ceil(center_y - radius_max);
+    int xmin = (int) ceil(center_x - radius_max);
+    int zmax = (int) floor(center_z + radius_max);
+    int ymax = (int) floor(center_y + radius_max);
+    int xmax = (int) floor(center_x + radius_max);
+    for (npy_intp z = zmin; z <= zmax; ++z) {
+      npy_intp ind_z = modulo(z * out_slice, out_size);
+      double radius2_z = SQUARE(z - center_z);
+      for (npy_intp y = ymin; y <= ymax; ++y) {
+        npy_intp ind_zy = modulo(y * out_shape[2], out_slice) + ind_z;
+        double radius2_zy = radius2_z + SQUARE(y - center_y);
+        for (npy_intp x = xmin; x <= xmax; ++x) {
+          double radius2 = radius2_zy + SQUARE(x - center_x);
+          if (radius2 <= radius2_max) {
+            npy_intp ind_zyx = ind_zy + modulo(x, out_shape[2]);
+            out[ind_zyx] = value;
+          }
+        }
+      }
+    }
+  }
+}
+
+
+static PyObject *py_dilate_points(PyObject *dummy, PyObject *args)
+{
+  PyObject *pypoints_arg=NULL, *pyradii_arg=NULL, *pyout_arg=NULL;
+  PyArrayObject *pypoints=NULL, *pyradii=NULL, *pyout=NULL;
+  double value;
+  if (!PyArg_ParseTuple(args, "OOdO", &pypoints_arg, &pyradii_arg, 
+                        &value, &pyout_arg)) 
+    return NULL;
+
+  pypoints = (PyArrayObject *) 
+      PyArray_FROM_OTF(pypoints_arg, NPY_FLOAT64, NPY_ARRAY_IN_ARRAY);
+  if (pypoints == NULL)
+    goto fail;
+  pyradii = (PyArrayObject *) 
+      PyArray_FROM_OTF(pyradii_arg, NPY_FLOAT64, NPY_ARRAY_IN_ARRAY);
+  if (pyradii == NULL)
+    goto fail;
+  pyout = (PyArrayObject *) 
+      PyArray_FROM_OTF(pyout_arg, NPY_FLOAT64, NPY_ARRAY_INOUT_ARRAY);
+  if (pyout == NULL)
+    goto fail;
+
+  dilate_points(pypoints, pyradii, value, pyout);
+
+  Py_DECREF(pypoints);
+  Py_DECREF(pyradii);
+  Py_DECREF(pyout);
+  Py_INCREF(Py_None);
+  return Py_None;
+fail:
+  // Clean up objects
+  Py_XDECREF(pypoints);
+  Py_XDECREF(pyradii);
+  PyArray_XDECREF_ERR(pyout);
+  return NULL;
+}
+
+
+static void fill_restraint_space(
+    PyArrayObject *py_rsel, PyArrayObject *py_lsel, 
+    double min_dis, double max_dis, int value,
+    PyArrayObject *py_out
+    )
+{
+  double *rsel = (double *) PyArray_DATA(py_rsel);
+  double *lsel = (double *) PyArray_DATA(py_lsel);
+  int *out = (int *) PyArray_DATA(py_out);
+
+  npy_intp *rsel_shape = PyArray_DIMS(py_rsel);
+  npy_intp *lsel_shape = PyArray_DIMS(py_lsel);
+  npy_intp *out_shape = PyArray_DIMS(py_out);
+  npy_intp out_slice = out_shape[2] * out_shape[1];
+  double max_dis2 = SQUARE(max_dis);
+  double min_dis2 = SQUARE(min_dis);
+
+  for (npy_intp nr = 0; nr < rsel_shape[0]; ++nr) {
+    for (npy_intp nl = 0; nl < lsel_shape[0]; ++nl) {
+      double center_x = rsel[3 * nr] - lsel[3 * nl];
+      double center_y = rsel[3 * nr + 1] - lsel[3 * nl + 1];
+      double center_z = rsel[3 * nr + 2] - lsel[3 * nl + 2];
+
+      int zmin = MAX((int) ceil(center_z - max_dis), 0);
+      int ymin = MAX((int) ceil(center_y - max_dis), 0);
+      int xmin = MAX((int) ceil(center_x - max_dis), 0);
+      int zmax = MIN((int) floor(center_z + max_dis), out_shape[0] - 1);
+      int ymax = MIN((int) floor(center_y + max_dis), out_shape[1] - 1);
+      int xmax = MIN((int) floor(center_x + max_dis), out_shape[2] - 1);
+
+      for (npy_intp z = zmin; z <= zmax; z++) {
+        double dist2_z = SQUARE(z - center_z);
+        npy_intp ind_z = z * out_slice;
+        for (npy_intp y = ymin; y <= ymax; y++) {
+          double dist2_zy = SQUARE(y - center_y) + dist2_z;
+          npy_intp ind_zy = y * out_shape[2] + ind_z;
+          for (npy_intp x = xmin; x <= xmax; x++) {
+            double dist2_zyx = SQUARE(x - center_x) + dist2_zy;
+            if ((dist2_zyx <= max_dis2) && (dist2_zyx >= min_dis2))
+              out[ind_zy + x] |= value;
+          }
+        }
+      }
+    }
+  }
+}
+
+
+static PyObject *py_fill_restraint_space(PyObject *dummy, PyObject *args)
+{
+   // Parse arguments
+  PyObject 
+      *arg1=NULL, *arg2=NULL, *arg6=NULL;
+  PyArrayObject 
+      *py_rsel=NULL, *py_lsel=NULL, *py_out=NULL;
+  double 
+      min_dis, max_dis;
+  int value;
+
+  if (!PyArg_ParseTuple(args, "OOddiO", &arg1, &arg2, &min_dis, 
+                        &max_dis, &value, &arg6))
+    return NULL;
+
+  py_rsel = (PyArrayObject *) 
+      PyArray_FROM_OTF(arg1, NPY_FLOAT64, NPY_ARRAY_IN_ARRAY);
+  if (py_rsel == NULL)
+    goto fail;
+
+  py_lsel = (PyArrayObject *) 
+      PyArray_FROM_OTF(arg2, NPY_FLOAT64, NPY_ARRAY_IN_ARRAY);
+  if (py_lsel == NULL)
+    goto fail;
+
+  py_out = (PyArrayObject *) 
+      PyArray_FROM_OTF(arg6, NPY_INT32, NPY_ARRAY_INOUT_ARRAY);
+  if (py_out == NULL)
+    goto fail;
+
+  fill_restraint_space(py_rsel, py_lsel, min_dis, max_dis, value, py_out);
+
+  // Clean up objects
+  Py_DECREF(py_rsel);
+  Py_DECREF(py_lsel);
+  Py_DECREF(py_out);
+  Py_INCREF(Py_None);
+  return Py_None;
+
+fail:
+  // Clean up objects
+  Py_XDECREF(py_rsel);
+  Py_XDECREF(py_lsel);
+  PyArray_XDECREF_ERR(py_out);
+  return NULL;
+}
+
 
 static PyMethodDef mymethods[] = {
-    {"rotate_grid3d", rotate_grid3d, METH_VARARGS, ""},
-    {NULL, NULL, 0, NULL}
+  {"dilate_points", py_dilate_points, METH_VARARGS, ""},
+  {"fill_restraint_space", py_fill_restraint_space, METH_VARARGS, ""},
+  {NULL, NULL, 0, NULL}
 };
 
 
 PyMODINIT_FUNC
 init_extensions(void)
 {
-    (void) Py_InitModule("_extensions", mymethods);
-    import_array();
+  (void) Py_InitModule("_extensions", mymethods);
+  import_array();
 };
 

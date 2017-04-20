@@ -35,10 +35,15 @@ if CYTHON:
     cmdclass['build_ext'] = build_ext
 
 scripts = [os.path.join('scripts', 'disvis')]
+entry_points = {
+        'console_scripts': [
+            'disvis3 = disvis.disvis2:main',
+            ]
+        }
 requirements = ["numpy",]
 
 setup(name="disvis",
-      version='2.0.0',
+      version='3.0.0',
       description=description,
       url="https://github.com/haddocking/disvis",
       author='Gydo C.P. van Zundert',
@@ -48,5 +53,6 @@ setup(name="disvis",
       ext_modules=ext_modules,
       package_data = package_data,
       scripts=scripts,
+      entry_points=entry_points,
       install_requires=requirements,
      )
