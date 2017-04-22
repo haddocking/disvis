@@ -1,0 +1,19 @@
+# ADH crosslinks
+restraint  (27.A@CA)  (18.B@CA) 0 23
+restraint (122.A@CA) (125.B@CA) 0 23
+restraint (122.A@CA) (127.B@CA) 0 23
+restraint (122.A@CA) (128.B@CA) 0 23
+
+# ZL crosslinks
+restraint (55.A@CA) (169.B@CA) 0 26
+restraint (55.A@CA) (179.B@CA) 0 26
+restraint (54.A@CA) (179.B@CA) 0 26
+
+
+# Virtual false positive ZL restraints
+# Euclidean distance 27.0A
+#A 50 CA B 32 CA 0 26
+restraint (50.A@CA) (32.B@CA) 0 26
+# Euclidean distance 29.6A
+#A 62 CA B 184 CA 0 26
+restraint (62.A@CA) (184.B@CA) 0 26

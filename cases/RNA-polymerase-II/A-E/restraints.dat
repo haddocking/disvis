@@ -1,0 +1,34 @@
+# Proper cross-links taken from XLdb
+#
+# 12.5A
+#A 1003 CB E 166 CB 0 30
+restraint (1003.A@CB) (166.E@CB) 0 30
+
+# 19.8A
+#A  129 CB E 161 CB 0 30
+restraint (129.A@CB) (161.E@CB) 0 30
+
+# 12.9A
+#A  129 CB E 171 CB 0 30
+restraint (129.A@CB) (171.E@CB) 0 30
+
+# 19.6A
+#A   15 CB E 171 CB 0 30
+restraint (15.A@CB) (171.E@CB) 0 30
+
+# 21.8A
+#A  934 CB E 201 CB 0 30
+restraint (934.A@CB) (201.E@CB) 0 30
+
+# 15.1A
+#A  938 CB E 201 CB 0 30
+restraint (938.A@CB) (201.E@CB) 0 30
+
+# Virtual cross-links
+# 42.2A
+#A  180 CB E 122 CB 0 30
+restraint (180.A@CB) (122.E@CB) 0 30
+
+# 35.7A
+#A 1092 CB E 152 CB 0 30
+restraint (1092.A@CB) (152.E@CB) 0 30
