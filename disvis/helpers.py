@@ -1,9 +1,18 @@
 import os
 import errno
+import re
+
 try:
     import pyopencl as cl
 except ImportError:
     pass
+try:
+    from pyparsing import (Literal, Word, Combine, Optional, Forward,
+            ZeroOrMore, StringEnd, nums, alphas, alphanums,
+            )
+    PYPARSING = True
+except ImportError:
+    PYPARSING = False
     
 
 def get_queue():
@@ -66,7 +75,8 @@ def parse_restraints(fid, pdb1, pdb2):
                 int(resi2)).select('name', name2).duplicate()
 
         if pdb1_sel.natoms == 0 or pdb2_sel.natoms == 0:
-            raise ValueError("A restraint selection was not found in line:\n{:s}".format(str(line)))
+            msg = "A restraint selection was not found in line:\n{:s}".format(str(line))
+            raise ValueError(msg)
 
         dist_restraints.append([pdb1_sel, pdb2_sel, float(mindis), float(maxdis)])
 
@@ -87,5 +97,103 @@ def parse_interaction_selection(fid, pdb1, pdb2):
     pdb1_sel = pdb1.select('name', 'CA').select('resi', resi1)
     pdb2_sel = pdb2.select('name', 'CA').select('resi', resi2)
 
-
     return pdb1_sel, pdb2_sel
+
+
+class RestraintParser(object):
+
+    """Parser for restraint files."""
+
+    if PYPARSING:
+        # Define grammar
+        point = Literal('.')
+        plusorminus = Literal('+') | Literal('-')
+        lpar = Literal('(')
+        rpar = Literal(')')
+        l_or = Literal('or')
+        start = Literal('restraint')
+        at = Literal('@')
+        number = Word(nums)
+        integer = Combine(Optional(plusorminus) + number)
+        floatnumber = Combine(integer + Optional(point + Optional(number)))
+
+        atomname = Combine(at + Word(alphanums))
+        chain = Combine(point + Word(alphanums))
+        term = Combine(integer + Optional(chain) + Optional(atomname))
+        selection = Forward()
+        selection << term + ZeroOrMore(l_or + term)
+
+        pattern = (start + lpar + selection + rpar + lpar + selection +
+                rpar + floatnumber + floatnumber)
+    
+    def parse_file(self, fid):
+        restraints = []
+        with open(fid) as f:
+            for line in f:
+                restraints.append(self.parse_line(line))
+        return restraints
+
+    def parse_line(self, line):
+        if not line:
+            return
+
+        if line.startswith('#'):
+            return
+        elif line.startswith('restraint'):
+            if not PYPARSING:
+                msg = "Ambiguous restraints syntax requires the pyparsing package."
+                raise ImportError(msg)
+            return self._ambiguous_restraint(line)
+        # Ignore empty lines
+        elif not line.strip():
+            return
+        else:
+            return self._simple_restraint(line)
+
+    def _simple_restraint(self, line):
+        # Old-style restraint
+        words = line.split()
+        words[1] = int(words[1])
+        words[4] = int(words[4])
+        receptor_selection = [self._simple_selection(words[:3])]
+        ligand_selection = [self._simple_selection(words[3:6])]
+        min_dis, max_dis = tuple(float(x) for x in words[6:8])
+        return receptor_selection, ligand_selection, min_dis, max_dis
+
+    def _simple_selection(self, words):
+        return zip(('chain', 'resi', 'name'), words)
+
+    def _ambiguous_restraint(self, line):
+        # Parse ambiguous restraint line
+        args = self.pattern.parseString(line).asList()
+
+        receptor_start = args.index('(') + 1
+        receptor_end = args.index(')')
+        ligand_start = receptor_end + 2
+        ligand_end = len(args) - 3
+
+        receptor_selection = []
+        for sel in args[receptor_start: receptor_end]:
+            if sel == 'or':
+                continue
+            receptor_selection.append(self._ambiguous_selection(sel))
+
+        ligand_selection = []
+        for sel in args[ligand_start: ligand_end]:
+            if sel == 'or':
+                continue
+            ligand_selection.append(self._ambiguous_selection(sel))
+
+        min_dis, max_dis = [float(args[-2]), float(args[-1])]
+
+        return receptor_selection, ligand_selection, min_dis, max_dis
+
+    def _ambiguous_selection(self, sel):
+        words = re.split('[.@]', sel)
+        words[0] = int(words[0])
+        # In case the user only specified resi and name.
+        if len(words) == 2:
+            if '@' in sel:
+                return zip(('resi', 'name'), words)
+        return zip(('resi', 'chain', 'name'), words)
+

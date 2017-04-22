@@ -38,33 +38,3 @@ def count_interactions(np.ndarray[np.int32_t, ndim=3] interaction_space,
 
                         if dist2 <= interaction_distance2:
                             interaction_matrix[n - interaction_restraint_cutoff, j, i] += weight
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-def count_violations(np.ndarray[np.float64_t, ndim=2] points,
-        np.ndarray[np.float64_t, ndim=1] mindis,
-        np.ndarray[np.float64_t, ndim=1] maxdis,
-        np.ndarray[np.int32_t, ndim=3] interspace,
-        double weight,
-        np.ndarray[np.float64_t, ndim=2] violations):
-
-    cdef:
-        unsigned int x, y, z, i
-        double distance2, mindis2, maxdis2
-
-    for z in range(interspace.shape[0]):
-        for y in range(interspace.shape[1]):
-            for x in range(interspace.shape[2]):
-
-                if interspace[z, y, x] == 0:
-                    continue
-
-                for i in range(violations.shape[0]):
-                    distance2 = (x - points[i, 0])**2 +\
-                            (y - points[i, 1])**2 + (z - points[i, 2])**2
-                    mindis2 = mindis[i]**2
-                    maxdis2 = maxdis[i]**2
-
-                    if distance2 < mindis2 or distance2 > maxdis2:
-                        violations[interspace[z, y, x] - 1, i] += weight

@@ -17,8 +17,10 @@ class Volume(object):
         return cls(np.zeros(shape, dtype=dtype), voxelspacing, origin)
 
     @classmethod
-    def zeros_like(cls, volume):
-        return cls(np.zeros_like(volume.array), volume.voxelspacing,
+    def zeros_like(cls, volume, dtype=None):
+        if dtype is None:
+            dtype = volume.array.dtype
+        return cls(np.zeros_like(volume.array, dtype=dtype), volume.voxelspacing,
                    volume.origin)
     
     def __init__(self, array, voxelspacing=1.0, origin=(0, 0, 0)):
@@ -64,12 +66,8 @@ class Volumizer(object):
                 longest_distance - interaction_radius)
         top_right = (receptor.coor.max(axis=0) + 
                 longest_distance + interaction_radius)
-        # TODO make shape a product of small primes
         self.shape = [closest_multiple(int(np.ceil(x)))
                 for x in (top_right - bottom_left)[::-1] / self.voxelspacing]
-        #self.shape = np.ceil(
-        #        (top_right - bottom_left) / 
-        #        self.voxelspacing)[::-1].astype(np.int32)
         self.origin = bottom_left
 
         self.rcore = Volume(np.zeros(self.shape, dtype=np.float64), 

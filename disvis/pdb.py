@@ -1,7 +1,7 @@
 from __future__ import absolute_import, print_function, division
 import os.path
 import operator
-from collections import Iterable, defaultdict
+from collections import Sequence, defaultdict 
 
 import numpy as np
 
@@ -119,8 +119,8 @@ class PDB(object):
         self.data['y'] += vector[1]
         self.data['z'] += vector[2]
 
-    def select(self, identifier, values, loperator='=='):
-        """A simple and probably pretty inefficient way of selection atoms"""
+    def select(self, identifier, values, loperator='==', return_ind=False):
+        """A simple way of selecting atoms"""
         if loperator == '==':
             oper = operator.eq
         elif loperator == '<':
@@ -133,16 +133,24 @@ class PDB(object):
             oper = operator.le
         elif loperator == '!=':
             oper = operator.ne
+        else:
+            raise ValueError('Logic operator not recognized.')
 
-        if not isinstance(values, Iterable):
+        if not isinstance(values, Sequence) or isinstance(values, basestring):
             values = (values,)
-        selection = oper(self.data[identifier], values[0])
 
+        selection = oper(self.data[identifier], values[0])
         if len(values) > 1:
             for v in values[1:]:
-                selection |= oper(self.data[identifier], v)
+                if loperator == '!=':
+                    selection &= oper(self.data[identifier], v)
+                else:
+                    selection |= oper(self.data[identifier], v)
 
-        return PDB(self.data[selection])
+        if return_ind:
+            return selection
+        else:
+            return PDB(self.data[selection])
 
     def tofile(self, fid):
         """Write instance to PDB-file"""
