@@ -4,7 +4,8 @@ import numpy as np
 
 from .pdb import PDB
 from .volume import Volume, Volumizer
-from .spaces import InteractionSpace, RestraintSpace, Restraint, AccessibleInteractionSpace
+from .spaces import (InteractionSpace, RestraintSpace, Restraint, 
+        AccessibleInteractionSpace, OccupancySpace)
 from .helpers import RestraintParser
 from .rotations import proportional_orientations, quat_to_rotmat
 
@@ -51,6 +52,8 @@ class DisVis(object):
                 accessible_interaction_space, self._interaction_space_calc, 
                 self._restraint_space_calc
                 )
+        self._occupancy_space = OccupancySpace(
+                self._interaction_space_calc, self._ais_calc)
         self._initialized = True
 
     def __call__(self, rotmat, weight=1):
@@ -62,6 +65,7 @@ class DisVis(object):
         self._interaction_space_calc()
         self._restraint_space_calc(rotmat)
         self._ais_calc(weight=weight)
+        self._occupancy_space(weight=weight)
 
     @property
     def consistent_complexes(self):
@@ -140,3 +144,5 @@ def main():
     print disvis.consistent_complexes
     print disvis.violation_matrix
     disvis.max_consistent.tofile('test.mrc')
+    for n, space in enumerate(disvis._occupancy_space.spaces):
+        space.tofile('occ_{:}.mrc'.format(n))
