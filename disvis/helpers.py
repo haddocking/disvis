@@ -30,11 +30,32 @@ def get_queue():
 def mkdir_p(path):
     try:
         os.makedirs(path)
-    except OSError as exc: # Python >2.5
+    except OSError as exc:
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
         else:
             raise
+
+
+class DJoiner(object):
+    
+    """Join filenames with a set directory."""
+
+    def __init__(self, directory):
+        self.directory = directory
+
+    def __call__(self, fname):
+        return os.path.abspath(os.path.join(self.directory, fname))
+
+    def __add__(self, path):
+        return DJoiner(os.path.join(self.directory, path))
+
+    def __iadd__(self, path):
+        self.directory = os.path.join(self.directory, path)
+        return self
+
+    def mkdir(self):
+        mkdir_p(self.directory)
 
 
 def parse_interactions(f):

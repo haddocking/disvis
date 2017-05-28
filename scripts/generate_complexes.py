@@ -39,7 +39,6 @@ class Move(object):
 
 
 def main():
-    """Main function that will perform the function of the script."""
 
     args = parse_args()
 
@@ -71,7 +70,9 @@ def main():
         ligand.rotate(move.rotmat)
         ligand.translate(move.trans)
         ligand.tofile(fn.format(n))
-        ligand.coor[:] = ligand_coor
+        ligand.data['x'][:] = ligand_coor[:,0]
+        ligand.data['y'][:] = ligand_coor[:,1]
+        ligand.data['z'][:] = ligand_coor[:,2]
 
 
 if __name__ == '__main__':
