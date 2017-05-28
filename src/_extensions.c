@@ -194,9 +194,105 @@ fail:
 }
 
 
+static void fill_restraint_space_add(
+    PyArrayObject *py_rsel, PyArrayObject *py_lsel, 
+    double min_dis, double max_dis,
+    PyArrayObject *py_out
+    )
+{
+  double *rsel = (double *) PyArray_DATA(py_rsel);
+  double *lsel = (double *) PyArray_DATA(py_lsel);
+  int *out = (int *) PyArray_DATA(py_out);
+
+  npy_intp *rsel_shape = PyArray_DIMS(py_rsel);
+  npy_intp *lsel_shape = PyArray_DIMS(py_lsel);
+  npy_intp *out_shape = PyArray_DIMS(py_out);
+  npy_intp out_slice = out_shape[2] * out_shape[1];
+  double max_dis2 = SQUARE(max_dis);
+  double min_dis2 = SQUARE(min_dis);
+
+  for (npy_intp nr = 0; nr < rsel_shape[0]; ++nr) {
+    for (npy_intp nl = 0; nl < lsel_shape[0]; ++nl) {
+      double center_x = rsel[3 * nr] - lsel[3 * nl];
+      double center_y = rsel[3 * nr + 1] - lsel[3 * nl + 1];
+      double center_z = rsel[3 * nr + 2] - lsel[3 * nl + 2];
+
+      int zmin = MAX((int) ceil(center_z - max_dis), 0);
+      int ymin = MAX((int) ceil(center_y - max_dis), 0);
+      int xmin = MAX((int) ceil(center_x - max_dis), 0);
+      int zmax = MIN((int) floor(center_z + max_dis), out_shape[0] - 1);
+      int ymax = MIN((int) floor(center_y + max_dis), out_shape[1] - 1);
+      int xmax = MIN((int) floor(center_x + max_dis), out_shape[2] - 1);
+
+      for (npy_intp z = zmin; z <= zmax; z++) {
+        double dist2_z = SQUARE(z - center_z);
+        npy_intp ind_z = z * out_slice;
+        for (npy_intp y = ymin; y <= ymax; y++) {
+          double dist2_zy = SQUARE(y - center_y) + dist2_z;
+          npy_intp ind_zy = y * out_shape[2] + ind_z;
+          for (npy_intp x = xmin; x <= xmax; x++) {
+            double dist2_zyx = SQUARE(x - center_x) + dist2_zy;
+            if ((dist2_zyx <= max_dis2) && (dist2_zyx >= min_dis2))
+              out[ind_zy + x] += 1;
+          }
+        }
+      }
+    }
+  }
+}
+
+
+static PyObject *py_fill_restraint_space_add(PyObject *dummy, PyObject *args)
+{
+   // Parse arguments
+  PyObject 
+      *arg1=NULL, *arg2=NULL, *arg6=NULL;
+  PyArrayObject 
+      *py_rsel=NULL, *py_lsel=NULL, *py_out=NULL;
+  double 
+      min_dis, max_dis;
+
+  if (!PyArg_ParseTuple(args, "OOddO", &arg1, &arg2, &min_dis, 
+                        &max_dis, &arg6))
+    return NULL;
+
+  py_rsel = (PyArrayObject *) 
+      PyArray_FROM_OTF(arg1, NPY_FLOAT64, NPY_ARRAY_IN_ARRAY);
+  if (py_rsel == NULL)
+    goto fail;
+
+  py_lsel = (PyArrayObject *) 
+      PyArray_FROM_OTF(arg2, NPY_FLOAT64, NPY_ARRAY_IN_ARRAY);
+  if (py_lsel == NULL)
+    goto fail;
+
+  py_out = (PyArrayObject *) 
+      PyArray_FROM_OTF(arg6, NPY_INT32, NPY_ARRAY_INOUT_ARRAY);
+  if (py_out == NULL)
+    goto fail;
+
+  fill_restraint_space_add(py_rsel, py_lsel, min_dis, max_dis, py_out);
+
+  // Clean up objects
+  Py_DECREF(py_rsel);
+  Py_DECREF(py_lsel);
+  Py_DECREF(py_out);
+  Py_INCREF(Py_None);
+  return Py_None;
+
+fail:
+  // Clean up objects
+  Py_XDECREF(py_rsel);
+  Py_XDECREF(py_lsel);
+  PyArray_XDECREF_ERR(py_out);
+  return NULL;
+}
+
+
 static PyMethodDef mymethods[] = {
   {"dilate_points", py_dilate_points, METH_VARARGS, ""},
   {"fill_restraint_space", py_fill_restraint_space, METH_VARARGS, ""},
+  {"fill_restraint_space_add", py_fill_restraint_space_add, METH_VARARGS, ""},
   {NULL, NULL, 0, NULL}
 };
 

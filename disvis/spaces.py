@@ -4,7 +4,7 @@ import numpy as np
 import pyfftw
 
 from .volume import Volume
-from ._extensions import dilate_points, fill_restraint_space
+from ._extensions import fill_restraint_space, fill_restraint_space_add
 
 
 class InteractionSpace(object):
@@ -186,12 +186,51 @@ class ResidueInteractionSpace(object):
         self.ligand = ligand
         self.receptor = receptor
         self.accessible_interaction_space = accessible_interaction_space
-        self._ligand_coor = (self.ligand.coor - self.ligand.center).T / self.space.voxelspacing
+        self._ligand_coor = np.ascontiguousarray(
+                (self.ligand.coor - self.ligand.center).T / self.space.voxelspacing)
         self._ligand_coor_rot = np.zeros_like(self._ligand_coor)
+        self._receptor_coor = np.ascontiguousarray((
+                self.receptor.coor - self.space.origin) / self.space.voxelspacing)
+        # Create distance restraints between each each residue of the ligand
+        # and all of the receptor and each residue of the receptor with all of
+        # the ligand. The distance restraints need to have views on the ligand
+        # and receptor coordinate for efficiency.
+        self._restraints_ligand = []
+        self._restraints_receptor = []
+        # Build up the restraints for each ligand residue
+        unique_residues, unique_indices = np.unique(
+                self.ligand.data['resi'], return_indices=True)
+        unique_indices = unique_indices.tolist() + [None]
+        max_dis = 5.0 / self.space.voxelspacing
+        for n in xrange(unique_residues.size):
+            coor = self._ligand_coor[unique_indices[n]: unique_indices[n+1]]
+            restraint = Restraint(self._receptor_coor, coor, 0, max_dis)
+            self._restraints_ligand.append(restraint)
+        # Build up the restraints for each receptor residue
+        unique_residues, unique_indices = np.unique(
+                self.receptor.data['resi'], return_indices=True)
+        unique_indices = unique_indices.tolist() + [None]
+        for n in xrange(unique_residues.size):
+            coor = self._receptor_coor[unique_indices[n]: unique_indices[n+1]]
+            restraint = Restraint(self._receptor_coor, coor, 0, max_dis)
+            self._restraints_ligand.append(restraint)
 
     def __call__(self, rotmat, weight=1):
-        np.dot(rotmat, self._ligand_coor, out=self._ligand_coor_rot)
-        pass
+        # Rotate all atoms and thus views of the ligand's coordinates
+        np.dot(self._ligand_coor, rotmat.T, out=self._ligand_coor_rot)
+        for n, restraint in enumerate(self._ligand_restraints):
+            fill_restraint_space_add(
+                    restraint.rselections, restraint.lselections,
+                    restraint.min, restraint.max, self.space.array)
+            # TODO Count interactions for consistent complexes
+            self.space.array.fill(0)
+
+        for n, restraint in enumerate(self._receptor_restraints):
+            fill_restraint_space_add(
+                    restraint.rselections, restraint.lselections,
+                    restraint.min, restraint.max, self.space.array)
+            # TODO Count interactions for consistent complexes
+            self.space.array.fill(0)
 
 
 class OccupancySpace(object):

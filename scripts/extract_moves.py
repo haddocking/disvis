@@ -38,7 +38,7 @@ def main():
 
     args = parse_args()
 
-    interspace_files = glob(join(args.input, 'red_interspace_*.mrc'))
+    interspace_files = glob(join(args.input, 'ais_*.mrc'))
     nrot = len(interspace_files)
     if nrot == 0:
         raise ValueError("No input files where found to generate complexes.")
@@ -60,7 +60,9 @@ def main():
         # Write nsol x y z q0 q1 q2 q3
         line = '{:d}' + ' {:.2f} ' * 3 + ' {:6.4f}' * 4 + '\n'
         for fn in interspace_files:
-            job, ind = [int(x) for x in splitext(fn)[0].split('_')[2:]]
+            #job, ind = [int(x) for x in splitext(fn)[0].split('_')[2:]]
+            ind = int(splitext(fn)[0].split('_')[1])
+            job = 0
             quat = quats[ind + job * nrot_per_job]
             vol = Volume.fromfile(fn)
             trans = np.asarray(l_operator(vol.array, args.consistent_restraints).nonzero()[::-1]).T * vol.voxelspacing + vol.origin

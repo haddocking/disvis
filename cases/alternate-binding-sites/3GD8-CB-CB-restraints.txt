@@ -1,0 +1,22 @@
+## AD-interface
+#A 158 CB B 135 CB 3.0 7.7
+#A 161 CB B 132 CB 3.0 8.1
+#A 253 CB B  91 CB 3.0 7.6
+## AC-interface
+#A  40 CB B 252 CB 3.0 7.2
+#A  90 CB B 176 CB 3.0 8.2
+#A 135 CB B 158 CB 3.0 7.7
+
+restraint (158.A@CB) (135.B@CB) 3.0 7.7
+restraint ( 40.A@CB) (252.B@CB) 3.0 7.2
+restraint (161.A@CB) (132.B@CB) 3.0 8.1
+restraint ( 90.A@CB) (176.B@CB) 3.0 8.2
+restraint (253.A@CB) ( 91.B@CB) 3.0 7.6
+restraint (135.A@CB) (158.B@CB) 3.0 7.7
+
+restraint (158.A@CB) (135.B@CB) 3.0 7.7
+restraint ( 40.A@CB) (252.B@CB) 3.0 7.2
+restraint (161.A@CB) (132.B@CB) 3.0 8.1
+restraint ( 90.A@CB) (176.B@CB) 3.0 8.2
+restraint (253.A@CB) ( 91.B@CB) 3.0 7.6
+restraint (135.A@CB) (158.B@CB) 3.0 7.7

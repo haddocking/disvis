@@ -62,17 +62,16 @@ def main():
     # Move ligand to the origin
     ligand = PDB.fromfile(args.ligand)
     ligand.translate(-ligand.coor.mean(axis=0))
-    ligand_coor = ligand.coor
-    rot_ligand = ligand.duplicate()
+    ligand_coor = ligand.coor.copy()
 
     print 'Writing complexes to file ...'
     mkdir_p(args.output)
     fn = join(args.output, 'sol_{:d}.pdb')
     for n, move in enumerate(moves, 1):
-        rot_ligand.rotate(move.rotmat)
-        rot_ligand.translate(move.trans)
-        rot_ligand.tofile(fn.format(n))
-        rot_ligand.coor = ligand_coor
+        ligand.rotate(move.rotmat)
+        ligand.translate(move.trans)
+        ligand.tofile(fn.format(n))
+        ligand.coor[:] = ligand_coor
 
 
 if __name__ == '__main__':
