@@ -1,7 +1,7 @@
 """Quantify and visualize the information content of distance restraints."""
 
 from argparse import ArgumentParser
-import os.path
+import time
 from itertools import izip
 import sys
 import logging
@@ -13,7 +13,7 @@ from .pdb import PDB
 from .volume import Volume, Volumizer
 from .spaces import (InteractionSpace, RestraintSpace, Restraint, 
         AccessibleInteractionSpace, OccupancySpace)
-from .helpers import RestraintParser, mkdir_p, DJoiner
+from .helpers import RestraintParser, DJoiner
 from .rotations import proportional_orientations, quat_to_rotmat
 
 
@@ -31,13 +31,19 @@ def parse_args():
             help="Voxelspacing of grids.")
     p.add_argument("-a", "--angle", default=20, type=float,
             help="Rotational sampling density in degree.")
+    p.add_argument("-ir", "--interaction-radius", type=float, default=3,
+            help="Interaction radius.")
+    p.add_argument("-mi", "--minimum-interaction-volume", type=float, default=300,
+            help="Minimum interaction volume required for a complex.")
+    p.add_argument("-mc", "--maximum-clash-volume", type=float, default=200,
+            help="Maximum clash volume allowed for a complex.")
     p.add_argument("-oa", "--occupancy-analysis", action="store_true",
             help="Perform an occupancy analysis.")
     p.add_argument("-ia", "--interaction-analysis", action="store_true",
             help="Perform an interaction analysis.")
     p.add_argument("-s", "--save", action="store_true",
             help="Save entire accessible interaction space to disk.")
-    p.add_argument("-d", "--directory", default='.', type=os.path.abspath,
+    p.add_argument("-d", "--directory", default=DJoiner('.'), type=DJoiner,
             help="Directory to store the results.")
     p.add_argument("-v", "--verbose", action="store_true",
             help="Be verbose.")
@@ -52,7 +58,7 @@ class DisVisOptions(object):
     voxelspacing = 2
     interaction_radius = 3
     save = False
-    directory = '.'
+    directory = DJoiner()
 
     @classmethod
     def fromargs(cls, args):
@@ -112,8 +118,7 @@ class DisVis(object):
         self._restraint_space_calc(rotmat)
         self._ais_calc(weight=weight)
         if self.options.save:
-            fname = os.path.join(self.options.directory, 
-                    'ais_{:d}.mrc'.format(self._counter))
+            fname = self.options.directory('ais_{:d}.mrc'.format(self._counter))
             self._ais_calc.consistent_space.tofile(fname)
             self._counter += 1
 
@@ -136,16 +141,16 @@ class DisVis(object):
 def main():
 
     args = parse_args()
-    mkdir_p(args.directory)
+    args.directory.mkdir()
 
     # Set up logger
-    logging_fname = os.path.join(args.directory, 'disvis.log')
+    logging_fname = args.directory('disvis.log')
     logging.basicConfig(filename=logging_fname, level=logging.INFO)
+    logger.info(' '.join(sys.argv))
     if args.verbose:
         console_out = logging.StreamHandler(stream=sys.stdout)
         console_out.setLevel(logging.INFO)
         logging.getLogger('').addHandler(console_out)
-    logger.info(sys.argv)
 
     logger.info("Reading receptor and ligand.")
     receptor = PDB.fromfile(args.receptor)
@@ -181,32 +186,44 @@ def main():
     quat, weights, alpha = proportional_orientations(args.angle)
     rotations = quat_to_rotmat(quat)
     disvis = DisVis(receptor, ligand, restraints, options)
-    import time
     time0 = time.time()
+    logger.info("Starting search.")
     for n, (rotmat, weight) in enumerate(izip(rotations, weights)):
         if args.verbose:
             sys.stdout.write('{:>6d}\r'.format(n))
             sys.stdout.flush()
         disvis(rotmat, weight=weight)
-    print 'Time:', time.time() - time0
+    logger.info('Time: {:.2f} s'.format(time.time() - time0))
 
-    print disvis.consistent_complexes
-    print disvis.violation_matrix
-    disvis.max_consistent.tofile(os.path.join(args.directory, 'consistent_space.mrc'))
+    # Write consistent complexes to file
+    fname = args.directory('consistent_complexes.txt')
+    with open(fname, 'w') as f:
+        for n, consistent_complexes in enumerate(disvis.consistent_complexes):
+            f.write('{} {:.0f}\n'.format(n, consistent_complexes))
+
+    # Write violation matrix to file
+    fname = args.directory('violation_matrix.txt')
+    np.savetxt(fname, disvis.violation_matrix, fmt='%.2f')
+    disvis.max_consistent.tofile(args.directory('consistent_space.mrc'))
 
     # Write number of correlated consistent restraints
     nrestraints = len(restraints)
-    for nconsistent_restraints in xrange(nrestraints + 1):
-        mask = disvis._ais_calc._consistent_restraints == nconsistent_restraints
-        cons_perm = disvis._ais_calc._consistent_permutations[mask]
-        consistent_sets = [bin(x) for x in disvis._ais_calc._indices[mask]]
-        for cset, sperm in izip(consistent_sets, cons_perm):
-            restraint_flags = ' '.join(list(('{:0>' + str(nrestraints) + 'd}').format(int(cset[2:]))))
-            print restraint_flags, sperm
-        print '=' * 30
+    fname = args.directory("restraint_correlations.txt")
+    with open(fname, 'w') as f:
+        for nconsistent_restraints in xrange(nrestraints + 1):
+            mask = disvis._ais_calc._consistent_restraints == nconsistent_restraints
+            cons_perm = disvis._ais_calc._consistent_permutations[mask]
+            consistent_sets = [bin(x) for x in disvis._ais_calc._indices[mask]]
+            for cset, sperm in izip(consistent_sets, cons_perm):
+                restraint_flags = ' '.join(list(('{:0>' + str(nrestraints) + 'd}').format(int(cset[2:])))[::-1])
+                f.write('{} {:.0f}\n'.format(restraint_flags, sperm))
+                #print restraint_flags, sperm
+            f.write('#' * 30 + '\n')
 
     # Write out occupancy maps
     if options.occupancy_analysis:
-        for n, space in enumerate(disvis._occupancy_space.spaces):
-            space.tofile('occ_{:}.mrc'.format(n))
+        iterator = izip(disvis._occupancy_space.nconsistent, 
+                        disvis._occupancy_space.spaces)
+        for n, space in iterator:
+            space.tofile(args.directory('occ_{:}.mrc'.format(n)))
 

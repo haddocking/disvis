@@ -21,8 +21,10 @@ class InteractionSpace(object):
         self.min_inter = min_inter
         self._shape = self.rcore.shape
         self._ft_shape = list(self._shape)[:-1] + [self._shape[-1] // 2 + 1]
-        self._max_clash_grid = self.max_clash / self.rcore.voxelspacing ** 3
-        self._min_inter_grid = self.min_inter / self.rcore.voxelspacing ** 3
+        # Subtract/add a small amount to account for later FFT round-off errors
+        # TODO test correct behaviour
+        self._max_clash_grid = np.floor(self.max_clash / self.rcore.voxelspacing ** 3) + 0.1
+        self._min_inter_grid = np.ceil(self.min_inter / self.rcore.voxelspacing ** 3)  - 0.1
 
         # Allocate space for arrays
         # Real arrays
@@ -90,16 +92,18 @@ class RestraintSpace(object):
         # Transform the restraint coordinates to grid coordinates
         self._restraints_grid = []
         for restraint in self.restraints:
-            rcoor = [rsel.coor for rsel in restraint.rselections]
-            rcoor = (np.asarray(rcoor).reshape(-1, 3) - self.space.origin) / self.space.voxelspacing
-            lcoor = [lsel.coor for lsel in restraint.lselections]
-            lcoor = (np.asarray(lcoor).reshape(-1, 3) - ligand_center) / self.space.voxelspacing
+            rcoor = np.vstack(rsel.coor for rsel in restraint.rselections)
+            rcoor = (rcoor.reshape(-1, 3) - self.space.origin) / self.space.voxelspacing
+
+            lcoor = np.vstack(lsel.coor for lsel in restraint.lselections)
+            lcoor = (lcoor.reshape(-1, 3) - ligand_center) / self.space.voxelspacing
             min_dis = restraint.min / self.space.voxelspacing
             max_dis = restraint.max / self.space.voxelspacing
             restraint_grid = Restraint(rcoor, lcoor, min_dis, max_dis)
             self._restraints_grid.append(restraint_grid)
 
         self.nrestraints = len(self.restraints)
+        # Number of permutations of a multi-set
         self.npermutations = 1 << self.nrestraints
         self.indices = np.arange(self.npermutations, dtype=np.int32)
         self.consistent_restraints = np.zeros(self.npermutations, dtype=np.int8)
@@ -113,7 +117,8 @@ class RestraintSpace(object):
     def __call__(self, rotmat):
         self.space.array.fill(0)
         for n, restraint in enumerate(self._restraints_grid):
-            lcoor = np.ascontiguousarray(np.dot(rotmat, restraint.lselections.T).T)
+            #lcoor = np.ascontiguousarray(np.dot(rotmat, restraint.lselections.T).T)
+            lcoor = np.ascontiguousarray(np.dot(restraint.lselections, rotmat.T))
             value = 1 << n
             fill_restraint_space(
                     restraint.rselections, lcoor,
@@ -202,16 +207,16 @@ class ResidueInteractionSpace(object):
                 self.ligand.data['resi'], return_indices=True)
         unique_indices = unique_indices.tolist() + [None]
         max_dis = 5.0 / self.space.voxelspacing
-        for n in xrange(unique_residues.size):
-            coor = self._ligand_coor[unique_indices[n]: unique_indices[n+1]]
+        for start, end in izip(unique_indices[:-1], unique_indices[1:]):
+            coor = self._ligand_coor[start:end]
             restraint = Restraint(self._receptor_coor, coor, 0, max_dis)
             self._restraints_ligand.append(restraint)
         # Build up the restraints for each receptor residue
         unique_residues, unique_indices = np.unique(
                 self.receptor.data['resi'], return_indices=True)
         unique_indices = unique_indices.tolist() + [None]
-        for n in xrange(unique_residues.size):
-            coor = self._receptor_coor[unique_indices[n]: unique_indices[n+1]]
+        for start, end in izip(unique_indices[:-1], unique_indices[1:]):
+            coor = self._receptor_coor[start:end]
             restraint = Restraint(self._receptor_coor, coor, 0, max_dis)
             self._restraints_ligand.append(restraint)
 
@@ -245,10 +250,8 @@ class OccupancySpace(object):
             self.nconsistent = range(minconsistent, nrestraints + 1)
         self._consistent = pyfftw.zeros_aligned(
                 self.interaction_space.space.array.shape, dtype=np.float64)
-        self._ft_tmp = pyfftw.zeros_aligned(
-                self.interaction_space._ft_shape, dtype=np.complex128)
-        self._tmp = pyfftw.zeros_aligned(
-                self.interaction_space._shape, dtype=np.float64)
+        self._tmp = interaction_space._tmp
+        self._ft_tmp = interaction_space._ft_tmp
         self._rfftn = self.interaction_space._rfftn
         self._irfftn = self.interaction_space._irfftn
         self.spaces = []

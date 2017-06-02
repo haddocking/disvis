@@ -25,7 +25,7 @@ entry_points = {
             'disvis3 = disvis.disvis2:main',
             ]
         }
-requirements = ["numpy", "pyparsing"]
+requirements = ["numpy", "pyparsing", "pyfftw"]
 
 setup(name="disvis",
       version='3.0.0',

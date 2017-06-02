@@ -8,7 +8,7 @@ except ImportError:
     pass
 try:
     from pyparsing import (Literal, Word, Combine, Optional, Forward,
-            ZeroOrMore, StringEnd, nums, alphas, alphanums,
+            ZeroOrMore, StringEnd, nums, alphas, alphanums, ParseException,
             )
     PYPARSING = True
 except ImportError:
@@ -41,7 +41,7 @@ class DJoiner(object):
     
     """Join filenames with a set directory."""
 
-    def __init__(self, directory):
+    def __init__(self, directory='.'):
         self.directory = directory
 
     def __call__(self, fname):
@@ -151,7 +151,9 @@ class RestraintParser(object):
         restraints = []
         with open(fid) as f:
             for line in f:
-                restraints.append(self.parse_line(line))
+                restraint = self.parse_line(line)
+                if restraint is not None:
+                    restraints.append(restraint)
         return restraints
 
     def parse_line(self, line):
@@ -186,7 +188,11 @@ class RestraintParser(object):
 
     def _ambiguous_restraint(self, line):
         # Parse ambiguous restraint line
-        args = self.pattern.parseString(line).asList()
+        try:
+            args = self.pattern.parseString(line).asList()
+        except ParseException:
+            print line
+            raise
 
         receptor_start = args.index('(') + 1
         receptor_end = args.index(')')
