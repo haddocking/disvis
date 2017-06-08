@@ -1,7 +1,12 @@
 import itertools
 
 import numpy as np
-import pyfftw
+# Support both fftw and numpy
+try:
+    import pyfftw
+    PYFFTW = True
+except ImportError:
+    PYFFTW = False
 
 from .volume import Volume
 from ._extensions import fill_restraint_space, fill_restraint_space_add
@@ -30,8 +35,12 @@ class InteractionSpace(object):
         # Real arrays
         array_names = 'tmp clashspace interspace'.split()
         for arr in array_names:
-            setattr(self, '_' + arr, 
-                    pyfftw.zeros_aligned(self._shape, dtype=np.float64))
+            if PYFFTW:
+                setattr(self, '_' + arr, 
+                        pyfftw.zeros_aligned(self._shape, dtype=np.float64))
+            else:
+                setattr(self, '_' + arr, 
+                        np.zeros(self._shape, dtype=np.float64))
         array_names = 'not_clashing interacting'.split()
         for arr in array_names:
             setattr(self, "_" + arr, np.zeros(self._shape, dtype=np.int32))
@@ -39,11 +48,24 @@ class InteractionSpace(object):
         # Complex arrays
         array_names = 'rcore rsurface lcore lcore_conj tmp'.split()
         for arr in array_names:
-            setattr(self, '_ft_' + arr, 
-                    pyfftw.zeros_aligned(self._ft_shape, dtype=np.complex128))
+            if PYFFTW:
+                setattr(self, '_ft_' + arr, 
+                        pyfftw.zeros_aligned(self._ft_shape, dtype=np.complex128))
+            else:
+                setattr(self, '_ft_' + arr, 
+                        np.zeros(self._ft_shape, dtype=np.complex128))
         # Setup FFT
-        self._rfftn = pyfftw.builders.rfftn(self.rcore.array)
-        self._irfftn = pyfftw.builders.irfftn(self._ft_rcore, s=self._shape)
+        if PYFFTW:
+            self._rfftn = pyfftw.builders.rfftn(self.rcore.array)
+            self._irfftn = pyfftw.builders.irfftn(self._ft_rcore, s=self._shape)
+
+        else:
+            def rfftn(a, b):
+                b[:] = np.fft.rfftn(a)
+            def irfftn(a, b):
+                b[:] = np.fft.irfftn(a, s=self._shape)
+            self._rfftn = rfftn
+            self._irfftn = irfftn
 
         # Perform initial calculations
         self._rfftn(self.rcore.array, self._ft_rcore)
@@ -101,8 +123,8 @@ class RestraintSpace(object):
             max_dis = restraint.max / self.space.voxelspacing
             restraint_grid = Restraint(rcoor, lcoor, min_dis, max_dis)
             self._restraints_grid.append(restraint_grid)
-
         self.nrestraints = len(self.restraints)
+
         # Number of permutations of a multi-set
         self.npermutations = 1 << self.nrestraints
         self.indices = np.arange(self.npermutations, dtype=np.int32)
@@ -117,7 +139,6 @@ class RestraintSpace(object):
     def __call__(self, rotmat):
         self.space.array.fill(0)
         for n, restraint in enumerate(self._restraints_grid):
-            #lcoor = np.ascontiguousarray(np.dot(rotmat, restraint.lselections.T).T)
             lcoor = np.ascontiguousarray(np.dot(restraint.lselections, rotmat.T))
             value = 1 << n
             fill_restraint_space(
@@ -131,14 +152,13 @@ class AccessibleInteractionSpace(object):
         self.space = space
         self.interaction_space = interaction_space
         self.restraint_space = restraint_space
-        self.consistent_space = Volume.zeros_like(self.space)
+        self.max_consistent = Volume.zeros_like(space)
         self.nrestraints = restraint_space.nrestraints
         self.npermutations = self.restraint_space.npermutations
         self._indices = self.restraint_space.indices
         self._consistent_restraints = self.restraint_space.consistent_restraints
-
-        self.max_consistent = Volume.zeros_like(space)
         self._consistent_permutations = np.zeros(self.npermutations, dtype=np.float64)
+        self.consistent_space = Volume.zeros_like(self.space)
 
     def __call__(self, weight=1):
         np.multiply(self.interaction_space.space.array, 
@@ -248,8 +268,12 @@ class OccupancySpace(object):
             nrestraints = self.accessible_interaction_space.nrestraints
             minconsistent = max(1, nrestraints - 2)
             self.nconsistent = range(minconsistent, nrestraints + 1)
-        self._consistent = pyfftw.zeros_aligned(
-                self.interaction_space.space.array.shape, dtype=np.float64)
+        if PYFFTW:
+            self._consistent = pyfftw.zeros_aligned(
+                    self.interaction_space.space.array.shape, dtype=np.float64)
+        else:
+            self._consistent = np.zeros(
+                    self.interaction_space.space.array.shape, dtype=np.float64)
         self._tmp = interaction_space._tmp
         self._ft_tmp = interaction_space._ft_tmp
         self._rfftn = self.interaction_space._rfftn
