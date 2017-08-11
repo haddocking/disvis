@@ -11,7 +11,7 @@ ave_inter = ave_inter[::-1]
 res_ind = arange(resids.size)
 
 # make figure
-fig = plt.figure()#figsize=(190/25.4/3.0, 250/25.4))
+fig = plt.figure()  # figsize=(190/25.4/3.0, 250/25.4))
 
 ax1 = plt.gca()
 
