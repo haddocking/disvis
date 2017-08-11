@@ -9,22 +9,21 @@ from setuptools.extension import Extension
 
 import numpy
 
-
 packages = ['disvis', 'disvis.IO']
 package_data = {'disvis': [os.path.join('data', '*.npy'), 'kernels.cl']}
 
 ext_modules = [Extension("disvis._extensions",
-                  [os.path.join("src", "_extensions.c")],
-                  include_dirs=[numpy.get_include()],
-                  extra_compile_args=['-ffast-math'],
-                  ),
-                  ]
+                         [os.path.join("src", "_extensions.c")],
+                         include_dirs=[numpy.get_include()],
+                         extra_compile_args=['-ffast-math'],
+                         ),
+               ]
 
 entry_points = {
-        'console_scripts': [
-            'disvis3 = disvis.disvis2:main',
-            ]
-        }
+    'console_scripts': [
+        'disvis3 = disvis.disvis2:main',
+    ]
+}
 requirements = ["numpy", "pyparsing"]
 
 setup(name="disvis",
@@ -35,7 +34,7 @@ setup(name="disvis",
       author_email='gvanzundert51@gmail.com',
       packages=packages,
       ext_modules=ext_modules,
-      package_data = package_data,
+      package_data=package_data,
       entry_points=entry_points,
       install_requires=requirements,
-     )
+      )
