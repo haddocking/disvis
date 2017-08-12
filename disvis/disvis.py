@@ -136,7 +136,7 @@ class DisVis(object):
         # Set ligand center to the origin of the grid and calculate the core
         # shape. The coordinates are wrapped around in the density.
         self._lgridcoor = (self.ligand.coor - self.ligand.center) / self.voxelspacing
-        radii = self.ligand.vdw_radius
+        radii = self.ligand.vdw_radius / self.voxelspacing
         self._lcore = np.zeros(self._shape, dtype=np.float64)
         dilate_points(self._lgridcoor, radii, self._lcore)
 
