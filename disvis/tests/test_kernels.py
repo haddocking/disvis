@@ -7,14 +7,14 @@ import pyopencl.array as cl_array
 from disvis.helpers import get_queue
 from disvis.kernels import Kernels
 
+
 class TestKernels(TestCase):
-    
     @classmethod
     def setUpClass(self):
         self.queue = get_queue()
         self.shape = (5, 4, 3)
         self.size = 5 * 4 * 3
-        self.values = {'interaction_cutoff' : 1,
+        self.values = {'interaction_cutoff': 1,
                        'nrestraints': 3,
                        'shape_x': self.shape[2],
                        'shape_y': self.shape[1],
@@ -35,11 +35,11 @@ class TestKernels(TestCase):
         args = (self.cl_grid.data, rotmat, self.cl_out.data)
         gws = tuple([2 * self.values['llength'] + 1] * 3)
         k(self.queue, gws, None, *args)
-        answer = [[[ 1.,  1.,  1.], [ 1.,  0.,  0.], [ 0.,  0.,  0.], [ 1.,  0.,  0.]], 
-                  [[ 1.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.]],
-                  [[ 0.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.]],
-                  [[ 0.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.]],
-                  [[ 1.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.], [ 0.,  0.,  0.]]]
+        answer = [[[1., 1., 1.], [1., 0., 0.], [0., 0., 0.], [1., 0., 0.]],
+                  [[1., 0., 0.], [0., 0., 0.], [0., 0., 0.], [0., 0., 0.]],
+                  [[0., 0., 0.], [0., 0., 0.], [0., 0., 0.], [0., 0., 0.]],
+                  [[0., 0., 0.], [0., 0., 0.], [0., 0., 0.], [0., 0., 0.]],
+                  [[1., 0., 0.], [0., 0., 0.], [0., 0., 0.], [0., 0., 0.]]]
 
         self.assertTrue(np.allclose(answer, self.cl_out.get()))
 
@@ -58,7 +58,6 @@ class TestKernels(TestCase):
         answer[0, 1, 0] = 1
         self.assertTrue(np.allclose(answer, self.cl_out.get()))
 
-
     def test_dilate_point_add(self):
         k = self.p.program.dilate_point_add
 
@@ -67,7 +66,7 @@ class TestKernels(TestCase):
         cl_center = cl_array.to_device(self.queue, center)
         cl_mindis = cl_array.zeros(self.queue, 3, dtype=np.float32)
         cl_maxdis = cl_array.to_device(self.queue,
-                np.array([1, 2, 1], dtype=np.float32))
+                                       np.array([1, 2, 1], dtype=np.float32))
         cl_out = cl_array.zeros(self.queue, self.shape, dtype=np.int32)
 
         args = (cl_center.data, cl_mindis.data, cl_maxdis.data, np.int32(0), cl_out.data)
@@ -99,8 +98,8 @@ class TestKernels(TestCase):
 
     def test_histogram(self):
         k = self.p.program.histogram
-        data = np.repeat(range(self.values['nrestraints'] + 1), 
-                self.size / (self.values['nrestraints'] + 1)).astype(np.int32)
+        data = np.repeat(range(self.values['nrestraints'] + 1),
+                         self.size / (self.values['nrestraints'] + 1)).astype(np.int32)
         cl_data = cl_array.to_device(self.queue, data)
         cl_hist = cl_array.zeros(self.queue, self.values['nrestraints'], dtype=np.int32)
         args = (cl_data.data, cl_hist.data)
@@ -134,14 +133,13 @@ class TestKernels(TestCase):
         self.assertTrue(np.allclose(answer, cl_viol.get().reshape(3, 3)))
 
     def test_count_interactions(self):
-
         k = self.p.program.count_interactions
         receptor = np.asarray([[0, 0, 0, 0], [1, 0, 0, 0], [2, 0, 0, 0]], dtype=np.float32)
         ligand = np.asarray([[0, 0, 0, 0], [10, 0, 0, 0]], dtype=np.float32)
         interspace = np.zeros(self.shape, dtype=np.int32)
         nconsistent = np.int32(1)
-        hist = np.zeros((self.values['nligand_coor'], self.values['nreceptor_coor']), 
-                dtype=np.int32)
+        hist = np.zeros((self.values['nligand_coor'], self.values['nreceptor_coor']),
+                        dtype=np.int32)
 
         interspace[0, 0, 0] = 1
         interspace[0, 0, 1] = 1

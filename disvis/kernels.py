@@ -5,8 +5,8 @@ import numpy as np
 import pyopencl as cl
 from pyopencl.elementwise import ElementwiseKernel
 
-class Kernels():
 
+class Kernels():
     def __init__(self, ctx, values):
         self.context = ctx
 
@@ -29,83 +29,82 @@ class Kernels():
         self._lws_count_interactions = (48, 1, 1)
         self._gws_count_interactions = (96, 96, 1)
 
-
         # Simple elementwise kernels
         self.multiply_add = ElementwiseKernel(ctx,
-                "int *x, float w, float* y",
-                "y[i] += w * x[i];",
-                )
+                                              "int *x, float w, float* y",
+                                              "y[i] += w * x[i];",
+                                              )
 
         self.multiply_add2 = ElementwiseKernel(ctx,
-                "float *x, float w, float* y",
-                "y[i] += w * x[i];",
-                )
+                                               "float *x, float w, float* y",
+                                               "y[i] += w * x[i];",
+                                               )
 
         self.multiply_f32 = ElementwiseKernel(ctx,
-                     "float *x, float *y, float *z",
-                     "z[i] = x[i] * y[i];",
-                     )
+                                              "float *x, float *y, float *z",
+                                              "z[i] = x[i] * y[i];",
+                                              )
 
         self.multiply_int32 = ElementwiseKernel(ctx,
-                     "int *x, int *y, int *z",
-                     "z[i] = x[i] * y[i];",
-                     )
+                                                "int *x, int *y, int *z",
+                                                "z[i] = x[i] * y[i];",
+                                                )
 
         self.subtract = ElementwiseKernel(ctx,
-                "float *in1, float *in2, float *out",
-                """out[i] = in1[i] - in2[i];
-                """,
-                )
+                                          "float *in1, float *in2, float *out",
+                                          """out[i] = in1[i] - in2[i];
+                                          """,
+                                          )
 
         self.conj = ElementwiseKernel(ctx,
-                "cfloat_t* in, cfloat_t *out",
-                "out[i] = cfloat_conj(in[i]);",
-                )
+                                      "cfloat_t* in, cfloat_t *out",
+                                      "out[i] = cfloat_conj(in[i]);",
+                                      )
 
         self.cmultiply = ElementwiseKernel(ctx,
-                "cfloat_t *in1, cfloat_t *in2, cfloat_t *out",
-                "out[i] = cfloat_mul(in1[i], in2[i]);",
-                )
+                                           "cfloat_t *in1, cfloat_t *in2, cfloat_t *out",
+                                           "out[i] = cfloat_mul(in1[i], in2[i]);",
+                                           )
 
         self.round = ElementwiseKernel(ctx,
-                "float *in, float* out",
-                "out[i] = round(in[i]);",
-                )
+                                       "float *in, float* out",
+                                       "out[i] = round(in[i]);",
+                                       )
 
         self.less_equal = ElementwiseKernel(ctx,
-                "float* array, float value, int *out",
-                "out[i] = (array[i] <= value) ? 1 : 0;",
-                )
+                                            "float* array, float value, int *out",
+                                            "out[i] = (array[i] <= value) ? 1 : 0;",
+                                            )
 
         self.greater_equal = ElementwiseKernel(ctx,
-                "float* array, float value, int *out",
-                "out[i] = (array[i] >= value) ? 1 : 0;",
-                )
+                                               "float* array, float value, int *out",
+                                               "out[i] = (array[i] >= value) ? 1 : 0;",
+                                               )
 
         self.greater_equal_iif = ElementwiseKernel(ctx,
-                "int* array, int value, float *out",
-                "out[i] = (array[i] >= value) ? 1.0f : 0;",
-                )
+                                                   "int* array, int value, float *out",
+                                                   "out[i] = (array[i] >= value) ? 1.0f : 0;",
+                                                   )
 
         self.equal = ElementwiseKernel(ctx,
-                "int *x, int y, float *z",
-                "z[i] = (x[i] == y) ? 1.0f : 0;",
-                )
+                                       "int *x, int y, float *z",
+                                       "z[i] = (x[i] == y) ? 1.0f : 0;",
+                                       )
 
         self.logical_and = ElementwiseKernel(ctx,
-                "int* in1, int *in2, int *out",
-                "out[i] = ((in1[i] == 1) && (in2[i] == 1)) ? 1 : 0;",
-                )
-        
+                                             "int* in1, int *in2, int *out",
+                                             "out[i] = ((in1[i] == 1) && (in2[i] == 1)) ? 1 : 0;",
+                                             )
+
         self.set_to_f32 = ElementwiseKernel(ctx,
-                "float value, float *out",
-                "out[i] = value;",
-                )
+                                            "float value, float *out",
+                                            "out[i] = value;",
+                                            )
 
         self.set_to_i32 = ElementwiseKernel(ctx,
-                "int value, int *out",
-                "out[i] = value;",
-                )
+                                            "int value, int *out",
+                                            "out[i] = value;",
+                                            )
 
     def rotate_points3d(self, queue, points, rotmat, out):
         args = (points.data, np.int32(points.shape[0]), rotmat, out.data)
@@ -126,11 +125,11 @@ class Kernels():
     def count_violations(self, queue, centers, mindis2, maxdis2, interspace, viol):
         args = (centers.data, mindis2.data, maxdis2.data, interspace.data, viol.data)
         self.program.count_violations(queue, self._gws_count_violations,
-                self._lws_count_violations, *args)
+                                      self._lws_count_violations, *args)
 
     def count_interactions(self, queue, fixed_coor, scanning_coor, interspace,
-            nconsistent, hist):
+                           nconsistent, hist):
         args = (fixed_coor.data, scanning_coor.data, interspace.data,
                 np.int32(nconsistent), hist.data)
         self.program.count_interactions(queue, self._gws_count_interactions,
-                self._lws_count_interactions, *args)
+                                        self._lws_count_interactions, *args)

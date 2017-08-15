@@ -5,9 +5,11 @@ from os.path import join as _join
 
 import numpy as np
 from numpy.fft import rfftn as np_rfftn, irfftn as np_irfftn
+
 try:
     from pyfftw import zeros_aligned
     from pyfftw.builders import rfftn as rfftn_builder, irfftn as irfftn_builder
+
     PYFFTW = True
 except ImportError:
     PYFFTW = False
@@ -16,6 +18,7 @@ try:
     import pyopencl.array as cl_array
     from . import pyclfft
     from .kernels import Kernels
+
     PYOPENCL = True
 except ImportError:
     PYOPENCL = False
@@ -23,12 +26,12 @@ except ImportError:
 from disvis import volume
 from .pdb import PDB
 from .libdisvis import (
-        dilate_points, distance_restraint, count_violations, count_interactions
-        )
+    dilate_points, distance_restraint, count_violations, count_interactions
+)
 from ._extensions import rotate_grid3d
 
-class DisVis(object):
 
+class DisVis(object):
     def __init__(self, fftw=True, print_callback=True):
         # parameters to be defined
         self.receptor = None
@@ -50,9 +53,9 @@ class DisVis(object):
         self.queue = None
         self._fftw = fftw and PYFFTW
         self.print_callback = print_callback
-	self.save = False
-	self.save_job = 0
-	self.save_directory = '.'
+        self.save = False
+        self.save_job = 0
+        self.save_directory = '.'
 
         # Output attributes
         # Array containing number of complexes consistent with EXACTLY n
@@ -78,8 +81,8 @@ class DisVis(object):
 
         # Set the results
         self.accessible_interaction_space = volume.Volume(
-                self._access_interspace, self.voxelspacing,
-                self._origin)
+            self._access_interspace, self.voxelspacing,
+            self._origin)
         self.accessible_complexes = self._accessible_complexes
         self.violations = self._violations
 
@@ -92,7 +95,7 @@ class DisVis(object):
                     occ_grid = None
                 if occ_grid is not None:
                     self.occupancy_grids[i] = volume.Volume(occ_grid,
-                            self.voxelspacing, self._origin)
+                                                            self.voxelspacing, self._origin)
 
         if self._interaction_analysis:
             self.interaction_matrix = self._interaction_matrix
@@ -105,8 +108,8 @@ class DisVis(object):
         offset += np.linalg.norm(scanning_coor - scanning_coor.mean(axis=0), axis=1).max()
         mindist = fixed_coor.min(axis=0) - offset
         maxdist = fixed_coor.max(axis=0) + offset
-        shape = [volume.radix235(int(np.ceil(x))) 
-                     for x in (maxdist - mindist) / voxelspacing][::-1]
+        shape = [volume.radix235(int(np.ceil(x)))
+                 for x in (maxdist - mindist) / voxelspacing][::-1]
         origin = mindist
         return shape, origin
 
@@ -124,8 +127,10 @@ class DisVis(object):
 
         # Determine size for volume to hold the recepter and ligand densities
         vdw_radii = self.receptor.vdw_radius
-        self._shape, self._origin = self._minimal_volume_parameters(self.receptor.coor, 
-                self.ligand.coor, self.interaction_radius + vdw_radii.max(), self.voxelspacing)
+        self._shape, self._origin = self._minimal_volume_parameters(self.receptor.coor,
+                                                                    self.ligand.coor,
+                                                                    self.interaction_radius + vdw_radii.max(),
+                                                                    self.voxelspacing)
 
         # Calculate the interaction surface and core of the receptor
         # Move the coordinates to the grid-frame
@@ -145,17 +150,17 @@ class DisVis(object):
         dilate_points(self._lgridcoor, radii, self._lcore)
 
         # Normalize the requirements for a complex in grid quantities
-        self._grid_max_clash = self.max_clash / self.voxelspacing**3
-        self._grid_min_interaction = self.min_interaction / self.voxelspacing**3
+        self._grid_max_clash = self.max_clash / self.voxelspacing ** 3
+        self._grid_min_interaction = self.min_interaction / self.voxelspacing ** 3
 
         # Setup the distance restraints
         self._nrestraints = len(self.distance_restraints)
-        self._grid_restraints = grid_restraints(self.distance_restraints, 
-                self.voxelspacing, self._origin, self.ligand.center)
+        self._grid_restraints = grid_restraints(self.distance_restraints,
+                                                self.voxelspacing, self._origin, self.ligand.center)
         self._rrestraints = self._grid_restraints[:, 0:3]
         self._lrestraints = self._grid_restraints[:, 3:6]
-        self._mindis = self._grid_restraints[:,6]
-        self._maxdis = self._grid_restraints[:,7]
+        self._mindis = self._grid_restraints[:, 6]
+        self._maxdis = self._grid_restraints[:, 7]
 
         self._accessible_complexes = np.zeros(self._nrestraints + 1, dtype=np.float64)
         self._access_interspace = np.zeros(self._shape, dtype=np.int32)
@@ -184,11 +189,11 @@ class DisVis(object):
             # Since calculating all interactions is costly, only analyze
             # solutions that are consistent with more than N restraints.
             self._lselect = (self.ligand_interaction_selection.coor -
-                    self.ligand_interaction_selection.center) / self.voxelspacing
+                             self.ligand_interaction_selection.center) / self.voxelspacing
             self._rselect = (self.receptor_interaction_selection.coor -
-                    self._origin) / self.voxelspacing
-            shape = (self._nrestraints + 1 - self.interaction_restraints_cutoff, 
-                    self._lselect.shape[0], self._rselect.shape[0])
+                             self._origin) / self.voxelspacing
+            shape = (self._nrestraints + 1 - self.interaction_restraints_cutoff,
+                     self._lselect.shape[0], self._rselect.shape[0])
             self._interaction_matrix = np.zeros(shape, dtype=np.float64)
             self._sub_interaction_matrix = np.zeros(shape, dtype=np.int64)
 
@@ -196,9 +201,9 @@ class DisVis(object):
         # grid rotation faster, as less points need to be considered for
         # rotation
         self._llength = int(np.ceil(
-            np.linalg.norm(self._lgridcoor, axis=1).max() + 
+            np.linalg.norm(self._lgridcoor, axis=1).max() +
             self.ligand.vdw_radius.max() / self.voxelspacing
-            )) + 1
+        )) + 1
 
     @staticmethod
     def _allocate_array(shape, dtype, fftw):
@@ -246,7 +251,7 @@ class DisVis(object):
             setattr(self, "_" + arr, np.zeros(self._shape, np.bool))
 
         # Array for rotating points and restraint coordinates
-        self._restraints_center = np.zeros_like(self._grid_restraints[:,3:6])
+        self._restraints_center = np.zeros_like(self._grid_restraints[:, 3:6])
         self._rot_lrestraints = np.zeros_like(self._lrestraints)
         if self._interaction_analysis:
             self._rot_lselect = np.zeros_like(self._lselect)
@@ -269,8 +274,8 @@ class DisVis(object):
 
     def _rotate_lcore(self, rotmat):
         rotate_grid3d(self._lcore, rotmat, self._llength,
-                self._rot_lcore, True)
-        
+                      self._rot_lcore, True)
+
     def _get_interaction_space(self):
         # Calculate the clashing and interaction volume
         self._ft_lcore = self.rfftn(self._rot_lcore, self._ft_lcore)
@@ -293,33 +298,33 @@ class DisVis(object):
         """Rotate the restraints and determine the restraints center point"""
         np.dot(self._lrestraints, rotmat.T, self._rot_lrestraints)
         np.subtract(self._rrestraints, self._rot_lrestraints,
-                self._restraints_center)
+                    self._restraints_center)
 
     def _get_restraint_space(self):
         # Determine the consistent restraint space
         self._restspace.fill(0)
         distance_restraint(self._restraints_center, self._mindis, self._maxdis,
-                self._restspace)
+                           self._restspace)
 
     def _get_reduced_interspace(self):
         np.multiply(self._interspace, self._restspace, self._red_interspace)
 
     def _count_complexes(self, weight):
         self._tot_complex += weight * self._interspace.sum()
-        self._consistent_complexes += weight *\
-                    np.bincount(self._red_interspace.ravel(),
-                            minlength=(max(2, self._nrestraints + 1))
-                            )
+        self._consistent_complexes += weight * \
+                                      np.bincount(self._red_interspace.ravel(),
+                                                  minlength=(max(2, self._nrestraints + 1))
+                                                  )
 
     def _count_violations(self, weight):
         # Count all sampled complexes
         count_violations(self._restraints_center, self._mindis,
-                self._maxdis, self._red_interspace, weight,
-                self._violations)
+                         self._maxdis, self._red_interspace, weight,
+                         self._violations)
 
     def _get_access_interspace(self):
         np.maximum(self._red_interspace, self._access_interspace,
-                self._access_interspace)
+                   self._access_interspace)
 
     def _get_occupancy_grids(self, weight):
         for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
@@ -334,9 +339,9 @@ class DisVis(object):
         # Rotate the ligand coordinates
         self._rot_lselect = np.dot(self._lselect, rotmat.T)
         count_interactions(self._red_interspace, self._rselect,
-                self._rot_lselect, np.float64(self.interaction_distance / self.voxelspacing),
-                weight, np.int32(self.interaction_restraints_cutoff),
-                self._interaction_matrix)
+                           self._rot_lselect, np.float64(self.interaction_distance / self.voxelspacing),
+                           weight, np.int32(self.interaction_restraints_cutoff),
+                           self._interaction_matrix)
 
     def _cpu_search(self):
 
@@ -377,14 +382,14 @@ class DisVis(object):
             if self._interaction_analysis:
                 self._get_interaction_matrix(rotmat, weight)
 
-	    # Write reduced accessible interaction space to file, if required
-	    if self.save:
-		fname = _join(self.save_directory, 
-		    'red_interspace_{:d}_{:d}.mrc'.format(self.save_job, n))
-	        volume.Volume(self._red_interspace, self.voxelspacing, self._origin).tofile(fname)
+            # Write reduced accessible interaction space to file, if required
+            if self.save:
+                fname = _join(self.save_directory,
+                              'red_interspace_{:d}_{:d}.mrc'.format(self.save_job, n))
+                volume.Volume(self._red_interspace, self.voxelspacing, self._origin).tofile(fname)
 
             if self.print_callback is not None:
-                #self.print_callback(n, total, time0)
+                # self.print_callback(n, total, time0)
                 self._print_progress(n, self.rotations.shape[0], time0)
 
         # Get the number of accessible complexes consistent with exactly N
@@ -392,15 +397,15 @@ class DisVis(object):
         # for this.
         self._accessible_complexes[:] = self._consistent_complexes
         self._accessible_complexes[0] = self._tot_complex - self._accessible_complexes[1:].sum()
-        
+
     @staticmethod
     def _print_progress(n, total, time0):
         m = n + 1
-        pdone = m/total
+        pdone = m / total
         t = _time() - time0
-        _stdout.write('\r{:d}/{:d} ({:.2%}, ETA: {:d}s)    '\
-                .format(m, total, pdone, 
-                        int(t/pdone - t)))
+        _stdout.write('\r{:d}/{:d} ({:.2%}, ETA: {:d}s)    ' \
+                      .format(m, total, pdone,
+                              int(t / pdone - t)))
         _stdout.flush()
 
     def _gpu_init(self):
@@ -421,21 +426,21 @@ class DisVis(object):
         self._cl_shape = tuple(self._shape)
         arr_names = 'rot_lcore clashvol intervol tmp'.split()
         for arr_name in arr_names:
-            setattr(self, '_cl_' + arr_name, 
+            setattr(self, '_cl_' + arr_name,
                     cl_array.zeros(q, self._cl_shape, dtype=np.float32)
                     )
 
         # Int32
         arr_names = 'interspace red_interspace restspace access_interspace'.split()
         for arr_name in arr_names:
-            setattr(self, '_cl_' + arr_name, 
+            setattr(self, '_cl_' + arr_name,
                     cl_array.zeros(q, self._cl_shape, dtype=np.int32)
                     )
 
         # Boolean
         arr_names = 'not_clashing interacting'.split()
         for arr_name in arr_names:
-            setattr(self, '_cl_' + arr_name, 
+            setattr(self, '_cl_' + arr_name,
                     cl_array.zeros(q, self._cl_shape, dtype=np.int32)
                     )
 
@@ -443,7 +448,7 @@ class DisVis(object):
         self._ft_shape = tuple([self._shape[0] // 2 + 1] + list(self._shape)[1:])
         arr_names = 'lcore lcore_conj rcore rsurf tmp'.split()
         for arr_name in arr_names:
-            setattr(self, '_cl_ft_' + arr_name, 
+            setattr(self, '_cl_ft_' + arr_name,
                     cl_array.empty(q, self._ft_shape, dtype=np.complex64)
                     )
 
@@ -462,24 +467,24 @@ class DisVis(object):
         self._cl_restraints_center = cl_array.zeros_like(self._cl_rrestraints)
 
         # kernels
-        self._kernel_constants = {'interaction_cutoff': 10, 
-                            'nrestraints': self._nrestraints,
-                            'shape_x': self._shape[2],
-                            'shape_y': self._shape[1],
-                            'shape_z': self._shape[0],
-                            'llength': self._llength,
-                            'nreceptor_coor': 0,
-                            'nligand_coor': 0,
-                            }
+        self._kernel_constants = {'interaction_cutoff': 10,
+                                  'nrestraints': self._nrestraints,
+                                  'shape_x': self._shape[2],
+                                  'shape_y': self._shape[1],
+                                  'shape_z': self._shape[0],
+                                  'llength': self._llength,
+                                  'nreceptor_coor': 0,
+                                  'nligand_coor': 0,
+                                  }
 
         # Counting arrays
         self._cl_hist = cl_array.zeros(self.queue, self._nrestraints, dtype=np.int32)
         self._cl_consistent_complexes = cl_array.zeros(self.queue,
-                self._nrestraints, dtype=np.float32)
+                                                       self._nrestraints, dtype=np.float32)
         self._cl_viol_hist = cl_array.zeros(self.queue, (self._nrestraints,
-            self._nrestraints), dtype=np.int32)
+                                                         self._nrestraints), dtype=np.int32)
         self._cl_violations = cl_array.zeros(self.queue, (self._nrestraints,
-            self._nrestraints), dtype=np.float32)
+                                                          self._nrestraints), dtype=np.float32)
 
         # Conversions
         self._cl_grid_max_clash = np.float32(self._grid_max_clash)
@@ -491,17 +496,17 @@ class DisVis(object):
         if self.occupancy_analysis:
             for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
                 self._cl_occ_grid[i] = cl_array.zeros(self.queue,
-                        self._cl_shape, dtype=np.float32)
+                                                      self._cl_shape, dtype=np.float32)
 
         # Interaction analysis
         if self._interaction_analysis:
             shape = (self._lselect.shape[0], self._rselect.shape[0])
             self._cl_interaction_hist = cl_array.zeros(self.queue, shape,
-                    dtype=np.int32)
+                                                       dtype=np.int32)
             self._cl_interaction_matrix = {}
             for i in xrange(self._nrestraints + 1 - self.interaction_restraints_cutoff):
                 self._cl_interaction_matrix[i] = cl_array.zeros(self.queue, shape,
-                        dtype=np.float32)
+                                                                dtype=np.float32)
             # Coordinate arrays
             self._cl_rselect = np.zeros((self._rselect.shape[0], 4), dtype=np.float32)
             self._cl_rselect[:, :3] = self._rselect
@@ -526,7 +531,7 @@ class DisVis(object):
 
     def _cl_rotate_lcore(self, rotmat):
         self._cl_kernels.rotate_grid3d(self.queue, self._cl_lcore, rotmat,
-                self._cl_rot_lcore)
+                                       self._cl_rot_lcore)
         self.queue.finish()
 
     def _cl_get_interaction_space(self):
@@ -548,59 +553,59 @@ class DisVis(object):
     def _cl_get_restraints_center(self, rotmat):
         k = self._cl_kernels
         k.rotate_points3d(self.queue, self._cl_lrestraints, rotmat,
-                self._cl_rot_lrestraints)
+                          self._cl_rot_lrestraints)
         k.subtract(self._cl_rrestraints, self._cl_rot_lrestraints,
-                self._cl_restraints_center)
+                   self._cl_restraints_center)
         self.queue.finish()
 
     def _cl_get_restraint_space(self):
         k = self._cl_kernels
         k.set_to_i32(np.int32(0), self._cl_restspace)
         k.dilate_point_add(self.queue, self._cl_restraints_center, self._cl_mindis,
-                self._cl_maxdis, self._cl_restspace)
+                           self._cl_maxdis, self._cl_restspace)
         self.queue.finish()
 
     def _cl_get_reduced_interspace(self):
         self._cl_kernels.multiply_int32(self._cl_restspace,
-                self._cl_interspace, self._cl_red_interspace)
+                                        self._cl_interspace, self._cl_red_interspace)
         self.queue.finish()
 
     def _cl_count_complexes(self, weight):
         # Count all sampled complexes
         self._cl_tot_complex += cl_array.sum(self._cl_interspace,
-                dtype=np.dtype(np.float32)) * weight
+                                             dtype=np.dtype(np.float32)) * weight
         self._cl_kernels.set_to_i32(np.int32(0), self._cl_hist)
 
         self._cl_kernels.histogram(self.queue, self._cl_red_interspace, self._cl_hist)
         self._cl_kernels.multiply_add(self._cl_hist, weight,
-                self._cl_consistent_complexes)
+                                      self._cl_consistent_complexes)
         self.queue.finish()
 
     def _cl_count_violations(self, weight):
         self._cl_kernels.set_to_i32(np.int32(0), self._cl_viol_hist)
         self._cl_kernels.count_violations(self.queue,
-                self._cl_restraints_center, self._cl_mindis2, self._cl_maxdis2,
-                self._cl_red_interspace, self._cl_viol_hist)
+                                          self._cl_restraints_center, self._cl_mindis2, self._cl_maxdis2,
+                                          self._cl_red_interspace, self._cl_viol_hist)
         self._cl_kernels.multiply_add(self._cl_viol_hist, weight, self._cl_violations)
         self.queue.finish()
-                
+
     def _cl_get_access_interspace(self):
         cl_array.maximum(self._cl_red_interspace, self._cl_access_interspace,
-                self._cl_access_interspace)
+                         self._cl_access_interspace)
         self.queue.finish()
 
     def _cl_get_interaction_matrix(self, rotmat, weight):
         self._cl_kernels.rotate_points3d(self.queue, self._cl_lselect, rotmat,
-                self._cl_rot_lselect)
+                                         self._cl_rot_lselect)
 
         for nconsistent in np.arange(self.interaction_restraints_cutoff,
-                self._nrestraints + 1, dtype=np.int32):
+                                     self._nrestraints + 1, dtype=np.int32):
             self._cl_kernels.set_to_i32(np.int32(0), self._cl_interaction_hist)
             self._cl_kernels.count_interactions(self.queue, self._cl_rselect,
-                    self._cl_rot_lselect, self._cl_red_interspace, nconsistent,
-                    self._cl_interaction_hist)
+                                                self._cl_rot_lselect, self._cl_red_interspace, nconsistent,
+                                                self._cl_interaction_hist)
             self._cl_kernels.multiply_add(self._cl_interaction_hist, weight,
-                    self._cl_interaction_matrix[nconsistent - self.interaction_restraints_cutoff])
+                                          self._cl_interaction_matrix[nconsistent - self.interaction_restraints_cutoff])
         self.queue.finish()
 
     def _cl_get_occupancy_grids(self, weight):
@@ -661,7 +666,7 @@ class DisVis(object):
 
         self._accessible_complexes = self._cl_consistent_complexes.get()
         self._accessible_complexes = np.asarray([self._cl_tot_complex.get()] +
-            self._accessible_complexes.tolist(), dtype=np.float64)
+                                                self._accessible_complexes.tolist(), dtype=np.float64)
         self._accessible_complexes[0] -= self._accessible_complexes[1:].sum()
 
         self._violations = self._cl_violations.get().astype(np.float64)
@@ -675,19 +680,19 @@ class DisVis(object):
             for i in xrange(self._nrestraints + 1 - self.interaction_restraints_cutoff):
                 self._interaction_matrix[i] = self._cl_interaction_matrix[i].get().astype(np.float64)
 
-def grid_restraints(restraints, voxelspacing, origin, lcenter):
 
+def grid_restraints(restraints, voxelspacing, origin, lcenter):
     nrestraints = len(restraints)
     g_restraints = np.zeros((nrestraints, 8), dtype=np.float64)
     for n in range(nrestraints):
         r_sel, l_sel, mindis, maxdis = restraints[n]
 
-        r_pos = (r_sel.center - origin)/voxelspacing
-        l_pos = (l_sel.center - lcenter)/voxelspacing
+        r_pos = (r_sel.center - origin) / voxelspacing
+        l_pos = (l_sel.center - lcenter) / voxelspacing
 
         g_restraints[n, 0:3] = r_pos
         g_restraints[n, 3:6] = l_pos
-        g_restraints[n, 6] = mindis/voxelspacing
-        g_restraints[n, 7] = maxdis/voxelspacing
+        g_restraints[n, 6] = mindis / voxelspacing
+        g_restraints[n, 7] = maxdis / voxelspacing
 
     return g_restraints

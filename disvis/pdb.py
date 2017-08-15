@@ -1,11 +1,11 @@
 from __future__ import absolute_import, print_function, division
 import os.path
 import operator
-from collections import Sequence, defaultdict 
+from collections import Sequence, defaultdict
 
 import numpy as np
 
-#from .IO.pdb import parse_pdb
+# from .IO.pdb import parse_pdb
 from .IO.mmcif import parse_cif
 from .elements import ELEMENTS
 
@@ -18,20 +18,18 @@ TER = 'TER   '
 MODEL_LINE = 'MODEL ' + ' ' * 4 + '{:>4d}\n'
 ENDMDL_LINE = 'ENDMDL\n'
 TER_LINE = 'TER   ' + '{:>5d}' + ' ' * 6 + '{:3s}' + ' ' + '{:1s}' + \
-        '{:>4d}' + '{:1s}' + ' ' * 53 + '\n'
+           '{:>4d}' + '{:1s}' + ' ' * 53 + '\n'
 ATOM_LINE = '{:6s}' + '{:>5d}' + ' ' + '{:4s}' + '{:1s}' + '{:3s}' + ' ' + \
-        '{:1s}' + '{:>4d}' + '{:1s}' + ' ' * 3 + '{:8.3f}' * 3 + '{:6.2f}' * 2 + \
-        ' ' * 10 + '{:<2s}' + '{:2s}\n'
+            '{:1s}' + '{:>4d}' + '{:1s}' + ' ' * 3 + '{:8.3f}' * 3 + '{:6.2f}' * 2 + \
+            ' ' * 10 + '{:<2s}' + '{:2s}\n'
 END_LINE = 'END   \n'
 
 ATOM_DATA = ('record id name alt resn chain resi i x y z q b ' \
-        'e charge').split()
+             'e charge').split()
 TER_DATA = 'id resn chain resi i'.split()
 
 
 class PDB(object):
-
-
     @classmethod
     def fromfile(cls, pdbfile):
         try:
@@ -40,7 +38,7 @@ class PDB(object):
             fname = pdbfile
 
         extension = os.path.splitext(fname)[1]
-     
+
         if extension == '.cif':
             return cls(parse_cif(pdbfile))
         elif extension in ('.pdb', '.ent'):
@@ -64,7 +62,7 @@ class PDB(object):
     @coor.setter
     def coor(self, coor_array):
         self.data['x'], self.data['y'], self.data['z'] = coor_array.T
-        
+
     @property
     def center(self):
         return self.coor.mean(axis=0)
@@ -72,7 +70,7 @@ class PDB(object):
     @property
     def center_of_mass(self):
         mass = self.mass.reshape(-1, 1)
-        return (self.coor * mass).sum(axis=0)/mass.sum()
+        return (self.coor * mass).sum(axis=0) / mass.sum()
 
     @property
     def chain_list(self):
@@ -108,11 +106,11 @@ class PDB(object):
         return PDB(self.data.copy())
 
     def rmsd(self, pdb):
-        return np.sqrt(((self.coor - pdb.coor)**2).mean()*3)
+        return np.sqrt(((self.coor - pdb.coor) ** 2).mean() * 3)
 
     def rotate(self, rotmat):
-        self.data['x'], self.data['y'], self.data['z'] =\
-             np.mat(rotmat) * np.mat(self.coor).T
+        self.data['x'], self.data['y'], self.data['z'] = \
+            np.mat(rotmat) * np.mat(self.coor).T
 
     def translate(self, vector):
         self.data['x'] += vector[0]
@@ -164,7 +162,6 @@ class PDB(object):
 
 
 def parse_pdb(infile):
-
     if isinstance(infile, file):
         f = infile
     elif isinstance(infile, str):
@@ -209,7 +206,6 @@ def parse_pdb(infile):
 
 
 def tofile(pdb, out):
-
     f = open(out, 'w')
 
     nmodels = len(set(pdb['model']))

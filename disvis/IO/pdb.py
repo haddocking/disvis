@@ -2,8 +2,8 @@ from collections import defaultdict
 
 import numpy as np
 
-def parse_pdb(pdbfile):
 
+def parse_pdb(pdbfile):
     if isinstance(pdbfile, file):
         pass
     elif isinstance(pdbfile, str):
@@ -49,16 +49,16 @@ def parse_pdb(pdbfile):
             pdb['charge'].append(line[78:80])
 
     natoms = len(pdb['name'])
-    dtype = [('atom_id', np.int64), ('name', np.str_, 4), 
-             ('resn', np.str_, 4), ('chain', np.str_, 1), 
+    dtype = [('atom_id', np.int64), ('name', np.str_, 4),
+             ('resn', np.str_, 4), ('chain', np.str_, 1),
              ('resi', np.int64), ('x', np.float64),
-             ('y', np.float64), ('z', np.float64), 
+             ('y', np.float64), ('z', np.float64),
              ('occupancy', np.float64), ('bfactor', np.float64),
              ('element', np.str_, 2), ('charge', np.str_, 2),
              ('model', np.int64), ('i_code', np.str_, 1),
              ('alt_loc', np.str_, 1)
              ]
-             
+
     pdbdata = np.zeros(natoms, dtype=dtype)
     for key, value in pdb.iteritems():
         pdbdata[key] = value

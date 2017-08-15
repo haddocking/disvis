@@ -8,12 +8,13 @@ except ImportError:
     pass
 try:
     from pyparsing import (Literal, Word, Combine, Optional, Forward,
-            ZeroOrMore, StringEnd, nums, alphas, alphanums, ParseException,
-            )
+                           ZeroOrMore, StringEnd, nums, alphas, alphanums, ParseException,
+                           )
+
     PYPARSING = True
 except ImportError:
     PYPARSING = False
-    
+
 
 def get_queue():
     try:
@@ -38,7 +39,6 @@ def mkdir_p(path):
 
 
 class DJoiner(object):
-    
     """Join filenames with a set directory."""
 
     def __init__(self, directory='.'):
@@ -91,9 +91,9 @@ def parse_restraints(fid, pdb1, pdb2):
 
         chain1, resi1, name1, chain2, resi2, name2, mindis, maxdis = line.split()
         pdb1_sel = pdb1.select('chain', chain1).select('resi',
-                int(resi1)).select('name', name1).duplicate()
+                                                       int(resi1)).select('name', name1).duplicate()
         pdb2_sel = pdb2.select('chain', chain2).select('resi',
-                int(resi2)).select('name', name2).duplicate()
+                                                       int(resi2)).select('name', name2).duplicate()
 
         if pdb1_sel.natoms == 0 or pdb2_sel.natoms == 0:
             msg = "A restraint selection was not found in line:\n{:s}".format(str(line))
@@ -122,7 +122,6 @@ def parse_interaction_selection(fid, pdb1, pdb2):
 
 
 class RestraintParser(object):
-
     """Parser for restraint files."""
 
     if PYPARSING:
@@ -145,8 +144,8 @@ class RestraintParser(object):
         selection << term + ZeroOrMore(l_or + term)
 
         pattern = (start + lpar + selection + rpar + lpar + selection +
-                rpar + floatnumber + floatnumber)
-    
+                   rpar + floatnumber + floatnumber)
+
     def parse_file(self, fid):
         restraints = []
         with open(fid) as f:
@@ -223,4 +222,3 @@ class RestraintParser(object):
             if '@' in sel:
                 return zip(('resi', 'name'), words)
         return zip(('resi', 'chain', 'name'), words)
-

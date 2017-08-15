@@ -24,15 +24,14 @@ print 'Rotations:', rotmat.shape[0]
 print volumizer.lcore.array.flags
 
 import time
+
 time0 = time.time()
 for n, rot in enumerate(rotmat):
     volumizer.generate_lcore(rot)
-    #if n == 0:
+    # if n == 0:
     #    volumizer.lcore.tofile('lcore.mrc')
-    #if n == 10:
+    # if n == 10:
     #    volumizer.lcore.tofile('test.mrc')
     #    break
 
 print 'Time:', time.time() - time0
-
-

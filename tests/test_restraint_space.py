@@ -7,6 +7,7 @@ from disvis.volume import Volume
 class Container(object):
     pass
 
+
 space = Volume.zeros((7, 8, 9), dtype=np.int32)
 rsel1 = Container()
 lsel1 = Container()
@@ -23,10 +24,10 @@ min_dis = 0
 max_dis = 5
 restraints = [Restraint([rsel1], [lsel1], min_dis, max_dis),
               Restraint([rsel2], [lsel2], min_dis, max_dis),
-        ]
+              ]
 
 E = np.eye(3)
 
-rs = RestraintSpace(space, restraints, (0,0,0))
+rs = RestraintSpace(space, restraints, (0, 0, 0))
 rs(E)
 print rs.space.array

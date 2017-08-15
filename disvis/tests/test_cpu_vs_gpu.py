@@ -7,8 +7,8 @@ from disvis import PDB, Volume
 from disvis.disvis import DisVis
 from disvis.helpers import get_queue, parse_restraints, parse_interaction_selection
 
-class TestCPUvsGPU(TestCase):
 
+class TestCPUvsGPU(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.dv = DisVis()
@@ -20,7 +20,7 @@ class TestCPUvsGPU(TestCase):
         ligand = PDB.fromfile(join('data', 'Q9UT97.pdb'))
         restraints = parse_restraints(join('data', 'restraints.dat'), receptor, ligand)
         rselect, lselect = parse_interaction_selection(join('data',
-            'selection.res'), receptor, ligand)
+                                                            'selection.res'), receptor, ligand)
 
         # Identity rotation and rotation around z-axis
         rotations = np.asarray([[[1, 0, 0], [0, 1, 0], [0, 0, 1]],
@@ -74,10 +74,10 @@ class TestCPUvsGPU(TestCase):
         self.dv._get_restraints_center(c_rotmat)
         self.gdv._cl_get_restraints_center(g_rotmat)
         test = np.allclose(self.dv._rot_lrestraints,
-                self.gdv._cl_rot_lrestraints.get()[:, :3])
+                           self.gdv._cl_rot_lrestraints.get()[:, :3])
         self.assertTrue(test)
         test = np.allclose(self.dv._restraints_center,
-                self.gdv._cl_restraints_center.get()[:, :3])
+                           self.gdv._cl_restraints_center.get()[:, :3])
         self.assertTrue(test)
 
         self.dv._get_restraint_space()
@@ -102,7 +102,7 @@ class TestCPUvsGPU(TestCase):
         self.dv._count_complexes(weight)
         self.gdv._cl_count_complexes(weight)
         test = np.allclose(self.dv._consistent_complexes[1:],
-                self.gdv._cl_consistent_complexes.get())
+                           self.gdv._cl_consistent_complexes.get())
         self.assertTrue(test)
         print self.dv._consistent_complexes[1:]
         print self.gdv._cl_consistent_complexes.get()
@@ -124,7 +124,6 @@ class TestCPUvsGPU(TestCase):
         g_im = self.gdv._cl_interaction_matrix[2]
         test = np.allclose(c_im, g_im.get())
         self.assertTrue(test)
-        
 
         # Check second rotation
         c_rotmat = self.dv.rotations[1]
@@ -151,10 +150,10 @@ class TestCPUvsGPU(TestCase):
         self.dv._get_restraints_center(c_rotmat)
         self.gdv._cl_get_restraints_center(g_rotmat)
         test = np.allclose(self.dv._rot_lrestraints,
-                self.gdv._cl_rot_lrestraints.get()[:, :3])
+                           self.gdv._cl_rot_lrestraints.get()[:, :3])
         self.assertTrue(test)
         test = np.allclose(self.dv._restraints_center,
-                self.gdv._cl_restraints_center.get()[:, :3])
+                           self.gdv._cl_restraints_center.get()[:, :3])
         self.assertTrue(test)
 
         self.dv._get_restraint_space()
@@ -179,7 +178,7 @@ class TestCPUvsGPU(TestCase):
         self.dv._count_complexes(weight)
         self.gdv._cl_count_complexes(weight)
         test = np.allclose(self.dv._consistent_complexes[1:],
-                self.gdv._cl_consistent_complexes.get())
+                           self.gdv._cl_consistent_complexes.get())
         self.assertTrue(test)
 
         self.dv._count_violations(weight)
@@ -199,7 +198,6 @@ class TestCPUvsGPU(TestCase):
         g_im = self.gdv._cl_interaction_matrix[2]
         test = np.allclose(c_im, g_im.get())
         self.assertTrue(test)
-
 
 
 if __name__ == '__main__':

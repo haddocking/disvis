@@ -1,9 +1,11 @@
 import itertools
 
 import numpy as np
+
 # Support both fftw and numpy
 try:
     import pyfftw
+
     PYFFTW = True
 except ImportError:
     PYFFTW = False
@@ -13,7 +15,6 @@ from ._extensions import fill_restraint_space, fill_restraint_space_add
 
 
 class InteractionSpace(object):
-
     """Calculates the interaction space between two macromolecules."""
 
     def __init__(self, space, rcore, rsurface, lcore, max_clash=200, min_inter=300):
@@ -29,17 +30,17 @@ class InteractionSpace(object):
         # Subtract/add a small amount to account for later FFT round-off errors
         # TODO test correct behaviour
         self._max_clash_grid = np.floor(self.max_clash / self.rcore.voxelspacing ** 3) + 0.1
-        self._min_inter_grid = np.ceil(self.min_inter / self.rcore.voxelspacing ** 3)  - 0.1
+        self._min_inter_grid = np.ceil(self.min_inter / self.rcore.voxelspacing ** 3) - 0.1
 
         # Allocate space for arrays
         # Real arrays
         array_names = 'tmp clashspace interspace'.split()
         for arr in array_names:
             if PYFFTW:
-                setattr(self, '_' + arr, 
+                setattr(self, '_' + arr,
                         pyfftw.zeros_aligned(self._shape, dtype=np.float64))
             else:
-                setattr(self, '_' + arr, 
+                setattr(self, '_' + arr,
                         np.zeros(self._shape, dtype=np.float64))
         array_names = 'not_clashing interacting'.split()
         for arr in array_names:
@@ -49,10 +50,10 @@ class InteractionSpace(object):
         array_names = 'rcore rsurface lcore lcore_conj tmp'.split()
         for arr in array_names:
             if PYFFTW:
-                setattr(self, '_ft_' + arr, 
+                setattr(self, '_ft_' + arr,
                         pyfftw.zeros_aligned(self._ft_shape, dtype=np.complex128))
             else:
-                setattr(self, '_ft_' + arr, 
+                setattr(self, '_ft_' + arr,
                         np.zeros(self._ft_shape, dtype=np.complex128))
         # Setup FFT
         if PYFFTW:
@@ -62,8 +63,10 @@ class InteractionSpace(object):
         else:
             def rfftn(a, b):
                 b[:] = np.fft.rfftn(a)
+
             def irfftn(a, b):
                 b[:] = np.fft.irfftn(a, s=self._shape)
+
             self._rfftn = rfftn
             self._irfftn = irfftn
 
@@ -79,22 +82,21 @@ class InteractionSpace(object):
         # Calculate the clashing volume
         np.multiply(self._ft_lcore_conj, self._ft_rcore, self._ft_tmp)
         self._irfftn(self._ft_tmp, self._clashspace)
-        #np.round(self._clashspace, out=self._clashspace)
+        # np.round(self._clashspace, out=self._clashspace)
         # Calculate the interaction volume
         np.multiply(self._ft_lcore_conj, self._ft_rsurface, self._ft_tmp)
         self._irfftn(self._ft_tmp, self._interspace)
-        #np.round(self._interspace, out=self._interspace)
+        # np.round(self._interspace, out=self._interspace)
         # Determine complexes with too many clashes and too few interactions
-        np.less_equal(self._clashspace, self._max_clash_grid, 
-                self._not_clashing)
+        np.less_equal(self._clashspace, self._max_clash_grid,
+                      self._not_clashing)
         np.greater_equal(self._interspace, self._min_inter_grid,
-                self._interacting)
-        np.logical_and(self._not_clashing, self._interacting, 
-                self.space.array)
+                         self._interacting)
+        np.logical_and(self._not_clashing, self._interacting,
+                       self.space.array)
 
 
 class Restraint(object):
-
     """An (ambiguous) distance restraint."""
 
     def __init__(self, rselections, lselections, min_dis, max_dis):
@@ -105,7 +107,6 @@ class Restraint(object):
 
 
 class RestraintSpace(object):
-
     """Determine consistent restraint space."""
 
     def __init__(self, space, restraints, ligand_center):
@@ -142,12 +143,11 @@ class RestraintSpace(object):
             lcoor = np.ascontiguousarray(np.dot(restraint.lselections, rotmat.T))
             value = 1 << n
             fill_restraint_space(
-                    restraint.rselections, lcoor,
-                    restraint.min, restraint.max, value, self.space.array)
+                restraint.rselections, lcoor,
+                restraint.min, restraint.max, value, self.space.array)
 
 
 class AccessibleInteractionSpace(object):
-
     def __init__(self, space, interaction_space, restraint_space):
         self.space = space
         self.interaction_space = interaction_space
@@ -161,16 +161,16 @@ class AccessibleInteractionSpace(object):
         self.consistent_space = Volume.zeros_like(self.space)
 
     def __call__(self, weight=1):
-        np.multiply(self.interaction_space.space.array, 
+        np.multiply(self.interaction_space.space.array,
                     self.restraint_space.space.array, self.space.array)
         self.consistent_space.array[:] = self._consistent_restraints[self.space.array]
-        np.maximum(self.max_consistent.array, 
+        np.maximum(self.max_consistent.array,
                    self.consistent_space.array,
                    self.max_consistent.array)
         counts = np.bincount(self.space.array.ravel(), minlength=self.npermutations)[1:]
         self._consistent_permutations[1:] += counts * weight
         self._consistent_permutations[0] += weight * (
-                self.interaction_space.space.array.sum() - counts.sum())
+            self.interaction_space.space.array.sum() - counts.sum())
 
     def consistent_complexes(self, exact=False):
         """
@@ -192,7 +192,7 @@ class AccessibleInteractionSpace(object):
                 restraint_bit = 1 << restraint_index
                 mask2 = np.bitwise_and(self._indices, restraint_bit) > 0
                 out[nconsistent, restraint_index] += self._consistent_permutations[
-                        np.logical_and(mask1, mask2)].sum()
+                    np.logical_and(mask1, mask2)].sum()
         if not exact:
             out = np.cumsum(out[::-1], axis=0)[::-1]
         return out
@@ -204,18 +204,17 @@ class AccessibleInteractionSpace(object):
 
 
 class ResidueInteractionSpace(object):
-
-    def __init__(self, space, receptor, ligand, accessible_interaction_space, 
+    def __init__(self, space, receptor, ligand, accessible_interaction_space,
                  interaction_radius=3):
         self.space = space
         self.ligand = ligand
         self.receptor = receptor
         self.accessible_interaction_space = accessible_interaction_space
         self._ligand_coor = np.ascontiguousarray(
-                (self.ligand.coor - self.ligand.center).T / self.space.voxelspacing)
+            (self.ligand.coor - self.ligand.center).T / self.space.voxelspacing)
         self._ligand_coor_rot = np.zeros_like(self._ligand_coor)
         self._receptor_coor = np.ascontiguousarray((
-                self.receptor.coor - self.space.origin) / self.space.voxelspacing)
+                                                       self.receptor.coor - self.space.origin) / self.space.voxelspacing)
         # Create distance restraints between each each residue of the ligand
         # and all of the receptor and each residue of the receptor with all of
         # the ligand. The distance restraints need to have views on the ligand
@@ -224,7 +223,7 @@ class ResidueInteractionSpace(object):
         self._restraints_receptor = []
         # Build up the restraints for each ligand residue
         unique_residues, unique_indices = np.unique(
-                self.ligand.data['resi'], return_indices=True)
+            self.ligand.data['resi'], return_indices=True)
         unique_indices = unique_indices.tolist() + [None]
         max_dis = 5.0 / self.space.voxelspacing
         for start, end in izip(unique_indices[:-1], unique_indices[1:]):
@@ -233,7 +232,7 @@ class ResidueInteractionSpace(object):
             self._restraints_ligand.append(restraint)
         # Build up the restraints for each receptor residue
         unique_residues, unique_indices = np.unique(
-                self.receptor.data['resi'], return_indices=True)
+            self.receptor.data['resi'], return_indices=True)
         unique_indices = unique_indices.tolist() + [None]
         for start, end in izip(unique_indices[:-1], unique_indices[1:]):
             coor = self._receptor_coor[start:end]
@@ -245,21 +244,20 @@ class ResidueInteractionSpace(object):
         np.dot(self._ligand_coor, rotmat.T, out=self._ligand_coor_rot)
         for n, restraint in enumerate(self._ligand_restraints):
             fill_restraint_space_add(
-                    restraint.rselections, restraint.lselections,
-                    restraint.min, restraint.max, self.space.array)
+                restraint.rselections, restraint.lselections,
+                restraint.min, restraint.max, self.space.array)
             # TODO Count interactions for consistent complexes
             self.space.array.fill(0)
 
         for n, restraint in enumerate(self._receptor_restraints):
             fill_restraint_space_add(
-                    restraint.rselections, restraint.lselections,
-                    restraint.min, restraint.max, self.space.array)
+                restraint.rselections, restraint.lselections,
+                restraint.min, restraint.max, self.space.array)
             # TODO Count interactions for consistent complexes
             self.space.array.fill(0)
 
 
 class OccupancySpace(object):
-    
     def __init__(self, interaction_space, accessible_interaction_space, nconsistent=None):
         self.interaction_space = interaction_space
         self.accessible_interaction_space = accessible_interaction_space
@@ -270,10 +268,10 @@ class OccupancySpace(object):
             self.nconsistent = range(minconsistent, nrestraints + 1)
         if PYFFTW:
             self._consistent = pyfftw.zeros_aligned(
-                    self.interaction_space.space.array.shape, dtype=np.float64)
+                self.interaction_space.space.array.shape, dtype=np.float64)
         else:
             self._consistent = np.zeros(
-                    self.interaction_space.space.array.shape, dtype=np.float64)
+                self.interaction_space.space.array.shape, dtype=np.float64)
         self._tmp = interaction_space._tmp
         self._ft_tmp = interaction_space._ft_tmp
         self._rfftn = self.interaction_space._rfftn
@@ -281,13 +279,13 @@ class OccupancySpace(object):
         self.spaces = []
         for n in self.nconsistent:
             self.spaces.append(
-                    Volume.zeros_like(self.interaction_space.space, dtype=np.float64)
-                    )
+                Volume.zeros_like(self.interaction_space.space, dtype=np.float64)
+            )
 
     def __call__(self, weight=1):
         for n, space in itertools.izip(self.nconsistent, self.spaces):
-            np.greater_equal(self.accessible_interaction_space.consistent_space.array, 
-                     n, out=self._consistent)
+            np.greater_equal(self.accessible_interaction_space.consistent_space.array,
+                             n, out=self._consistent)
             self._rfftn(self._consistent, self._ft_tmp)
             self._ft_tmp *= self.interaction_space._ft_lcore
             self._irfftn(self._ft_tmp, self._tmp)

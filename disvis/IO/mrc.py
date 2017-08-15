@@ -16,6 +16,7 @@ def parse_mrc(fid):
 
     return array, voxelspacing, origin
 
+
 class MRCFile(object):
     """
     Class for MRC-type files
@@ -23,7 +24,6 @@ class MRCFile(object):
 
     def __init__(self, fid, fmt=None):
 
-    
         if isinstance(fid, file):
             pass
         elif isinstance(fid, str):
@@ -49,8 +49,8 @@ class MRCFile(object):
         self._endian = endian
 
         self._fid.seek(0)
-        headertype = 'i'*10 + 'f'*6 + 'i'*3 + 'f'*3 + 'i'*3\
-               + 'f'*27 + 'c'*8 + 'f'*1 + 'i'*1 + 'c'*(80*10)
+        headertype = 'i' * 10 + 'f' * 6 + 'i' * 3 + 'f' * 3 + 'i' * 3 \
+                     + 'f' * 27 + 'c' * 8 + 'f' * 1 + 'i' * 1 + 'c' * (80 * 10)
         raw_header = unpack(endian + headertype, self._fid.read(1024))
         self._header = OrderedDict()
         self._header['nc'] = raw_header[0]
@@ -81,15 +81,15 @@ class MRCFile(object):
         self._header['skwmat'] = raw_header[25:34]
         self._header['skwtrn'] = raw_header[34:37]
         self._header['extra'] = raw_header[37:49]
-	self._header['xstart'] = raw_header[49]
-	self._header['ystart'] = raw_header[50]
-	self._header['zstart'] = raw_header[51]
+        self._header['xstart'] = raw_header[49]
+        self._header['ystart'] = raw_header[50]
+        self._header['zstart'] = raw_header[51]
         self._header['map'] = "".join(raw_header[52:56])
-        self._header['machst'] = " ".join(map(hex,map(ord,raw_header[56:60])))
+        self._header['machst'] = " ".join(map(hex, map(ord, raw_header[56:60])))
         self._header['rms'] = raw_header[60]
         self._header['nlabel'] = raw_header[61]
         self._header['label'] = "".join(raw_header[62:862]).strip()
-    
+
     @property
     def fid(self):
         return self._fid
@@ -110,38 +110,37 @@ class MRCFile(object):
 
     @property
     def voxelspacing(self):
-        return self.header['xlength']/self.header['nx']
+        return self.header['xlength'] / self.header['nx']
 
     @property
     def origin(self):
         if self.fmt == 'mrc':
-            origin = (self.header['xstart'], 
-                    self.header['ystart'], self.header['zstart'])
+            origin = (self.header['xstart'],
+                      self.header['ystart'], self.header['zstart'])
         elif self.fmt in ('map', 'ccp4'):
-            order = (self.header['mapc'], 
-                    self.header['mapr'], self.header['maps'])
+            order = (self.header['mapc'],
+                     self.header['mapr'], self.header['maps'])
             if order == (1, 2, 3):
-                start = (self.header['ncstart'], 
-                        self.header['nrstart'], self.header['nsstart'])
-            elif order == (1,3,2):
-                start = (self.header['ncstart'], 
-                        self.header['nsstart'], self.header['nrstart'])
-            elif order == (2,1,3):
-                start = (self.header['nrstart'], 
-                        self.header['ncstart'], self.header['nsstart'])
-            elif order == (2,3,1):
-                start = (self.header['nrstart'], 
-                        self.header['nsstart'], self.header['ncstart'])
-            elif order == (3,1,2):
-                start = (self.header['nsstart'], 
-                        self.header['ncstart'], self.header['nrstart'])
-            elif order == (3,2,1):
-                start = (self.header['nsstart'], 
-                        self.header['nrstart'], self.header['ncstart'])
+                start = (self.header['ncstart'],
+                         self.header['nrstart'], self.header['nsstart'])
+            elif order == (1, 3, 2):
+                start = (self.header['ncstart'],
+                         self.header['nsstart'], self.header['nrstart'])
+            elif order == (2, 1, 3):
+                start = (self.header['nrstart'],
+                         self.header['ncstart'], self.header['nsstart'])
+            elif order == (2, 3, 1):
+                start = (self.header['nrstart'],
+                         self.header['nsstart'], self.header['ncstart'])
+            elif order == (3, 1, 2):
+                start = (self.header['nsstart'],
+                         self.header['ncstart'], self.header['nrstart'])
+            elif order == (3, 2, 1):
+                start = (self.header['nsstart'],
+                         self.header['nrstart'], self.header['ncstart'])
 
             origin = [x * self.voxelspacing for x in start]
         return origin
-
 
     @property
     def density(self):
@@ -154,8 +153,8 @@ class MRCFile(object):
             datatype = 'i2'
         elif mode == 2:
             datatype = 'f4'
-	else:
-	    raise IOError("Datatype of density is not recoginized")
+        else:
+            raise IOError("Datatype of density is not recoginized")
 
         # read the density and reshape it
         nc = self.header['nc']
@@ -163,27 +162,26 @@ class MRCFile(object):
         ns = self.header['ns']
 
         self.fid.seek(1024)
-        density = np.fromfile(self.fid, dtype=self._endian + datatype).reshape((ns,nr,nc))
+        density = np.fromfile(self.fid, dtype=self._endian + datatype).reshape((ns, nr, nc))
 
         order = (self.header['mapc'], self.header['mapr'], self.header['maps'])
-        if order == (1,3,2):
+        if order == (1, 3, 2):
             density = np.swapaxes(density, 0, 1)
-        elif order == (2,1,3):
+        elif order == (2, 1, 3):
             density = np.swapaxes(density, 1, 2)
-        elif order == (2,3,1):
+        elif order == (2, 3, 1):
             density = np.swapaxes(density, 2, 0)
             density = np.swapaxes(density, 0, 1)
-        elif order == (3,1,2):
+        elif order == (3, 1, 2):
             density = np.swapaxes(density, 2, 1)
             density = np.swapaxes(density, 0, 2)
-        elif order == (3,2,1):
+        elif order == (3, 2, 1):
             density = np.swapaxes(density, 0, 2)
 
         return density
 
 
 def to_mrc(fid, volume, labels=[]):
-
     voxelspacing = volume.voxelspacing
     with open(fid, 'wb') as out:
 
@@ -238,14 +236,14 @@ def to_mrc(fid, volume, labels=[]):
 
         lskflg = 0
         out.write(pack('i', lskflg))
-        skwmat = [0.0]*9
+        skwmat = [0.0] * 9
         for f in skwmat:
             out.write(pack('f', f))
-        skwtrn = [0.0]*3
+        skwtrn = [0.0] * 3
         for f in skwtrn:
             out.write(pack('f', f))
 
-        fut_use = [0.0]*12
+        fut_use = [0.0] * 12
         for f in fut_use:
             out.write(pack('f', f))
 
@@ -257,9 +255,9 @@ def to_mrc(fid, volume, labels=[]):
             out.write(pack('c', c))
 
         if sys.byteorder == 'little':
-            machst = ['\x44', '\x41' ,'\x00', '\x00']
+            machst = ['\x44', '\x41', '\x00', '\x00']
         elif sys.byteorder == 'big':
-            machst = ['\x44', '\x41' ,'\x00', '\x00']
+            machst = ['\x44', '\x41', '\x00', '\x00']
         else:
             raise ValueError("Byteorder {:} is not recognized".format(sys.byteorder))
 
@@ -272,7 +270,7 @@ def to_mrc(fid, volume, labels=[]):
         # nlabels = min(len(labels), 10)
         # TODO labels not handled correctly
 
-        #for label in labels:
+        # for label in labels:
         #     list_label = [c for c in label]
         #     llabel = len(list_label)
         #     if llabel < 80:

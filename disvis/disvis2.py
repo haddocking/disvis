@@ -5,48 +5,49 @@ import time
 from itertools import izip
 import sys
 import logging
-logger = logging.getLogger(__name__)
 
 import numpy as np
 
 from .pdb import PDB
 from .volume import Volume, Volumizer
-from .spaces import (InteractionSpace, RestraintSpace, Restraint, 
-        AccessibleInteractionSpace, OccupancySpace)
+from .spaces import (InteractionSpace, RestraintSpace, Restraint,
+                     AccessibleInteractionSpace, OccupancySpace)
 from .helpers import RestraintParser, DJoiner
 from .rotations import proportional_orientations, quat_to_rotmat
 
 
-def parse_args():
+logger = logging.getLogger(__name__)
 
+
+def parse_args():
     p = ArgumentParser(description=__doc__)
     p.add_argument("receptor", type=str,
-            help="Receptor / fixed chain.")
+                   help="Receptor / fixed chain.")
     p.add_argument("ligand", type=str,
-            help="Ligand / scanning chain.")
+                   help="Ligand / scanning chain.")
     p.add_argument("restraints", type=file,
-            help="File containing restraints.")
+                   help="File containing restraints.")
 
     p.add_argument("-vs", "--voxelspacing", default=2, type=float,
-            help="Voxelspacing of grids.")
+                   help="Voxelspacing of grids.")
     p.add_argument("-a", "--angle", default=20, type=float,
-            help="Rotational sampling density in degree.")
+                   help="Rotational sampling density in degree.")
     p.add_argument("-ir", "--interaction-radius", type=float, default=3,
-            help="Interaction radius.")
+                   help="Interaction radius.")
     p.add_argument("-mi", "--minimum-interaction-volume", type=float, default=300,
-            help="Minimum interaction volume required for a complex.")
+                   help="Minimum interaction volume required for a complex.")
     p.add_argument("-mc", "--maximum-clash-volume", type=float, default=200,
-            help="Maximum clash volume allowed for a complex.")
+                   help="Maximum clash volume allowed for a complex.")
     p.add_argument("-oa", "--occupancy-analysis", action="store_true",
-            help="Perform an occupancy analysis.")
+                   help="Perform an occupancy analysis.")
     p.add_argument("-ia", "--interaction-analysis", action="store_true",
-            help="Perform an interaction analysis.")
+                   help="Perform an interaction analysis.")
     p.add_argument("-s", "--save", action="store_true",
-            help="Save entire accessible interaction space to disk.")
+                   help="Save entire accessible interaction space to disk.")
     p.add_argument("-d", "--directory", default=DJoiner('.'), type=DJoiner,
-            help="Directory to store the results.")
+                   help="Directory to store the results.")
     p.add_argument("-v", "--verbose", action="store_true",
-            help="Be verbose.")
+                   help="Be verbose.")
 
     args = p.parse_args()
     return args
@@ -68,7 +69,6 @@ class DisVisOptions(object):
 
 
 class DisVis(object):
-
     def __init__(self, receptor, ligand, restraints, options):
         self.receptor = receptor
         self.ligand = ligand
@@ -80,32 +80,32 @@ class DisVis(object):
     def initialize(self):
 
         self._volumizer = Volumizer(
-                self.receptor, self.ligand, 
-                voxelspacing=self.options.voxelspacing,
-                interaction_radius=self.options.interaction_radius,
-                )
+            self.receptor, self.ligand,
+            voxelspacing=self.options.voxelspacing,
+            interaction_radius=self.options.interaction_radius,
+        )
 
         rcore = self._volumizer.rcore
         rsurface = self._volumizer.rsurface
         lcore = self._volumizer.lcore
         interaction_space = Volume.zeros_like(rcore, dtype=np.int32)
         self._interaction_space_calc = InteractionSpace(
-                interaction_space, rcore, rsurface, lcore,
-                max_clash=self.options.maximum_clash_volume,
-                min_inter=self.options.minimum_interaction_volume,
-                )
-        restraint_space= Volume.zeros_like(rcore, dtype=np.int32)
+            interaction_space, rcore, rsurface, lcore,
+            max_clash=self.options.maximum_clash_volume,
+            min_inter=self.options.minimum_interaction_volume,
+        )
+        restraint_space = Volume.zeros_like(rcore, dtype=np.int32)
         self._restraint_space_calc = RestraintSpace(
-                restraint_space, self.restraints, self.ligand.center
-                )
+            restraint_space, self.restraints, self.ligand.center
+        )
         accessible_interaction_space = Volume.zeros_like(rcore, dtype=np.int32)
         self._ais_calc = AccessibleInteractionSpace(
-                accessible_interaction_space, self._interaction_space_calc, 
-                self._restraint_space_calc
-                )
+            accessible_interaction_space, self._interaction_space_calc,
+            self._restraint_space_calc
+        )
         if self.options.occupancy_analysis:
             self._occupancy_space = OccupancySpace(
-                    self._interaction_space_calc, self._ais_calc)
+                self._interaction_space_calc, self._ais_calc)
         self._initialized = True
 
     def __call__(self, rotmat, weight=1):
@@ -139,7 +139,6 @@ class DisVis(object):
 
 
 def main():
-
     args = parse_args()
     args.directory.mkdir()
 
@@ -161,25 +160,25 @@ def main():
     restraint_parser = RestraintParser()
     restraints = []
     for line in args.restraints:
-         out = restraint_parser.parse_line(line)
-         if out is not None:
-             rsel, lsel, min_dis, max_dis = out
-             receptor_selection = []
-             for sel in rsel:
-                 rpart = receptor
-                 for key, value in sel:
-                     rpart = rpart.select(key, value)
-                 receptor_selection.append(rpart)
-             lpart = ligand
-             ligand_selection = []
-             for sel in lsel:
-                 lpart = ligand
-                 for key, value in sel:
-                     lpart = lpart.select(key, value)
-                 ligand_selection.append(lpart)
-             restraints.append(Restraint(
-                 receptor_selection, ligand_selection, min_dis, max_dis)
-                 )
+        out = restraint_parser.parse_line(line)
+        if out is not None:
+            rsel, lsel, min_dis, max_dis = out
+            receptor_selection = []
+            for sel in rsel:
+                rpart = receptor
+                for key, value in sel:
+                    rpart = rpart.select(key, value)
+                receptor_selection.append(rpart)
+            lpart = ligand
+            ligand_selection = []
+            for sel in lsel:
+                lpart = ligand
+                for key, value in sel:
+                    lpart = lpart.select(key, value)
+                ligand_selection.append(lpart)
+            restraints.append(Restraint(
+                receptor_selection, ligand_selection, min_dis, max_dis)
+            )
 
     options = DisVisOptions.fromargs(args)
 
@@ -217,13 +216,12 @@ def main():
             for cset, sperm in izip(consistent_sets, cons_perm):
                 restraint_flags = ' '.join(list(('{:0>' + str(nrestraints) + 'd}').format(int(cset[2:])))[::-1])
                 f.write('{} {:.0f}\n'.format(restraint_flags, sperm))
-                #print restraint_flags, sperm
+                # print restraint_flags, sperm
             f.write('#' * 30 + '\n')
 
     # Write out occupancy maps
     if options.occupancy_analysis:
-        iterator = izip(disvis._occupancy_space.nconsistent, 
+        iterator = izip(disvis._occupancy_space.nconsistent,
                         disvis._occupancy_space.spaces)
         for n, space in iterator:
             space.tofile(args.directory('occ_{:}.mrc'.format(n)))
-
