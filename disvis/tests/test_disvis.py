@@ -91,13 +91,13 @@ class TestDisVis(TestCase):
         dv.min_interaction = 0.1
         dv._initialize()
         dv._cpu_init()
-        
+
         # Manually set rot_lcore for tests
         dv._rot_lcore = np.zeros_like(dv._lcore)
         dv._rot_lcore[0, 0, 0] = 1
 
         dv._get_interaction_space()
-        
+
         self.assertTrue(np.allclose(dv._rsurf, dv._intervol))
         self.assertTrue(np.allclose(dv._rcore, dv._clashvol))
         self.assertTrue(np.allclose(dv._intervol, dv._interacting))

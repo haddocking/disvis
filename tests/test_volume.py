@@ -1,4 +1,5 @@
 import os.path
+import time
 
 from disvis.volume import Volumizer
 from disvis.pdb import PDB
@@ -22,8 +23,6 @@ q = proportional_orientations(10)[0]
 rotmat = quat_to_rotmat(q)
 print 'Rotations:', rotmat.shape[0]
 print volumizer.lcore.array.flags
-
-import time
 
 time0 = time.time()
 for n, rot in enumerate(rotmat):

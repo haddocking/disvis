@@ -73,17 +73,14 @@ class Volumizer(object):
         self.rsurface = Volume.zeros_like(self.rcore)
         self.lcore = Volume.zeros_like(self.rcore)
 
-        receptor_coor_grid = np.ascontiguousarray((
-                                                      self.receptor.coor - self.origin).T / self.voxelspacing)
+        receptor_coor_grid = np.ascontiguousarray((self.receptor.coor - self.origin).T / self.voxelspacing)
         receptor_radii = self.receptor.vdw_radius / self.voxelspacing
         dilate_points(receptor_coor_grid, receptor_radii, 1, self.rcore.array)
         receptor_radii += interaction_radius / self.voxelspacing
         dilate_points(receptor_coor_grid, receptor_radii, 1, self.rsurface.array)
 
-        self._ligand_coor_grid = (
-                                     self.ligand.coor - self.ligand.center).T / self.voxelspacing
-        self._ligand_coor_grid_rot = np.ascontiguousarray(
-            self._ligand_coor_grid.copy())
+        self._ligand_coor_grid = (self.ligand.coor - self.ligand.center).T / self.voxelspacing
+        self._ligand_coor_grid_rot = np.ascontiguousarray(self._ligand_coor_grid.copy())
         self._ligand_radii = self.ligand.vdw_radius / self.voxelspacing
 
     def generate_lcore(self, rotmat):

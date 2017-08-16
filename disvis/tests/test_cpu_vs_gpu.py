@@ -164,7 +164,7 @@ class TestCPUvsGPU(TestCase):
         c_restspace = self.dv._restspace
         g_restspace = self.gdv._cl_restspace.get()
         # The restraints space can differ slightly because of roundoff errors
-        # in the distance calculation. 
+        # in the distance calculation.
         loc = (c_restspace != g_restspace).nonzero()
         diff = (c_restspace != g_restspace).sum()
         self.assertLessEqual(diff, 1)

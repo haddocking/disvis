@@ -198,8 +198,7 @@ class AccessibleInteractionSpace(object):
         return out
 
     def violation_matrix(self, exact=False):
-        out = self.consistent_complexes(exact=exact).reshape(-1, 1) - \
-              self.consistent_matrix(exact=exact)
+        out = self.consistent_complexes(exact=exact).reshape(-1, 1) - self.consistent_matrix(exact=exact)
         return out
 
 
@@ -213,8 +212,8 @@ class ResidueInteractionSpace(object):
         self._ligand_coor = np.ascontiguousarray(
             (self.ligand.coor - self.ligand.center).T / self.space.voxelspacing)
         self._ligand_coor_rot = np.zeros_like(self._ligand_coor)
-        self._receptor_coor = np.ascontiguousarray((
-                                                       self.receptor.coor - self.space.origin) / self.space.voxelspacing)
+        self._receptor_coor = np.ascontiguousarray((self.receptor.coor -
+                                                    self.space.origin) / self.space.voxelspacing)
         # Create distance restraints between each each residue of the ligand
         # and all of the receptor and each residue of the receptor with all of
         # the ligand. The distance restraints need to have views on the ligand

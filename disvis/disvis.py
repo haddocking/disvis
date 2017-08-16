@@ -108,7 +108,7 @@ class DisVis(object):
     @staticmethod
     def _minimal_volume_parameters(fixed_coor, scanning_coor, offset,
                                    voxelspacing):
-        # the minimal grid shape is the size of the fixed protein in 
+        # the minimal grid shape is the size of the fixed protein in
         # each dimension and the longest diameter of the scanning chain
 
         offset += np.linalg.norm(scanning_coor - scanning_coor.mean(axis=0),
@@ -208,13 +208,12 @@ class DisVis(object):
             # Since calculating all interactions is costly, only analyze
             # solutions that are consistent with more than N restraints.
             self._lselect = (self.ligand_interaction_selection.coor -
-                             self.ligand_interaction_selection.center) / \
-                            self.voxelspacing
+                             self.ligand_interaction_selection.center) / self.voxelspacing
             self._rselect = (self.receptor_interaction_selection.coor -
                              self._origin) / self.voxelspacing
             shape = (
-            self._nrestraints + 1 - self.interaction_restraints_cutoff,
-            self._lselect.shape[0], self._rselect.shape[0])
+                self._nrestraints + 1 - self.interaction_restraints_cutoff,
+                self._lselect.shape[0], self._rselect.shape[0])
             self._interaction_matrix = np.zeros(shape, dtype=np.float64)
             self._sub_interaction_matrix = np.zeros(shape, dtype=np.int64)
 
@@ -366,8 +365,8 @@ class DisVis(object):
         # Rotate the ligand coordinates
         self._rot_lselect = np.dot(self._lselect, rotmat.T)
         count_interactions(self._red_interspace, self._rselect,
-                           self._rot_lselect, np.float64(
-                self.interaction_distance / self.voxelspacing),
+                           self._rot_lselect,
+                           np.float64(self.interaction_distance / self.voxelspacing),
                            weight,
                            np.int32(self.interaction_restraints_cutoff),
                            self._interaction_matrix)
