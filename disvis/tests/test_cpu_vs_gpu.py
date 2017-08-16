@@ -18,13 +18,16 @@ class TestCPUvsGPU(TestCase):
 
         receptor = PDB.fromfile(join('data', 'O14250.pdb'))
         ligand = PDB.fromfile(join('data', 'Q9UT97.pdb'))
-        restraints = parse_restraints(join('data', 'restraints.dat'), receptor, ligand)
+        restraints = parse_restraints(join('data', 'restraints.dat'),
+                                      receptor, ligand)
         rselect, lselect = parse_interaction_selection(join('data',
-                                                            'selection.res'), receptor, ligand)
+                                                            'selection.res'),
+                                                       receptor, ligand)
 
         # Identity rotation and rotation around z-axis
         rotations = np.asarray([[[1, 0, 0], [0, 1, 0], [0, 0, 1]],
-                                [[0, -1, 0], [1, 0, 0], [0, 0, 1]]], dtype=np.float64)
+                                [[0, -1, 0], [1, 0, 0], [0, 0, 1]]],
+                               dtype=np.float64)
 
         cls.dv.receptor = receptor
         cls.gdv.receptor = receptor
@@ -85,7 +88,7 @@ class TestCPUvsGPU(TestCase):
         c_restspace = self.dv._restspace
         g_restspace = self.gdv._cl_restspace.get()
         # The restraints space can differ slightly because of roundoff errors
-        # in the distance calculation. 
+        # in the distance calculation.
         loc = (c_restspace != g_restspace).nonzero()
         diff = (c_restspace != g_restspace).sum()
         self.assertLessEqual(diff, 1)

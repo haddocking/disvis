@@ -162,7 +162,8 @@ class MRCFile(object):
         ns = self.header['ns']
 
         self.fid.seek(1024)
-        density = np.fromfile(self.fid, dtype=self._endian + datatype).reshape((ns, nr, nc))
+        density = np.fromfile(self.fid,
+                              dtype=self._endian + datatype).reshape((ns, nr, nc))
 
         order = (self.header['mapc'], self.header['mapr'], self.header['maps'])
         if order == (1, 3, 2):
@@ -259,7 +260,8 @@ def to_mrc(fid, volume, labels=[]):
         elif sys.byteorder == 'big':
             machst = ['\x44', '\x41', '\x00', '\x00']
         else:
-            raise ValueError("Byteorder {:} is not recognized".format(sys.byteorder))
+            raise ValueError("Byteorder {:} is not "
+                             "recognized".format(sys.byteorder))
 
         for c in machst:
             out.write(pack('c', c))
@@ -274,7 +276,7 @@ def to_mrc(fid, volume, labels=[]):
         #     list_label = [c for c in label]
         #     llabel = len(list_label)
         #     if llabel < 80:
-        #         
+        #
         #     # max 80 characters
         #     label = min(len(label), 80)
 

@@ -24,12 +24,13 @@ def parse_args():
     # optional
     p.add_argument('-ac', '--active-cutoff', dest='active_cutoff',
                    default=DEFAULT_ACTIVE_CUTOFF, type=float,
-                   help="Minimum number of average interactions for a residue to be "
-                        "considered 'active'.")
+                   help="Minimum number of average interactions for a residue "
+                        "to be considered 'active'.")
 
     p.add_argument('-pc', '--passive-cutoff', dest='passive_cutoff',
                    default=DEFAULT_PASSIVE_CUTOFF, type=float,
-                   help="Minimum number of average interactions for a residue to be considered 'passive'.")
+                   help="Minimum number of average interactions for a residue "
+                        "to be considered 'passive'.")
 
     p.add_argument('-o', '--out', dest='out', type=FileType('w'),
                    default=DEFAULT_OUT,

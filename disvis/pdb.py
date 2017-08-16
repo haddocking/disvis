@@ -24,7 +24,7 @@ ATOM_LINE = '{:6s}' + '{:>5d}' + ' ' + '{:4s}' + '{:1s}' + '{:3s}' + ' ' + \
             ' ' * 10 + '{:<2s}' + '{:2s}\n'
 END_LINE = 'END   \n'
 
-ATOM_DATA = ('record id name alt resn chain resi i x y z q b ' \
+ATOM_DATA = ('record id name alt resn chain resi i x y z q b '
              'e charge').split()
 TER_DATA = 'id resn chain resi i'.split()
 

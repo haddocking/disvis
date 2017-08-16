@@ -22,7 +22,8 @@ def parse_args():
                    help="File containing the ligand structure.")
     p.add_argument('infile', type=file,
                    help="File containing the translations and rotations.")
-    p.add_argument('-o', '--output', dest='output', type=abspath, default='.', metavar='<dir>',
+    p.add_argument('-o', '--output', dest='output', type=abspath, default='.',
+                   metavar='<dir>',
                    help="Directory where the structures will be stored.")
     p.add_argument('-f', '--force', dest='force', action='store_true',
                    help="Do not ask permission to write files.")
@@ -43,7 +44,8 @@ def main():
     moves = []
     for line in args.infile:
         values = np.asarray(line.split()[1:], dtype=np.float64)
-        moves.append(Move(values[:3], quat_to_rotmat(values[3:].reshape(1, -1))))
+        moves.append(Move(values[:3],
+                          quat_to_rotmat(values[3:].reshape(1, -1))))
 
     # Give required memory in MBs
     if not args.force:

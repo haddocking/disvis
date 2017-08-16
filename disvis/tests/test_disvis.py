@@ -18,7 +18,8 @@ class TestDisVis(TestCase):
         coor2 = np.asarray([[1, 0, 0], [-1, 0, 0]], dtype=np.float64)
         offset = 0
         voxelspacing = 1
-        shape, origin = self.dv._minimal_volume_parameters(coor1, coor2, offset, voxelspacing)
+        shape, origin = self.dv._minimal_volume_parameters(coor1, coor2,
+                                                           offset, voxelspacing)
         offset = np.linalg.norm(coor2 - coor2.mean(axis=0), axis=1).max()
 
         self.assertEqual(shape, [9, 8, 5])
@@ -56,8 +57,8 @@ class TestDisVis(TestCase):
         dv._initialize()
         dv._cpu_init()
 
-        self.assertEqual(dv._mindis[0] , 0.5)
-        self.assertEqual(dv._maxdis[0] , 2.25)
+        self.assertEqual(dv._mindis[0], 0.5)
+        self.assertEqual(dv._maxdis[0], 2.25)
 
     def test_rotate_lcore(self):
         dv = self.dv
@@ -128,7 +129,7 @@ class TestDisVis(TestCase):
         dv._restspace = np.empty((5, 7, 9), np.int32)
 
         dv._get_restraint_space()
-        #print dv._restspace
+        # print dv._restspace
 
     def test_cpu_search(self):
         dv = self.dv

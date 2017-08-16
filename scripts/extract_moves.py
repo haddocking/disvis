@@ -22,12 +22,15 @@ def parse_args():
     p = ArgumentParser(description=__doc__)
     p.add_argument('consistent_restraints', type=int, metavar='<int>',
                    help="Minimum number of required consistent restraints.")
-    p.add_argument('-i', '--input', dest='input', type=abspath, default='.', metavar='<dir>',
+    p.add_argument('-i', '--input', dest='input', type=abspath, default='.',
+                   metavar='<dir>',
                    help="Directory where the input files can be found.")
-    p.add_argument('-o', '--output', dest='output', type=abspath, default='.', metavar='<dir>',
+    p.add_argument('-o', '--output', dest='output', type=abspath, default='.',
+                   metavar='<dir>',
                    help="Directory where the output file will be stored.")
     p.add_argument('-e', '--exact', dest='exact', action='store_true',
-                   help="Only write moves that are consistent with exactly the specified restraints.")
+                   help="Only write moves that are consistent with exactly the"
+                        " specified restraints.")
 
     args = p.parse_args()
     return args
@@ -66,7 +69,8 @@ def main():
             quat = quats[ind + job * nrot_per_job]
             vol = Volume.fromfile(fn)
             trans = np.asarray(
-                l_operator(vol.array, args.consistent_restraints).nonzero()[::-1]).T * vol.voxelspacing + vol.origin
+                l_operator(vol.array, args.consistent_restraints).nonzero()[::-1]).T \
+                    * vol.voxelspacing + vol.origin
             for t in trans:
                 data = [n] + list(t) + list(quat)
                 f.write(line.format(*data))
