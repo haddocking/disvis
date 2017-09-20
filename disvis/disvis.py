@@ -70,6 +70,14 @@ class DisVis(object):
 
     def add_distance_restraint(self, receptor_selection, ligand_selection,
                                mindis, maxdis):
+        """
+
+        :param receptor_selection:
+        :param ligand_selection:
+        :param mindis:
+        :param maxdis:
+        :return:
+        """
         distance_restraint = [receptor_selection, ligand_selection,
                               mindis, maxdis]
         self.distance_restraints.append(distance_restraint)
