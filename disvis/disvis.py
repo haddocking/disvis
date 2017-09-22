@@ -116,6 +116,14 @@ class DisVis(object):
     @staticmethod
     def _minimal_volume_parameters(fixed_coor, scanning_coor, offset,
                                    voxelspacing):
+        """
+        
+        :param fixed_coor:
+        :param scanning_coor:
+        :param offset:
+        :param voxelspacing:
+        :return:
+        """
         # the minimal grid shape is the size of the fixed protein in
         # each dimension and the longest diameter of the scanning chain
 
