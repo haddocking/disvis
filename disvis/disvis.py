@@ -117,7 +117,7 @@ class DisVis(object):
     def _minimal_volume_parameters(fixed_coor, scanning_coor, offset,
                                    voxelspacing):
         """
-        
+
         :param fixed_coor:
         :param scanning_coor:
         :param offset:
