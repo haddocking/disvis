@@ -312,6 +312,11 @@ class DisVis(object):
                                               dtype=np.float64)
 
     def _rotate_lcore(self, rotmat):
+        """
+
+        :param rotmat:
+        :return:
+        """
         rotate_grid3d(self._lcore, rotmat, self._llength,
                       self._rot_lcore, True)
 
