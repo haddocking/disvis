@@ -243,6 +243,13 @@ class DisVis(object):
 
     @staticmethod
     def _allocate_array(shape, dtype, fftw):
+        """
+
+        :param shape:
+        :param dtype:
+        :param fftw:
+        :return:
+        """
         if fftw:
             arr = zeros_aligned(shape, dtype)
         else:
