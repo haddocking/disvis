@@ -329,6 +329,19 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
 
 def run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints,
                pdb1_sel, pdb2_sel, args):
+    """
+
+    :param queue:
+    :param receptor:
+    :param ligand:
+    :param rotmat:
+    :param weights:
+    :param distance_restraints:
+    :param pdb1_sel:
+    :param pdb2_sel:
+    :param args:
+    :return:
+    """
     dv = DisVis()
 
     dv.receptor = receptor
