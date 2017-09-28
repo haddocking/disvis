@@ -205,7 +205,18 @@ def run_disvis_instance(queue, receptor, ligand, distance_restraints, rotmat,
 
 def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
                   pdb1_sel, pdb2_sel, args):
-    """Run several DisVis instances, each with a subset of all rotations."""
+    """Run several DisVis instances, each with a subset of all rotations.
+
+    :param receptor:
+    :param ligand:
+    :param rotmat:
+    :param weights:
+    :param distance_restraints:
+    :param pdb1_sel:
+    :param pdb2_sel:
+    :param args:
+    :return: results:
+    """
 
     # multi-threaded CPU version
     try:
