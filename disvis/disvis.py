@@ -257,7 +257,12 @@ class DisVis(object):
         return arr
 
     def rfftn(self, in_arr, out_arr):
-        """Provide a similar interface to PyFFTW and numpy interface"""
+        """
+        Provide a similar interface to PyFFTW and numpy interface
+        :param in_arr:
+        :param out_arr:
+        :return:
+        """
         if self._fftw:
             out_arr = self._rfftn(in_arr, out_arr)
         else:
