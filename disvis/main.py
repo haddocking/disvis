@@ -106,8 +106,8 @@ def parse_interaction_selection(fid, pdb1, pdb2):
     pdb2_sel = pdb2.select('name', ('CA', "O3'")).select('resi', resi2)
 
     if (len(resi1) != pdb1_sel.natoms) or (len(resi2) != pdb2_sel.natoms):
-        msg = ("Some selected residues where not found in the PDB file. Please "
-               "check your input residues.")
+        msg = ("Some selected interaction residues where either missing in the PDB file "
+               "or had alternate conformers. Please check your input residues and remove alternate conformers.")
         raise ValueError(msg)
 
     return pdb1_sel, pdb2_sel
