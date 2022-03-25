@@ -5,6 +5,7 @@ from os.path import join, abspath
 from sys import stdout, exit
 from time import time
 import multiprocessing as mp
+import Queue
 from argparse import ArgumentParser
 import logging
 
@@ -247,7 +248,7 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
     # Check whether the queue is empty, this indicates failure to run on
     # multi-processor runs.
     if queue.empty():
-        raise mp.Queue.Empty
+        raise Queue.Empty
 
     write('Searching done. Combining results')
 
