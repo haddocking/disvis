@@ -37,7 +37,7 @@ if CYTHON:
 requirements = ["numpy",]
 
 setup(name="disvis",
-      version='2.0.0',
+      version='2.2.0',
       description=description,
       url="https://github.com/haddocking/disvis",
       author='Gydo C.P. van Zundert',
