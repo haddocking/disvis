@@ -388,10 +388,11 @@ class DisVis(object):
         m = n + 1
         pdone = m/total
         t = _time() - time0
-        _stdout.write('\r{:d}/{:d} ({:.2%}, ETA: {:d}s)    '\
-                .format(m, total, pdone, 
-                        int(t/pdone - t)))
-        _stdout.flush()
+        if _stdout.isatty():
+            _stdout.write('\r{:d}/{:d} ({:.2%}, ETA: {:d}s\n)    '\
+                    .format(m, total, pdone, 
+                            int(t/pdone - t)))
+            _stdout.flush()
 
     def _gpu_init(self):
 
