@@ -1,10 +1,12 @@
 import os
 import errno
+import copy
+import json
 try:
     import pyopencl as cl
 except ImportError:
     pass
-    
+
 
 def get_queue():
     try:
@@ -89,3 +91,13 @@ def parse_interaction_selection(fid, pdb1, pdb2):
 
 
     return pdb1_sel, pdb2_sel
+
+def dump_args(args):
+    """Dump the arguments to a `.json` file"""
+    _args = copy.deepcopy(args)
+    for key, value in vars(args).items():
+        if isinstance(value, file):
+            setattr(_args, key, value.name)
+
+    with open('args.json', 'w') as f:
+        json.dump(vars(_args), f, indent=4, sort_keys=True)

@@ -12,7 +12,7 @@ import numpy as np
 
 from disvis import DisVis, PDB, Volume
 from disvis.rotations import proportional_orientations, quat_to_rotmat
-from disvis.helpers import mkdir_p
+from disvis.helpers import mkdir_p, dump_args
 
 
 def parse_args():
@@ -347,6 +347,8 @@ def write(line):
 def main():
 
     args = parse_args()
+
+    dump_args(args)
 
     mkdir_p(args.directory)
     joiner = Joiner(args.directory)
