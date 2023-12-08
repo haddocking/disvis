@@ -339,8 +339,7 @@ def run_disvis(queue, receptor, ligand, rotmat, weights, distance_restraints,
 
 
 def write(line):
-    if stdout.isatty():
-        print(line)
+    print(line)
     logging.info(line)
 
 
