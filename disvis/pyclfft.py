@@ -11,15 +11,15 @@ def builder(context, shape, direction_forward=True):
 class RFFTn:
     def __init__(self, context, shape):
         # The maximum number of elements of the transform is 2^24 
-	# in clFFT (single precision)
+        # in clFFT (single precision)
         elements = 1
         for i in shape:
-	    elements *= i
+            elements *= i
         if (elements > (2.0**24.0)):
             from math import log
             power = log(elements, 2)
             raise ValueError('The maximum number of elements for clFFT is 2^24, currently you want 2^{:.2f}'.format(power))
-	    
+            
 
         ndim = len(shape)
         if ndim > 3:
@@ -64,14 +64,14 @@ class iRFFTn:
     def __init__(self, context, shape):
 
         # The maximum number of elements of the transform is 2^24 
-	# in clFFT (single precision)
+        # in clFFT (single precision)
         elements = 1
-	for i in shape:
-	    elements *= i
-	if elements > 2**24:
-	    from math import log
-	    power = log(elements, 2)
-	    raise ValueError('The maximum number of elements for clFFT is 2^24, currently you want 2^{:.2f}'.format(power))
+        for i in shape:
+            elements *= i
+        if elements > 2**24:
+            from math import log
+            power = log(elements, 2)
+            raise ValueError('The maximum number of elements for clFFT is 2^24, currently you want 2^{:.2f}'.format(power))
 
         ndim = len(shape)
         if ndim > 3:

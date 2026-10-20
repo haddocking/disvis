@@ -1,46 +1,89 @@
-# Installation instructions for DisVis
+# Installation instructions for GPU-accelerated DisVis
 
-This document shows how to prepare your system for GPU accelerated DisVis for
-MacOSX, using the OpenCL framework.  Note though, that it requires a high-end
-graphics card to get a proper acceleration, else the speedup will be neglible.
-Practically this means that it should be either an AMD or NVIDIA GPU; if it is
-a power efficient Intel card, usually present on laptops, installing the GPU
-version will most likely not help much. 
+This document shows how to set up GPU-accelerated DisVis using the OpenCL
+framework. These instructions were tested on macOS 15 with an Apple M2 Pro GPU
+and Python 3.14. Note that the speed-up depends on the GPU: a power-efficient
+integrated card may not be much faster than the multi-processor CPU version
+(`-p`).
 
 ## Requirements
 
-* An OpenCL1.1+ enabled GPU (this is for current Macs usually the case)
-* brew (MacOSX package manager)
+* An OpenCL 1.1+ enabled GPU and its OpenCL driver (included in macOS)
 * git
-* pip
+* cmake and a C++ compiler (on macOS: `brew install cmake` and the Xcode
+  command line tools)
+* DisVis installed in a virtual environment, as described in README.md
 
-First install Python bindings to OpenCL with the pyopencl Python package
+All commands below are typed with the virtual environment activated, so that
+`$VIRTUAL_ENV` points to it.
 
-    pip install --upgrade pyopencl
+## 1. pyopencl
 
-Note that this will upgrade all dependencies required for pyopencl, such as
-NumPy.
+Install the optional GPU requirements of DisVis (pyopencl and Mako) from the
+DisVis directory
 
-Next comes the somewhat more tedious part of installing a high-performance FFT
-library for GPU using the OpenCL framework clFFT. This requires the cmake
-program first
+    pip install '.[gpu]'
 
-    brew install cmake
+and check that your GPU is found
 
-Next download the source code of clFFT and build the library
+    python -c "import pyopencl as cl; print([d.name for p in cl.get_platforms() for d in p.get_devices()])"
+
+## 2. clFFT
+
+clFFT, the OpenCL FFT library, is not maintained anymore and must be built
+from source. Here it is installed into the virtual environment
 
     git clone https://github.com/clMathLibraries/clFFT.git
-    cd clFFT/src && cmake CMakeLists.txt && make && cd ../../
+    mkdir clFFT/build && cd clFFT/build
+    cmake ../src -DCMAKE_BUILD_TYPE=Release -DBUILD_CLIENT=OFF -DBUILD_TEST=OFF \
+        -DBUILD_EXAMPLES=OFF -DBUILD_CALLBACK_CLIENT=OFF \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_INSTALL_PREFIX="$VIRTUAL_ENV"
+    make -j 8 && make install
+    cd ../..
 
-Python bindings to to the clFFT library are provided with the gpyfft package
+On macOS, give the libraries their full path as install name, so that gpyfft
+finds them at run time
+
+    cd "$VIRTUAL_ENV/lib"
+    for lib in clFFT StatTimer; do
+        install_name_tool -id "$VIRTUAL_ENV/lib/lib$lib.2.dylib" lib$lib.2.*.*.dylib
+        codesign -f -s - lib$lib.2.*.*.dylib
+    done
+    cd -
+
+On Linux, add `$VIRTUAL_ENV/lib` (or `lib64`) to `LD_LIBRARY_PATH` instead.
+
+## 3. gpyfft
+
+gpyfft, the Python bindings to clFFT, is not on PyPI either
 
     git clone https://github.com/geggo/gpyfft.git
     cd gpyfft
 
-In the folder of gpyfft there is a file called setup.py. Open it with a text
-editor and change the directory that points to the clFFT directory. Then type
+Its `setup.py` contains hard-coded paths to clFFT. In the section for your
+operating system (`Darwin` for macOS, `Linux` for Linux), set them to the
+virtual environment
 
-    sudo python setup.py install
+    CLFFT_DIR = os.environ['VIRTUAL_ENV']
+    CLFFT_LIB_DIRS = [os.path.join(CLFFT_DIR, 'lib')]
+    CLFFT_INCL_DIRS = [os.path.join(CLFFT_DIR, 'include'), ]
 
-If it all worked out, congratulations, your system is now ready for GPU
-calculations!
+On Linux, also set `CL_INCL_DIRS` to the directory containing `CL/cl.h`
+(e.g. `[]` if the OpenCL headers are installed system-wide). Then type
+
+    pip install .
+    cd ..
+
+## 4. Test
+
+From the `disvis/tests` directory, run the GPU tests
+
+    python -m unittest test_kernels test_cpu_vs_gpu
+
+and run DisVis with the `-g` option, e.g. on the PRE5-PUP2 test case
+
+    cd test-cases/PRE5-PUP2-complex
+    disvis O14250.pdb Q9UT97.pdb restraints.dat -a 9.72 -vs 2 -g -d gpu-results
+
+The results should agree with the CPU results in `example-results/cpu/coarse`
+to within single-precision rounding (relative differences of about 1e-5).

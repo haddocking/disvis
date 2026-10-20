@@ -1,6 +1,5 @@
 import os
 import errno
-import copy
 import json
 try:
     import pyopencl as cl
@@ -31,19 +30,30 @@ def mkdir_p(path):
 
 
 def parse_interactions(f):
-    data = {}
-    with open(f) as f:
-        words = f.readline().split()
-        data['residues'] = [int(x) for x in words[2:]]
+    """Parse a receptor_interactions.txt or ligand_interactions.txt file.
 
-        for line in f:
+    Returns a dictionary with the residue numbers under 'residues' and, for
+    each number of consistent restraints, the average number of interactions
+    of each residue.
+    """
+    with open(f) as fh:
+        words = fh.readline().split()
+        if not words or words[0] != '#resi':
+            raise ValueError("{:s} is not a DisVis interaction file.".format(f))
+        consistent_restraints = [int(x) for x in words[1:]]
+
+        residues = []
+        interactions = []
+        for line in fh:
             words = line.split()
+            if not words:
+                continue
+            residues.append(int(words[0]))
+            interactions.append([float(x) for x in words[1:]])
 
-            consistent_restraints = int(words[0])
-            data[consistent_restraints] = {}
-
-            data[consistent_restraints]['total'] = int(words[1])
-            data[consistent_restraints]['interactions'] = [int(x) for x in words[2:]]
+    data = {'residues': residues}
+    for n, nconsistent in enumerate(consistent_restraints):
+        data[nconsistent] = [x[n] for x in interactions]
     return data
 
 
@@ -92,12 +102,7 @@ def parse_interaction_selection(fid, pdb1, pdb2):
 
     return pdb1_sel, pdb2_sel
 
-def dump_args(args):
-    """Dump the arguments to a `.json` file"""
-    _args = copy.deepcopy(args)
-    for key, value in vars(args).items():
-        if isinstance(value, file):
-            setattr(_args, key, value.name)
-
-    with open('args.json', 'w') as f:
-        json.dump(vars(_args), f, indent=4, sort_keys=True)
+def dump_args(args, fname):
+    """Dump the command-line arguments to a `.json` file."""
+    with open(fname, 'w') as f:
+        json.dump(vars(args), f, indent=4, sort_keys=True)

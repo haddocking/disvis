@@ -5,10 +5,11 @@ import numpy as np
 
 def parse_pdb(pdbfile):
 
-    if isinstance(pdbfile, file):
+    if hasattr(pdbfile, 'read'):
         pass
     elif isinstance(pdbfile, str):
-        pdbfile = open(pdbfile)
+        with open(pdbfile) as f:
+            return parse_pdb(f)
     else:
         raise TypeError('Input should either be a file or string.')
 
@@ -59,7 +60,7 @@ def parse_pdb(pdbfile):
              ]
              
     pdbdata = np.zeros(natoms, dtype=dtype)
-    for key, value in pdb.iteritems():
+    for key, value in pdb.items():
         pdbdata[key] = value
 
     return pdbdata

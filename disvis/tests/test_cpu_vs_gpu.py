@@ -52,6 +52,8 @@ class TestCPUvsGPU(TestCase):
         c_rotmat = self.dv.rotations[0]
         g_rotmat = self.gdv._cl_rotations[0]
         weight = np.float64(1)
+        # The GPU works in single precision, as in DisVis._gpu_search.
+        gweight = np.float32(weight)
 
         self.dv._rotate_lcore(c_rotmat)
         self.gdv._cl_rotate_lcore(g_rotmat)
@@ -100,26 +102,26 @@ class TestCPUvsGPU(TestCase):
         self.assertTrue(test)
 
         self.dv._count_complexes(weight)
-        self.gdv._cl_count_complexes(weight)
+        self.gdv._cl_count_complexes(gweight)
         test = np.allclose(self.dv._consistent_complexes[1:],
                 self.gdv._cl_consistent_complexes.get())
         self.assertTrue(test)
-        print self.dv._consistent_complexes[1:]
-        print self.gdv._cl_consistent_complexes.get()
+        print(self.dv._consistent_complexes[1:])
+        print(self.gdv._cl_consistent_complexes.get())
 
         self.dv._count_violations(weight)
-        self.gdv._cl_count_violations(weight)
+        self.gdv._cl_count_violations(gweight)
         test = np.allclose(self.dv._violations, self.gdv._cl_violations.get())
         self.assertTrue(test)
 
         self.dv._get_occupancy_grids(weight)
-        self.gdv._cl_get_occupancy_grids(weight)
+        self.gdv._cl_get_occupancy_grids(gweight)
         for i in (7, 6, 5):
             test = np.allclose(self.dv._occ_grid[i], self.gdv._cl_occ_grid[i].get())
             self.assertTrue(test)
 
         self.dv._get_interaction_matrix(c_rotmat, weight)
-        self.gdv._cl_get_interaction_matrix(g_rotmat, weight)
+        self.gdv._cl_get_interaction_matrix(g_rotmat, gweight)
         c_im = self.dv._interaction_matrix[2]
         g_im = self.gdv._cl_interaction_matrix[2]
         test = np.allclose(c_im, g_im.get())
@@ -177,24 +179,24 @@ class TestCPUvsGPU(TestCase):
         self.assertTrue(test)
 
         self.dv._count_complexes(weight)
-        self.gdv._cl_count_complexes(weight)
+        self.gdv._cl_count_complexes(gweight)
         test = np.allclose(self.dv._consistent_complexes[1:],
                 self.gdv._cl_consistent_complexes.get())
         self.assertTrue(test)
 
         self.dv._count_violations(weight)
-        self.gdv._cl_count_violations(weight)
+        self.gdv._cl_count_violations(gweight)
         test = np.allclose(self.dv._violations, self.gdv._cl_violations.get())
         self.assertTrue(test)
 
         self.dv._get_occupancy_grids(weight)
-        self.gdv._cl_get_occupancy_grids(weight)
+        self.gdv._cl_get_occupancy_grids(gweight)
         for i in (7, 6, 5):
             test = np.allclose(self.dv._occ_grid[i], self.gdv._cl_occ_grid[i].get())
             self.assertTrue(test)
 
         self.dv._get_interaction_matrix(c_rotmat, weight)
-        self.gdv._cl_get_interaction_matrix(g_rotmat, weight)
+        self.gdv._cl_get_interaction_matrix(g_rotmat, gweight)
         c_im = self.dv._interaction_matrix[2]
         g_im = self.gdv._cl_interaction_matrix[2]
         test = np.allclose(c_im, g_im.get())

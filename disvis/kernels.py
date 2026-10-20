@@ -15,6 +15,9 @@ class Kernels():
             t = Template(f.read()).substitute(**values)
 
         self.program = cl.Program(ctx, t).build()
+        # Retrieve every kernel once: each program.<name> access creates a
+        # new kernel object.
+        self._kernels = {k.function_name: k for k in self.program.all_kernels()}
         # Global and local workitems for all kernels
         self._gws_rotate_points3d = (8 * 32 * 8 * 8,)
         self._gws_rotate_grid3d = (96, 64, 1)
@@ -109,28 +112,28 @@ class Kernels():
 
     def rotate_points3d(self, queue, points, rotmat, out):
         args = (points.data, np.int32(points.shape[0]), rotmat, out.data)
-        self.program.rotate_points3d(queue, self._gws_rotate_points3d, None, *args)
+        self._kernels['rotate_points3d'](queue, self._gws_rotate_points3d, None, *args)
 
     def rotate_grid3d(self, queue, grid, rotmat, out):
         args = (grid.data, rotmat, out.data)
-        self.program.rotate_grid3d(queue, self._gws_rotate_grid3d, None, *args)
+        self._kernels['rotate_grid3d'](queue, self._gws_rotate_grid3d, None, *args)
 
     def dilate_point_add(self, queue, centers, mindis, maxdis, restspace):
         args = (centers.data, mindis.data, maxdis.data, restspace.data)
-        self.program.dilate_point_add(queue, self._gws_dilate_point_add, None, *args)
+        self._kernels['dilate_point_add'](queue, self._gws_dilate_point_add, None, *args)
 
     def histogram(self, queue, data, hist):
         args = (data.data, hist.data)
-        self.program.histogram(queue, self._gws_histogram, self._lws_histogram, *args)
+        self._kernels['histogram'](queue, self._gws_histogram, self._lws_histogram, *args)
 
     def count_violations(self, queue, centers, mindis2, maxdis2, interspace, viol):
         args = (centers.data, mindis2.data, maxdis2.data, interspace.data, viol.data)
-        self.program.count_violations(queue, self._gws_count_violations,
+        self._kernels['count_violations'](queue, self._gws_count_violations,
                 self._lws_count_violations, *args)
 
     def count_interactions(self, queue, fixed_coor, scanning_coor, interspace,
             nconsistent, hist):
         args = (fixed_coor.data, scanning_coor.data, interspace.data,
                 np.int32(nconsistent), hist.data)
-        self.program.count_interactions(queue, self._gws_count_interactions,
+        self._kernels['count_interactions'](queue, self._gws_count_interactions,
                 self._lws_count_interactions, *args)

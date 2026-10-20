@@ -1,6 +1,7 @@
 #! usr/bin/python
 from __future__ import print_function, division, absolute_import
 from os import remove
+from queue import Empty
 from os.path import join, abspath
 from sys import stdout, exit
 from time import time
@@ -20,13 +21,13 @@ def parse_args():
 
     p = ArgumentParser()
 
-    p.add_argument('receptor', type=file,
+    p.add_argument('receptor',
             help='PDB-file containing fixed chain.')
 
-    p.add_argument('ligand', type=file,
+    p.add_argument('ligand',
             help='PDB-file containing scanning chain.')
 
-    p.add_argument('restraints', type=file,
+    p.add_argument('restraints',
             help='File containing the distance restraints')
 
     p.add_argument('-a', '--angle', dest='angle', type=float, default=15, metavar='<float>',
@@ -74,7 +75,7 @@ def parse_args():
                 "The first line holds the receptor residue, "
                 "and the second line the ligand residue numbers.")
     p.add_argument('-is', '--interaction-selection', metavar='<file>',
-            dest='interaction_selection', type=file, default=None,
+            dest='interaction_selection', default=None,
             help=help_msg)
 
     help_msg = ("Number of minimal consistent restraints for which an interaction "
@@ -95,12 +96,13 @@ def parse_args():
     return p.parse_args()
 
 
-def parse_interaction_selection(fid, pdb1, pdb2):
+def parse_interaction_selection(fname, pdb1, pdb2):
     """Parse the interaction selection file, i.e. all residues for which an
     interaction analysis is performed."""
 
-    resi1 = [int(x) for x in fid.readline().split()]
-    resi2 = [int(x) for x in fid.readline().split()]
+    with open(fname) as fid:
+        resi1 = [int(x) for x in fid.readline().split()]
+        resi2 = [int(x) for x in fid.readline().split()]
 
     pdb1_sel = pdb1.select('name', ('CA', "O3'")).select('resi', resi1)
     pdb2_sel = pdb2.select('name', ('CA', "O3'")).select('resi', resi2)
@@ -113,12 +115,15 @@ def parse_interaction_selection(fid, pdb1, pdb2):
     return pdb1_sel, pdb2_sel
 
 
-def parse_restraints(fid, pdb1, pdb2):
+def parse_restraints(fname, pdb1, pdb2):
     """Parse the restraints file."""
+
+    with open(fname) as fid:
+        lines = fid.readlines()
 
     dist_restraints = []
 
-    for line in fid:
+    for line in lines:
         # ignore comments and empty lines
         line = line.strip()
         if line.startswith('#') or not line:
@@ -135,7 +140,6 @@ def parse_restraints(fid, pdb1, pdb2):
 
         dist_restraints.append([pdb1_sel, pdb2_sel, float(mindis), float(maxdis)])
 
-    fid.close()
     return dist_restraints
 
 
@@ -154,10 +158,19 @@ class Results(object):
 
 
 def run_disvis_instance(queue, receptor, ligand, distance_restraints, rotmat,
-        weights, n, pdb1_sel, pdb2_sel, args):
-    """Run a single DisVis instance."""
+        weights, n, pdb1_sel, pdb2_sel, args, counter=None):
+    """Run a single DisVis instance.
+
+    If a shared counter is given, it is incremented after every rotation
+    instead of printing the progress.
+    """
 
     dv = DisVis()
+    if counter is not None:
+        def count_rotation(n, total, time0):
+            with counter.get_lock():
+                counter.value += 1
+        dv.print_callback = count_rotation
 
     dv.receptor = receptor
     dv.ligand = ligand
@@ -191,7 +204,7 @@ def run_disvis_instance(queue, receptor, ligand, distance_restraints, rotmat,
         np.save(fname, dv.interaction_matrix)
 
     if dv.occupancy_analysis:
-        for key, value in dv.occupancy_grids.iteritems():
+        for key, value in dv.occupancy_grids.items():
             fname = joiner('occupancy_{:d}_{:d}.mrc'.format(key, n))
             value.tofile(fname)
 
@@ -220,8 +233,10 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
     write('Creating jobs')
 
     queue = mp.Queue()
+    # Number of rotations done by all jobs, to print a combined progress.
+    counter = mp.Value('l', 0)
     processes = []
-    for n in xrange(jobs):
+    for n in range(jobs):
         # Determine the rotations that each job needs to sample
         init_rot = n * nrot_per_job
         end_rot = (n + 1) * nrot_per_job
@@ -232,22 +247,34 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
         sub_weights = weights[init_rot: end_rot]
 
         disvis_args = (queue, receptor, ligand, distance_restraints,
-                sub_rotmat, sub_weights, n, pdb1_sel, pdb2_sel, args)
+                sub_rotmat, sub_weights, n, pdb1_sel, pdb2_sel, args, counter)
         process = mp.Process(target=run_disvis_instance, args=disvis_args)
         processes.append(process)
 
     write('Starting jobs')
+    time0 = time()
     for p in processes:
         p.start()
     write('Waiting for jobs to finish')
 
-    for p in processes:
-        p.join()
+    # Print the combined progress of all jobs every second until they finish.
+    progress = stdout.isatty()
+    while True:
+        alive = [p for p in processes if p.is_alive()]
+        done = counter.value
+        if progress and done > 0:
+            DisVis._print_progress(done - 1, nrot, time0)
+        if not alive:
+            break
+        alive[0].join(timeout=1)
+    if progress and 0 < done < nrot:
+        # A job failed: end the progress line.
+        stdout.write('\n')
 
     # Check whether the queue is empty, this indicates failure to run on
     # multi-processor runs.
     if queue.empty():
-        raise mp.Queue.Empty
+        raise Empty
 
     write('Searching done. Combining results')
 
@@ -262,11 +289,11 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
     accessible_complexes = np.asarray(queue.get(), dtype=np.float64)
     accessible_interaction_space = Volume.fromfile(fname_interspace.format(0))
     violations = np.load(fname_violations.format(0))
-    for n in xrange(1, jobs):
+    for n in range(1, jobs):
         accessible_complexes += np.asarray(queue.get(), dtype=np.float64)
         np.maximum(accessible_interaction_space.array,
                 Volume.fromfile(fname_interspace.format(n)).array,
-                accessible_interaction_space.array)
+                out=accessible_interaction_space.array)
         violations += np.load(fname_violations.format(n))
 
     # Combine the occupancy grids
@@ -274,7 +301,7 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
     if args.occupancy_analysis:
         fname_occupancy = joiner('occupancy_{:d}_{:d}.mrc')
         occupancy = {}
-        for consistent_restraints in xrange(args.interaction_restraints_cutoff,
+        for consistent_restraints in range(args.interaction_restraints_cutoff,
                 len(distance_restraints) + 1):
             occupancy[consistent_restraints] = Volume.fromfile(
                     fname_occupancy.format(consistent_restraints, 0))
@@ -293,13 +320,13 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
 
     # Remove the intermediate files
     write('Cleaning')
-    for n in xrange(jobs):
+    for n in range(jobs):
         remove(fname_interspace.format(n))
         remove(fname_violations.format(n))
         if args.interaction_selection is not None:
             remove(fname_intermat.format(n))
         if args.occupancy_analysis:
-            for consistent_restraints in xrange(
+            for consistent_restraints in range(
                     args.interaction_restraints_cutoff, len(distance_restraints) + 1):
                 remove(fname_occupancy.format(consistent_restraints, n))
 
@@ -347,26 +374,30 @@ def main():
 
     args = parse_args()
 
-    dump_args(args)
-
     mkdir_p(args.directory)
     joiner = Joiner(args.directory)
+    dump_args(args, joiner('args.json'))
 
-    logging.basicConfig(filename=joiner('disvis.log'),
-            level=logging.INFO, format='%(asctime)s %(message)s')
+    # force: gpyfft configures the root logger when it is imported.
+    logging.basicConfig(filename=joiner('disvis.log'), filemode='w',
+            level=logging.INFO, format='%(asctime)s %(message)s', force=True)
 
     time0 = time()
 
     queue = None
     if args.gpu:
+        from disvis.disvis import PYOPENCL
+        if not PYOPENCL:
+            exit('ERROR: GPU acceleration requires pyopencl, clFFT and gpyfft. '
+                 'See INSTALLATION.md.')
         from disvis.helpers import get_queue
         queue = get_queue()
         if queue is None:
             raise ValueError("No GPU queue was found.")
 
-    write('Reading fixed model from: {:s}'.format(args.receptor.name))
+    write('Reading fixed model from: {:s}'.format(args.receptor))
     receptor = PDB.fromfile(args.receptor)
-    write('Reading scanning model from: {:s}'.format(args.ligand.name))
+    write('Reading scanning model from: {:s}'.format(args.ligand))
     ligand = PDB.fromfile(args.ligand)
 
     write('Reading in rotations.')
@@ -376,7 +407,7 @@ def main():
     write('Real rotational sampling density: {:.2f}'.format(a))
     write('Number of rotations: {:d}'.format(rotmat.shape[0]))
 
-    write('Reading in restraints from file: {:s}'.format(args.restraints.name))
+    write('Reading in restraints from file: {:s}'.format(args.restraints))
     distance_restraints = parse_restraints(args.restraints, receptor, ligand)
     write('Number of distance restraints: {:d}'.format(len(distance_restraints)))
 
@@ -389,7 +420,7 @@ def main():
     pdb1_sel = pdb2_sel = None
     if args.interaction_selection is not None:
         write('Reading in interaction selection from file: {:s}'
-                .format(args.interaction_selection.name))
+                .format(args.interaction_selection))
         pdb1_sel, pdb2_sel = parse_interaction_selection(
                 args.interaction_selection, receptor, ligand)
 
@@ -409,7 +440,7 @@ def main():
             try:
                 dv = mp_cpu_disvis(receptor, ligand, rotmat, weights,
                         distance_restraints, pdb1_sel, pdb2_sel, args)
-            except Queue.Empty:
+            except Empty:
                 msg = ('ERROR: Queue.Empty exception raised while processing job, '
                        'stopping execution ...')
                 write(msg)
@@ -497,7 +528,7 @@ def main():
 
     with open(joiner('z-score.out'), 'w') as f:
         write('Writing z-score of each restraint to {:s}'.format(f.name))
-        for n in xrange(zscore_violations.shape[0]):
+        for n in range(zscore_violations.shape[0]):
             f.write('{:2d} {:6.3f} {:6.3f} {:6.3f}\n'.format(n+1,
                     average_restraint_violation[n], std_restraint_violation[n],
                     zscore_violations[n]))
@@ -505,7 +536,7 @@ def main():
 
     # Write all occupancy grids to MRC-files if requested
     if args.occupancy_analysis:
-        for n, vol in dv.occupancy_grids.iteritems():
+        for n, vol in dv.occupancy_grids.items():
             # Normalize the occupancy grid
             if cum_complexes[n] > 0:
                 vol._array /= cum_complexes[n]
@@ -534,13 +565,13 @@ def main():
         with open(fname, 'w') as f:
             # Write header
             f.write('#resi')
-            for consistent_restraints in xrange(args.interaction_restraints_cutoff, nrestraints + 1):
+            for consistent_restraints in range(args.interaction_restraints_cutoff, nrestraints + 1):
                 f.write(' {:>6d}'.format(consistent_restraints))
             f.write('\n')
 
             for n, resi in enumerate(pdb1_sel.data['resi']):
                 f.write('{:<5d}'.format(resi))
-                for consistent_restraints in xrange(args.interaction_restraints_cutoff, nrestraints + 1):
+                for consistent_restraints in range(args.interaction_restraints_cutoff, nrestraints + 1):
                     index = consistent_restraints - args.interaction_restraints_cutoff
                     interactions = receptor_cum_interactions[index, n]
                     cum_complex = cum_complexes[consistent_restraints]
@@ -555,13 +586,13 @@ def main():
         with open(fname, 'w') as f:
             # Write header
             f.write('#resi')
-            for consistent_restraints in xrange(args.interaction_restraints_cutoff, nrestraints + 1):
+            for consistent_restraints in range(args.interaction_restraints_cutoff, nrestraints + 1):
                 f.write(' {:>6d}'.format(consistent_restraints))
             f.write('\n')
 
             for n, resi in enumerate(pdb2_sel.data['resi']):
                 f.write('{:<5d}'.format(resi))
-                for consistent_restraints in xrange(args.interaction_restraints_cutoff, nrestraints + 1):
+                for consistent_restraints in range(args.interaction_restraints_cutoff, nrestraints + 1):
                     index = consistent_restraints - args.interaction_restraints_cutoff
                     interactions = ligand_cum_interactions[index, n]
                     cum_complex = cum_complexes[consistent_restraints]

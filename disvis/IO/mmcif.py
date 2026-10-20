@@ -4,7 +4,7 @@ from collections import OrderedDict
 import numpy as np
 
 def parse_cif(infile):
-    if isinstance(infile, file):
+    if hasattr(infile, 'read'):
         pass
     elif isinstance(infile, str):
         infile = open(infile)
@@ -45,7 +45,7 @@ def parse_cif(infile):
     cifdata['z'] = atom_site['Cartn_z']
     cifdata['occupancy'] = atom_site['occupancy']
     cifdata['bfactor'] = atom_site['B_iso_or_equiv']
-    cifdata['element'] = atom_site['type_symbol'].title()
+    cifdata['element'] = [e.title() for e in atom_site['type_symbol']]
     cifdata['charge'] = atom_site['pdbx_formal_charge']
     cifdata['model'] = atom_site['pdbx_PDB_model_num']
 

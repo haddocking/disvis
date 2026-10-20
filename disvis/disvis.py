@@ -53,8 +53,8 @@ class DisVis(object):
         # Output attributes
         # Array containing number of complexes consistent with EXACTLY n
         # restraints, no more, no less.
-        self.accessable_complexes = None
-        self.accessable_interaction_space = None
+        self.accessible_complexes = None
+        self.accessible_interaction_space = None
         self.violations = None
         self.occupancy_grids = None
         self.interaction_matrix = None
@@ -81,7 +81,7 @@ class DisVis(object):
 
         if self.occupancy_analysis:
             self.occupancy_grids = {}
-            for i in xrange(self._nrestraints + 1):
+            for i in range(self._nrestraints + 1):
                 try:
                     occ_grid = self._occ_grid[i]
                 except KeyError:
@@ -169,7 +169,7 @@ class DisVis(object):
         # Allocate an occupancy grid for all restraints that are being investigated
         self._occ_grid = {}
         if self.occupancy_analysis:
-            for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
+            for i in range(self.interaction_restraints_cutoff, self._nrestraints + 1):
                 self._occ_grid[i] = np.zeros(self._shape, np.float64)
 
         # Check if we want to do an interaction analysis, i.e. whether
@@ -217,7 +217,7 @@ class DisVis(object):
         if self._fftw:
             out_arr = self._irfftn(in_arr, out_arr)
         else:
-            out_arr = self._irfftn(in_arr, s=self._shape)
+            out_arr = self._irfftn(in_arr, s=self._shape, axes=(0, 1, 2))
         return out_arr
 
     def _cpu_init(self):
@@ -239,7 +239,7 @@ class DisVis(object):
 
         # Boolean arrays
         for arr in 'not_clashing interacting'.split():
-            setattr(self, "_" + arr, np.zeros(self._shape, np.bool))
+            setattr(self, "_" + arr, np.zeros(self._shape, bool))
 
         # Array for rotating points and restraint coordinates
         self._restraints_center = np.zeros_like(self._grid_restraints[:,3:6])
@@ -315,10 +315,10 @@ class DisVis(object):
 
     def _get_access_interspace(self):
         np.maximum(self._red_interspace, self._access_interspace,
-                self._access_interspace)
+                out=self._access_interspace)
 
     def _get_occupancy_grids(self, weight):
-        for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
+        for i in range(self.interaction_restraints_cutoff, self._nrestraints + 1):
             np.greater_equal(self._red_interspace, np.int32(i), self._tmp)
             self._ft_tmp = self.rfftn(self._tmp, self._ft_tmp)
             np.multiply(self._ft_tmp, self._ft_lcore, self._ft_tmp)
@@ -337,7 +337,7 @@ class DisVis(object):
     def _cpu_search(self):
 
         time0 = _time()
-        for n in xrange(self.rotations.shape[0]):
+        for n in range(self.rotations.shape[0]):
             rotmat = self.rotations[n]
             weight = self.weights[n]
             # Rotate the ligand grid
@@ -373,9 +373,7 @@ class DisVis(object):
             if self._interaction_analysis:
                 self._get_interaction_matrix(rotmat, weight)
 
-            if self.print_callback is not None:
-                #self.print_callback(n, total, time0)
-                self._print_progress(n, self.rotations.shape[0], time0)
+            self._report_progress(n, time0)
 
         # Get the number of accessible complexes consistent with exactly N
         # restraints. We need to correct the total number of complexes sampled
@@ -383,15 +381,31 @@ class DisVis(object):
         self._accessible_complexes[:] = self._consistent_complexes
         self._accessible_complexes[0] = self._tot_complex - self._accessible_complexes[1:].sum()
         
+    def _report_progress(self, n, time0):
+        """Report that rotation n is done.
+
+        print_callback is either a callable, called as
+        print_callback(n, total, time0), or a flag to print the progress to
+        the terminal.
+        """
+        total = self.rotations.shape[0]
+        if callable(self.print_callback):
+            self.print_callback(n, total, time0)
+        elif self.print_callback:
+            self._print_progress(n, total, time0)
+
     @staticmethod
     def _print_progress(n, total, time0):
         m = n + 1
         pdone = m/total
         t = _time() - time0
         if _stdout.isatty():
-            _stdout.write('\r{:d}/{:d} ({:.2%}, ETA: {:d}s\n)    '\
-                    .format(m, total, pdone, 
-                            int(t/pdone - t)))
+            # Overwrite the same line; the trailing spaces erase leftover
+            # characters of a previous, longer line.
+            _stdout.write('\r{:d}/{:d} ({:.2%}, ETA: {:d}s)    '
+                    .format(m, total, pdone, int(t/pdone - t)))
+            if m == total:
+                _stdout.write('\n')
             _stdout.flush()
 
     def _gpu_init(self):
@@ -480,7 +494,7 @@ class DisVis(object):
         # Occupancy analysis
         self._cl_occ_grid = {}
         if self.occupancy_analysis:
-            for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
+            for i in range(self.interaction_restraints_cutoff, self._nrestraints + 1):
                 self._cl_occ_grid[i] = cl_array.zeros(self.queue,
                         self._cl_shape, dtype=np.float32)
 
@@ -490,7 +504,7 @@ class DisVis(object):
             self._cl_interaction_hist = cl_array.zeros(self.queue, shape,
                     dtype=np.int32)
             self._cl_interaction_matrix = {}
-            for i in xrange(self._nrestraints + 1 - self.interaction_restraints_cutoff):
+            for i in range(self._nrestraints + 1 - self.interaction_restraints_cutoff):
                 self._cl_interaction_matrix[i] = cl_array.zeros(self.queue, shape,
                         dtype=np.float32)
             # Coordinate arrays
@@ -598,7 +612,7 @@ class DisVis(object):
         # Calculate an average occupancy grid to provide an average shape
         # for several number of consistent restraints
         k = self._cl_kernels
-        for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
+        for i in range(self.interaction_restraints_cutoff, self._nrestraints + 1):
             # Get a grid for all translations that are consistent with at least
             # N restraints
             k.greater_equal_iif(self._cl_red_interspace, np.int32(i), self._cl_tmp)
@@ -612,7 +626,7 @@ class DisVis(object):
     def _gpu_search(self):
 
         time0 = _time()
-        for n in xrange(self.rotations.shape[0]):
+        for n in range(self.rotations.shape[0]):
 
             rotmat = self._cl_rotations[n]
             weight = np.float32(self.weights[n])
@@ -644,8 +658,7 @@ class DisVis(object):
                 self._cl_get_interaction_matrix(rotmat, weight)
 
             # Print progress
-            if _stdout.isatty():
-                self._print_progress(n, self.rotations.shape[0], time0)
+            self._report_progress(n, time0)
 
         self.queue.finish()
         # Get the data from GPU
@@ -659,11 +672,11 @@ class DisVis(object):
         self._cl_access_interspace.get(ary=self._access_interspace)
 
         if self.occupancy_analysis:
-            for i in xrange(self.interaction_restraints_cutoff, self._nrestraints + 1):
+            for i in range(self.interaction_restraints_cutoff, self._nrestraints + 1):
                 self._occ_grid[i] = self._cl_occ_grid[i].get().astype(np.float64)
 
         if self._interaction_analysis:
-            for i in xrange(self._nrestraints + 1 - self.interaction_restraints_cutoff):
+            for i in range(self._nrestraints + 1 - self.interaction_restraints_cutoff):
                 self._interaction_matrix[i] = self._cl_interaction_matrix[i].get().astype(np.float64)
 
 def grid_restraints(restraints, voxelspacing, origin, lcenter):

@@ -9,3 +9,4 @@ disvis.egg-info/
 *.pyc
 *.html
 *.mrc
+.venv/

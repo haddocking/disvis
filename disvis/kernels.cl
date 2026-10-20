@@ -233,7 +233,7 @@ void count_violations(
     }
     barrier(CLK_LOCAL_MEM_FENCE);
 
-    // Loop over the accessable interaction space and count the violations
+    // Loop over the accessible interaction space and count the violations
     for (z = zid; z < SHAPE_Z; z += zstride) {
         ind_z = z * SLICE;
         for (y = yid; y < SHAPE_Y; y += ystride) {

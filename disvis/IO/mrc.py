@@ -8,6 +8,10 @@ import numpy as np
 
 
 def parse_mrc(fid):
+    if isinstance(fid, str):
+        with open(fid, 'rb') as f:
+            return parse_mrc(f)
+
     mrcfile = MRCFile(fid)
 
     array = mrcfile.density
@@ -24,7 +28,7 @@ class MRCFile(object):
     def __init__(self, fid, fmt=None):
 
     
-        if isinstance(fid, file):
+        if hasattr(fid, 'read'):
             pass
         elif isinstance(fid, str):
             fid = open(fid, 'rb')
@@ -39,7 +43,7 @@ class MRCFile(object):
         self._header = {}
 
         self._fid.seek(212)
-        machst = hex(ord(self._fid.read(1)))
+        machst = hex(self._fid.read(1)[0])
         if (machst == '0x44'):
             endian = '<'
         elif (machst == '0x11'):
@@ -81,14 +85,14 @@ class MRCFile(object):
         self._header['skwmat'] = raw_header[25:34]
         self._header['skwtrn'] = raw_header[34:37]
         self._header['extra'] = raw_header[37:49]
-	self._header['xstart'] = raw_header[49]
-	self._header['ystart'] = raw_header[50]
-	self._header['zstart'] = raw_header[51]
-        self._header['map'] = "".join(raw_header[52:56])
-        self._header['machst'] = " ".join(map(hex,map(ord,raw_header[56:60])))
+        self._header['xstart'] = raw_header[49]
+        self._header['ystart'] = raw_header[50]
+        self._header['zstart'] = raw_header[51]
+        self._header['map'] = b"".join(raw_header[52:56]).decode('ascii', 'replace')
+        self._header['machst'] = " ".join(hex(c[0]) for c in raw_header[56:60])
         self._header['rms'] = raw_header[60]
         self._header['nlabel'] = raw_header[61]
-        self._header['label'] = "".join(raw_header[62:862]).strip()
+        self._header['label'] = b"".join(raw_header[62:862]).decode('ascii', 'replace').strip()
     
     @property
     def fid(self):
@@ -154,8 +158,8 @@ class MRCFile(object):
             datatype = 'i2'
         elif mode == 2:
             datatype = 'f4'
-	else:
-	    raise IOError("Datatype of density is not recoginized")
+        else:
+            raise IOError("Datatype of density is not recoginized")
 
         # read the density and reshape it
         nc = self.header['nc']
@@ -252,14 +256,14 @@ def to_mrc(fid, volume, labels=[]):
         for f in volume.origin:
             out.write(pack('f', f))
 
-        str_map = ['M', 'A', 'P', ' ']
+        str_map = [b'M', b'A', b'P', b' ']
         for c in str_map:
             out.write(pack('c', c))
 
         if sys.byteorder == 'little':
-            machst = ['\x44', '\x41' ,'\x00', '\x00']
+            machst = [b'\x44', b'\x41' ,b'\x00', b'\x00']
         elif sys.byteorder == 'big':
-            machst = ['\x44', '\x41' ,'\x00', '\x00']
+            machst = [b'\x11', b'\x11' ,b'\x00', b'\x00']
         else:
             raise ValueError("Byteorder {:} is not recognized".format(sys.byteorder))
 
@@ -283,7 +287,7 @@ def to_mrc(fid, volume, labels=[]):
         nlabels = 0
         out.write(pack('i', nlabels))
 
-        labels = [' '] * 800
+        labels = [b' '] * 800
         for c in labels:
             out.write(pack('c', c))
 

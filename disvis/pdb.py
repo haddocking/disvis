@@ -1,7 +1,7 @@
 from __future__ import absolute_import, print_function, division
 import os.path
 import operator
-from collections import Iterable
+from collections.abc import Iterable
 
 import numpy as np
 
@@ -92,7 +92,7 @@ class PDB(object):
 
     def rotate(self, rotmat):
         self.data['x'], self.data['y'], self.data['z'] =\
-             np.mat(rotmat) * np.mat(self.coor).T
+             np.dot(rotmat, self.coor.T)
 
     def translate(self, vector):
         self.data['x'] += vector[0]
@@ -114,7 +114,7 @@ class PDB(object):
         elif loperator == '!=':
             oper = operator.ne
 
-        if not isinstance(values, Iterable) or isinstance(values, basestring):
+        if not isinstance(values, Iterable) or isinstance(values, str):
             values = (values,)
         selection = oper(self.data[identifier], values[0])
 

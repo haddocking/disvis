@@ -70,32 +70,16 @@ class TestKernels(TestCase):
                 np.array([1, 2, 1], dtype=np.float32))
         cl_out = cl_array.zeros(self.queue, self.shape, dtype=np.int32)
 
-        args = (cl_center.data, cl_mindis.data, cl_maxdis.data, np.int32(0), cl_out.data)
+        args = (cl_center.data, cl_mindis.data, cl_maxdis.data, cl_out.data)
         k(self.queue, (5, 5, 5), None, *args)
-        answer = [[[1, 1, 0], [1, 0, 0], [0, 0, 0], [0, 0, 0]],
-                  [[1, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-                  [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-                  [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-                  [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]]
-        self.assertTrue(np.allclose(answer, cl_out.get()))
 
-        args = (cl_center.data, cl_mindis.data, cl_maxdis.data, np.int32(1), cl_out.data)
-        k(self.queue, (5, 5, 5), None, *args)
-        answer = [[[2, 2, 1], [2, 1, 0], [1, 0, 0], [0, 0, 0]],
-                  [[2, 1, 0], [1, 1, 0], [0, 0, 0], [0, 0, 0]],
-                  [[1, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-                  [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-                  [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]]
-        self.assertTrue(np.allclose(answer, cl_out.get()))
-
-        args = (cl_center.data, cl_mindis.data, cl_maxdis.data, np.int32(2), cl_out.data)
-        k(self.queue, (5, 5, 5), None, *args)
-        answer = [[[2, 2, 1], [2, 1, 0], [1, 0, 0], [0, 0, 0]],
-                  [[2, 1, 0], [1, 1, 0], [0, 0, 0], [0, 0, 0]],
-                  [[1, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]],
-                  [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 1]],
-                  [[0, 0, 0], [0, 0, 0], [0, 0, 1], [0, 1, 1]]]
-        self.assertTrue(np.allclose(answer, cl_out.get()))
+        # Every grid point counts the restraints it is consistent with.
+        z, y, x = np.indices(self.shape)
+        answer = np.zeros(self.shape, dtype=np.int32)
+        for (cx, cy, cz, _), maxdis in zip(center, [1, 2, 1]):
+            dis2 = (x - cx)**2 + (y - cy)**2 + (z - cz)**2
+            answer += dis2 <= maxdis**2
+        self.assertTrue(np.array_equal(answer, cl_out.get()))
 
     def test_histogram(self):
         k = self.p.program.histogram

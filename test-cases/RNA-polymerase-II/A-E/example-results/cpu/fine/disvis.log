@@ -1,26 +1,26 @@
-2015-03-10 18:10:17,900 Reading fixed model from: 1wcm_A.pdb
-2015-03-10 18:10:17,995 Reading scanning model from: 1wcm_E.pdb
-2015-03-10 18:10:18,009 Reading in rotations.
-2015-03-10 18:10:18,040 Requested rotational sampling density: 5.27
-2015-03-10 18:10:18,040 Real rotational sampling density: 5.27
-2015-03-10 18:10:18,040 Number of rotations: 53256
-2015-03-10 18:10:18,040 Reading in restraints from file: restraints.dat
-2015-03-10 18:10:18,073 Number of distance restraints: 8
-2015-03-10 18:10:18,074 Voxel spacing set to: 1.00
-2015-03-10 18:10:18,074 Interaction radius set to: 3.00
-2015-03-10 18:10:18,074 Minimum required interaction volume: 300.00
-2015-03-10 18:10:18,074 Maximum allowed volume of clashes: 200.00
-2015-03-10 18:10:18,074 Number of processors used: 16
-2015-03-10 18:10:18,074 Number of rotations per job: 3328
-2015-03-10 18:10:18,074 Creating jobs
-2015-03-10 18:10:18,078 Starting jobs
-2015-03-10 18:10:18,099 Waiting for jobs to finish
-2015-03-10 19:24:05,585 Searching done. Combining results
-2015-03-10 19:24:05,924 Cleaning
-2015-03-10 19:24:06,156 Writing accessible interaction space to: results/cpu/fine/accessible_interaction_space.mrc
-2015-03-10 19:24:06,328 Writing number of accessible complexes to: results/cpu/fine/accessible_complexes.out
-2015-03-10 19:24:06,328 Writing violations to file: results/cpu/fine/violations.out
-2015-03-10 19:24:06,329 Not all restraints are consistent. Number of false-positive restraints present is at least: 1
-2015-03-10 19:24:06,329 Possible false-positive restraints (z-score > 1.0): 7 8
-2015-03-10 19:24:06,330 Writing z-score of each restraint to results/cpu/fine/z-score.out
-2015-03-10 19:24:06,330 Total time passed: 73m 48s
+2026-10-19 22:50:12,863 Reading fixed model from: 1wcm_A.pdb
+2026-10-19 22:50:12,882 Reading scanning model from: 1wcm_E.pdb
+2026-10-19 22:50:12,886 Reading in rotations.
+2026-10-19 22:50:12,890 Requested rotational sampling density: 5.27
+2026-10-19 22:50:12,890 Real rotational sampling density: 5.27
+2026-10-19 22:50:12,890 Number of rotations: 53256
+2026-10-19 22:50:12,890 Reading in restraints from file: restraints.dat
+2026-10-19 22:50:12,891 Number of distance restraints: 8
+2026-10-19 22:50:12,891 Voxel spacing set to: 1.00
+2026-10-19 22:50:12,891 Interaction radius set to: 3.00
+2026-10-19 22:50:12,891 Minimum required interaction volume: 300.00
+2026-10-19 22:50:12,891 Maximum allowed volume of clashes: 200.00
+2026-10-19 22:50:12,891 Number of processors used: 8
+2026-10-19 22:50:12,891 Number of rotations per job: 6657
+2026-10-19 22:50:12,891 Creating jobs
+2026-10-19 22:50:12,903 Starting jobs
+2026-10-19 22:50:13,683 Waiting for jobs to finish
+2026-10-19 23:37:40,556 Searching done. Combining results
+2026-10-19 23:37:40,582 Cleaning
+2026-10-19 23:37:40,584 Writing accessible interaction space to: /Users/abonvin/haddock_git/disvis/test-cases/RNA-polymerase-II/A-E/example-results/cpu/fine/accessible_interaction_space.mrc
+2026-10-19 23:37:40,610 Writing number of accessible complexes to: /Users/abonvin/haddock_git/disvis/test-cases/RNA-polymerase-II/A-E/example-results/cpu/fine/accessible_complexes.out
+2026-10-19 23:37:40,610 Writing violations to file: /Users/abonvin/haddock_git/disvis/test-cases/RNA-polymerase-II/A-E/example-results/cpu/fine/violations.out
+2026-10-19 23:37:40,610 Not all restraints are consistent. Number of false-positive restraints present is at least: 1
+2026-10-19 23:37:40,611 Possible false-positive restraints (z-score > 1.0): 7 8
+2026-10-19 23:37:40,611 Writing z-score of each restraint to /Users/abonvin/haddock_git/disvis/test-cases/RNA-polymerase-II/A-E/example-results/cpu/fine/z-score.out
+2026-10-19 23:37:40,611 Total time passed: 47m 28s
