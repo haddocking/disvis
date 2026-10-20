@@ -10,7 +10,7 @@ import logging
 
 import numpy as np
 
-from disvis import DisVis, PDB, Volume
+from disvis import DisVis, PDB, Volume, __version__
 from disvis.rotations import proportional_orientations, quat_to_rotmat
 from disvis.helpers import (dump_args, parse_interaction_selection,
                             parse_restraints)
@@ -19,6 +19,9 @@ from disvis.helpers import (dump_args, parse_interaction_selection,
 def parse_args():
     """Parse the command-line arguments."""
     p = ArgumentParser()
+
+    p.add_argument('--version', action='version',
+                   version='%(prog)s {:s}'.format(__version__))
 
     p.add_argument('receptor',
                    help='PDB-file containing fixed chain.')
