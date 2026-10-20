@@ -100,5 +100,7 @@ and run DisVis with the `-g` option, e.g. on the PRE5-PUP2 test case
     cd test-cases/PRE5-PUP2-complex
     disvis O14250.pdb Q9UT97.pdb restraints.dat -a 9.72 -vs 2 -g -d gpu-results
 
-The results should agree with the CPU results in `example-results/cpu/coarse`
-to within single-precision rounding (relative differences of about 1e-5).
+The results should agree with the GPU results in `example-results/gpu/coarse`
+and the CPU results in `example-results/cpu/coarse` to within single-precision
+rounding (relative differences of about 1e-5). Timings on several GPUs are
+listed in `test-cases/README.md`.

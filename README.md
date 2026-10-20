@@ -222,3 +222,6 @@ The GPU version has been tested on:
 NVIDIA GeForce GTX 1080 Ti and RTX 6000 Ada for Linux, and Apple M2 Pro for
 macOS (and, with the earlier Python 2 version, NVIDIA GeForce GTX 680 and AMD
 Radeon HD 7730M for Linux)
+
+Reference results and timings for the test cases, on CPUs and GPUs, are in
+`test-cases/README.md`.

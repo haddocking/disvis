@@ -1,0 +1,19 @@
+2026-10-20 19:39:21,534 Reading fixed model from: O14250.pdb
+2026-10-20 19:39:21,538 Reading scanning model from: Q9UT97.pdb
+2026-10-20 19:39:21,542 Reading in rotations.
+2026-10-20 19:39:21,544 Requested rotational sampling density: 9.72
+2026-10-20 19:39:21,544 Real rotational sampling density: 9.72
+2026-10-20 19:39:21,544 Number of rotations: 7416
+2026-10-20 19:39:21,544 Reading in restraints from file: restraints.dat
+2026-10-20 19:39:21,545 Number of distance restraints: 7
+2026-10-20 19:39:21,545 Voxel spacing set to: 2.00
+2026-10-20 19:39:21,545 Interaction radius set to: 3.00
+2026-10-20 19:39:21,545 Minimum required interaction volume: 300.00
+2026-10-20 19:39:21,545 Maximum allowed volume of clashes: 200.00
+2026-10-20 19:39:21,545 Using GPU accelerated search.
+2026-10-20 19:39:25,197 Writing accessible interaction space to: /trinity/login/abonvin/haddock_git/disvis/linux-tests/gpu-ref-gpu002/pre5_coarse/accessible_interaction_space.mrc
+2026-10-20 19:39:25,203 Writing number of accessible complexes to: /trinity/login/abonvin/haddock_git/disvis/linux-tests/gpu-ref-gpu002/pre5_coarse/accessible_complexes.out
+2026-10-20 19:39:25,204 Writing violations to file: /trinity/login/abonvin/haddock_git/disvis/linux-tests/gpu-ref-gpu002/pre5_coarse/violations.out
+2026-10-20 19:39:25,204 Possible false-positive restraints (z-score > 1.0): 1 2
+2026-10-20 19:39:25,204 Writing z-score of each restraint to /trinity/login/abonvin/haddock_git/disvis/linux-tests/gpu-ref-gpu002/pre5_coarse/z-score.out
+2026-10-20 19:39:25,205 Total time passed: 0m  4s

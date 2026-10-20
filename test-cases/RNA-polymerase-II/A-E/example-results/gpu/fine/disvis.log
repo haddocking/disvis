@@ -1,0 +1,20 @@
+2026-10-20 19:40:27,610 Reading fixed model from: 1wcm_A.pdb
+2026-10-20 19:40:27,633 Reading scanning model from: 1wcm_E.pdb
+2026-10-20 19:40:27,636 Reading in rotations.
+2026-10-20 19:40:27,641 Requested rotational sampling density: 5.27
+2026-10-20 19:40:27,641 Real rotational sampling density: 5.27
+2026-10-20 19:40:27,641 Number of rotations: 53256
+2026-10-20 19:40:27,641 Reading in restraints from file: restraints.dat
+2026-10-20 19:40:27,643 Number of distance restraints: 8
+2026-10-20 19:40:27,643 Voxel spacing set to: 1.00
+2026-10-20 19:40:27,643 Interaction radius set to: 3.00
+2026-10-20 19:40:27,643 Minimum required interaction volume: 300.00
+2026-10-20 19:40:27,643 Maximum allowed volume of clashes: 200.00
+2026-10-20 19:40:27,643 Using GPU accelerated search.
+2026-10-20 19:42:58,173 Writing accessible interaction space to: /trinity/login/abonvin/haddock_git/disvis/linux-tests/gpu-ref-gpu002/rna_fine/accessible_interaction_space.mrc
+2026-10-20 19:42:58,222 Writing number of accessible complexes to: /trinity/login/abonvin/haddock_git/disvis/linux-tests/gpu-ref-gpu002/rna_fine/accessible_complexes.out
+2026-10-20 19:42:58,223 Writing violations to file: /trinity/login/abonvin/haddock_git/disvis/linux-tests/gpu-ref-gpu002/rna_fine/violations.out
+2026-10-20 19:42:58,223 Not all restraints are consistent. Number of false-positive restraints present is at least: 1
+2026-10-20 19:42:58,223 Possible false-positive restraints (z-score > 1.0): 7 8
+2026-10-20 19:42:58,223 Writing z-score of each restraint to /trinity/login/abonvin/haddock_git/disvis/linux-tests/gpu-ref-gpu002/rna_fine/z-score.out
+2026-10-20 19:42:58,223 Total time passed: 2m 31s
