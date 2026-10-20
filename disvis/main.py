@@ -1,5 +1,5 @@
 """The disvis command-line program."""
-from os import remove
+from os import makedirs, remove
 from queue import Empty
 from os.path import join, abspath
 from sys import stdout, exit
@@ -12,7 +12,8 @@ import numpy as np
 
 from disvis import DisVis, PDB, Volume
 from disvis.rotations import proportional_orientations, quat_to_rotmat
-from disvis.helpers import mkdir_p, dump_args
+from disvis.helpers import (dump_args, parse_interaction_selection,
+                            parse_restraints)
 
 
 def parse_args():
@@ -106,65 +107,6 @@ def parse_args():
     return p.parse_args()
 
 
-def parse_interaction_selection(fname, pdb1, pdb2):
-    """Parse the interaction selection file.
-
-    Its first and second lines list the residue numbers of pdb1 and pdb2
-    for which the interactions are analysed. Returns the CA (protein) or
-    O3' (nucleic acid) atoms of these residues.
-    """
-    with open(fname) as fid:
-        resi1 = [int(x) for x in fid.readline().split()]
-        resi2 = [int(x) for x in fid.readline().split()]
-
-    pdb1_sel = pdb1.select('name', ('CA', "O3'")).select('resi', resi1)
-    pdb2_sel = pdb2.select('name', ('CA', "O3'")).select('resi', resi2)
-
-    if (len(resi1) != pdb1_sel.natoms) or (len(resi2) != pdb2_sel.natoms):
-        msg = ("Some selected interaction residues where either missing in "
-               "the PDB file "
-               "or had alternate conformers. Please check your input "
-               "residues and remove alternate conformers.")
-        raise ValueError(msg)
-
-    return pdb1_sel, pdb2_sel
-
-
-def parse_restraints(fname, pdb1, pdb2):
-    """Parse a restraints file.
-
-    Each line gives chain, residue number and atom name in pdb1, the same
-    in pdb2, and the minimum and maximum distance. Returns a list of
-    [pdb1 selection, pdb2 selection, mindis, maxdis].
-    """
-    with open(fname) as fid:
-        lines = fid.readlines()
-
-    dist_restraints = []
-
-    for line in lines:
-        # ignore comments and empty lines
-        line = line.strip()
-        if line.startswith('#') or not line:
-            continue
-
-        (chain1, resi1, name1,
-         chain2, resi2, name2, mindis, maxdis) = line.split()
-        pdb1_sel = pdb1.select('chain', chain1).select(
-            'resi', int(resi1)).select('name', name1).duplicate()
-        pdb2_sel = pdb2.select('chain', chain2).select(
-            'resi', int(resi2)).select('name', name2).duplicate()
-
-        if pdb1_sel.natoms == 0 or pdb2_sel.natoms == 0:
-            raise ValueError("A restraint selection was not found in line:"
-                             "\n{:s}".format(str(line)))
-
-        dist_restraints.append([pdb1_sel, pdb2_sel,
-                                float(mindis), float(maxdis)])
-
-    return dist_restraints
-
-
 class Joiner(object):
     """Join file names with an output directory."""
 
@@ -183,20 +125,19 @@ class Results(object):
 
 
 def run_disvis_instance(queue, receptor, ligand, distance_restraints, rotmat,
-                        weights, n, pdb1_sel, pdb2_sel, args, counter=None):
+                        weights, n, pdb1_sel, pdb2_sel, args, counter):
     """Run a single DisVis instance on a subset of the rotations.
 
     The results are written to temporary files in args.directory, numbered
-    n, and the accessible complexes are put on queue. If a shared counter
-    is given, it is incremented after every rotation instead of printing
-    the progress.
+    n, and the accessible complexes are put on queue. The shared counter is
+    incremented after every rotation, so that the parent process can print
+    the combined progress.
     """
-    dv = DisVis()
-    if counter is not None:
-        def count_rotation(n, total, time0):
-            with counter.get_lock():
-                counter.value += 1
-        dv.print_callback = count_rotation
+    def count_rotation(n, total, time0):
+        with counter.get_lock():
+            counter.value += 1
+
+    dv = DisVis(print_callback=count_rotation)
 
     dv.receptor = receptor
     dv.ligand = ligand
@@ -404,7 +345,7 @@ def main():
     """Run disvis from the command line and write the results."""
     args = parse_args()
 
-    mkdir_p(args.directory)
+    makedirs(args.directory, exist_ok=True)
     joiner = Joiner(args.directory)
     dump_args(args, joiner('args.json'))
 

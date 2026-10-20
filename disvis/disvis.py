@@ -36,8 +36,9 @@ class DisVis(object):
     without clashing (max_clash, in A^3).
 
     fftw selects pyFFTW instead of the NumPy FFT, when it is installed.
-    print_callback is a flag to print the progress, or a callable called as
-    print_callback(n, total, time0) after each rotation n. The search runs
+    print_callback is True to print the progress, a false value to stay
+    silent, or a callable called as print_callback(n, total, time0) after
+    each rotation n. The search runs
     on the GPU when queue is set to an OpenCL command queue.
 
     After the search, accessible_complexes[n] is the (weighted) number of
@@ -70,6 +71,8 @@ class DisVis(object):
         self.occupancy_analysis = False
         self.queue = None
         self._fftw = fftw and PYFFTW
+        if print_callback is True:
+            print_callback = self._print_progress
         self.print_callback = print_callback
 
         # Output attributes
@@ -394,8 +397,9 @@ class DisVis(object):
 
     def _cpu_search(self):
 
+        nrot = self.rotations.shape[0]
         time0 = _time()
-        for n in range(self.rotations.shape[0]):
+        for n in range(nrot):
             rotmat = self.rotations[n]
             weight = self.weights[n]
             # Rotate the ligand grid
@@ -431,7 +435,8 @@ class DisVis(object):
             if self._interaction_analysis:
                 self._get_interaction_matrix(rotmat, weight)
 
-            self._report_progress(n, time0)
+            if self.print_callback:
+                self.print_callback(n, nrot, time0)
 
         # Get the number of accessible complexes consistent with exactly N
         # restraints. We need to correct the total number of complexes sampled
@@ -439,19 +444,6 @@ class DisVis(object):
         self._accessible_complexes[:] = self._consistent_complexes
         self._accessible_complexes[0] = (
             self._tot_complex - self._accessible_complexes[1:].sum())
-
-    def _report_progress(self, n, time0):
-        """Report that rotation n is done.
-
-        print_callback is either a callable, called as
-        print_callback(n, total, time0), or a flag to print the progress to
-        the terminal.
-        """
-        total = self.rotations.shape[0]
-        if callable(self.print_callback):
-            self.print_callback(n, total, time0)
-        elif self.print_callback:
-            self._print_progress(n, total, time0)
 
     @staticmethod
     def _print_progress(n, total, time0):
@@ -717,8 +709,9 @@ class DisVis(object):
 
     def _gpu_search(self):
 
+        nrot = self.rotations.shape[0]
         time0 = _time()
-        for n in range(self.rotations.shape[0]):
+        for n in range(nrot):
 
             rotmat = self._cl_rotations[n]
             weight = np.float32(self.weights[n])
@@ -751,7 +744,8 @@ class DisVis(object):
                 self._cl_get_interaction_matrix(rotmat, weight)
 
             # Print progress
-            self._report_progress(n, time0)
+            if self.print_callback:
+                self.print_callback(n, nrot, time0)
 
         self.queue.finish()
         # Get the data from GPU

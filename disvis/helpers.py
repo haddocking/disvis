@@ -1,6 +1,4 @@
 """Input parsers and other helper functions."""
-import os
-import errno
 import json
 try:
     import pyopencl as cl
@@ -19,17 +17,6 @@ def get_queue():
         queue = None
 
     return queue
-
-
-def mkdir_p(path):
-    """Create a directory and its parents, like mkdir -p."""
-    try:
-        os.makedirs(path)
-    except OSError as exc:  # Python >2.5
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
 
 
 def parse_interactions(f):
@@ -61,19 +48,43 @@ def parse_interactions(f):
     return data
 
 
-def parse_restraints(fid, pdb1, pdb2):
+def parse_interaction_selection(fname, pdb1, pdb2):
+    """Parse the interaction selection file.
+
+    Its first and second lines list the residue numbers of pdb1 and pdb2
+    for which the interactions are analysed. Returns the CA (protein) or
+    O3' (nucleic acid) atoms of these residues.
+    """
+    with open(fname) as fid:
+        resi1 = [int(x) for x in fid.readline().split()]
+        resi2 = [int(x) for x in fid.readline().split()]
+
+    pdb1_sel = pdb1.select('name', ('CA', "O3'")).select('resi', resi1)
+    pdb2_sel = pdb2.select('name', ('CA', "O3'")).select('resi', resi2)
+
+    if (len(resi1) != pdb1_sel.natoms) or (len(resi2) != pdb2_sel.natoms):
+        msg = ("Some selected interaction residues where either missing in "
+               "the PDB file "
+               "or had alternate conformers. Please check your input "
+               "residues and remove alternate conformers.")
+        raise ValueError(msg)
+
+    return pdb1_sel, pdb2_sel
+
+
+def parse_restraints(fname, pdb1, pdb2):
     """Parse a restraints file.
 
     Each line gives chain, residue number and atom name in pdb1, the same
     in pdb2, and the minimum and maximum distance. Returns a list of
     [pdb1 selection, pdb2 selection, mindis, maxdis].
     """
-    if isinstance(fid, str):
-        fid = open(fid)
+    with open(fname) as fid:
+        lines = fid.readlines()
 
     dist_restraints = []
 
-    for line in fid:
+    for line in lines:
         # ignore comments and empty lines
         line = line.strip()
         if line.startswith('#') or not line:
@@ -93,28 +104,7 @@ def parse_restraints(fid, pdb1, pdb2):
         dist_restraints.append([pdb1_sel, pdb2_sel,
                                 float(mindis), float(maxdis)])
 
-    fid.close()
     return dist_restraints
-
-
-def parse_interaction_selection(fid, pdb1, pdb2):
-    """Parse the interaction selection file.
-
-    Its first and second lines list the residue numbers of pdb1 and pdb2
-    for which the interactions are analysed. Returns the CA atoms of these
-    residues.
-    """
-    if isinstance(fid, str):
-        fid = open(fid)
-
-    resi1 = [int(x) for x in fid.readline().split()]
-    resi2 = [int(x) for x in fid.readline().split()]
-    fid.close()
-
-    pdb1_sel = pdb1.select('name', 'CA').select('resi', resi1)
-    pdb2_sel = pdb2.select('name', 'CA').select('resi', resi2)
-
-    return pdb1_sel, pdb2_sel
 
 
 def dump_args(args, fname):
