@@ -1,18 +1,31 @@
+"""Grid operations of the CPU search, written in Cython.
+
+All grids are indexed as [z, y, x], and all coordinates and distances are in
+grid units.
+"""
 import cython
 import numpy as np
 cimport numpy as np
-from libc.math cimport ceil, exp, floor, sqrt
+from libc.math cimport ceil, floor
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def count_interactions(np.ndarray[np.int32_t, ndim=3] interaction_space,
-        np.ndarray[np.float64_t, ndim=2] r_inter_coor,
-        np.ndarray[np.float64_t, ndim=2] l_inter_coor,
-        double interaction_distance,
-        double weight,
-        int interaction_restraint_cutoff,
-        np.ndarray[np.float64_t, ndim=3] interaction_matrix):
+                       np.ndarray[np.float64_t, ndim=2] r_inter_coor,
+                       np.ndarray[np.float64_t, ndim=2] l_inter_coor,
+                       double interaction_distance,
+                       double weight,
+                       int interaction_restraint_cutoff,
+                       np.ndarray[np.float64_t, ndim=3] interaction_matrix):
+    """Count the interactions between the selected residues.
 
+    For every ligand position in interaction_space consistent with n >=
+    interaction_restraint_cutoff restraints, weight is added to
+    interaction_matrix[n - interaction_restraint_cutoff, j, i] when ligand
+    atom j (l_inter_coor, translated to the position) is within
+    interaction_distance of receptor atom i (r_inter_coor).
+    """
     cdef:
         int x, y, z, i, j, n
         double interaction_distance2 = interaction_distance**2
@@ -32,23 +45,31 @@ def count_interactions(np.ndarray[np.int32_t, ndim=3] interaction_space,
                     lz = l_inter_coor[j, 2] + z
 
                     for i in range(r_inter_coor.shape[0]):
-                        dist2 = (r_inter_coor[i, 0] - lx)**2 +\
-                                (r_inter_coor[i, 1] - ly)**2 +\
-                                (r_inter_coor[i, 2] - lz)**2
+                        dist2 = ((r_inter_coor[i, 0] - lx)**2
+                                 + (r_inter_coor[i, 1] - ly)**2
+                                 + (r_inter_coor[i, 2] - lz)**2)
 
                         if dist2 <= interaction_distance2:
-                            interaction_matrix[n - interaction_restraint_cutoff, j, i] += weight
+                            interaction_matrix[
+                                n - interaction_restraint_cutoff, j, i
+                            ] += weight
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def count_violations(np.ndarray[np.float64_t, ndim=2] points,
-        np.ndarray[np.float64_t, ndim=1] mindis,
-        np.ndarray[np.float64_t, ndim=1] maxdis,
-        np.ndarray[np.int32_t, ndim=3] interspace,
-        double weight,
-        np.ndarray[np.float64_t, ndim=2] violations):
+                     np.ndarray[np.float64_t, ndim=1] mindis,
+                     np.ndarray[np.float64_t, ndim=1] maxdis,
+                     np.ndarray[np.int32_t, ndim=3] interspace,
+                     double weight,
+                     np.ndarray[np.float64_t, ndim=2] violations):
+    """Count how often each restraint is violated.
 
+    For every ligand position in interspace consistent with n > 0
+    restraints, weight is added to violations[n - 1, i] when the position
+    is not between mindis[i] and maxdis[i] from points[i], the center of
+    restraint i.
+    """
     cdef:
         unsigned int x, y, z, i
         double distance2, mindis2, maxdis2
@@ -61,8 +82,9 @@ def count_violations(np.ndarray[np.float64_t, ndim=2] points,
                     continue
 
                 for i in range(violations.shape[0]):
-                    distance2 = (x - points[i, 0])**2 +\
-                            (y - points[i, 1])**2 + (z - points[i, 2])**2
+                    distance2 = ((x - points[i, 0])**2
+                                 + (y - points[i, 1])**2
+                                 + (z - points[i, 2])**2)
                     mindis2 = mindis[i]**2
                     maxdis2 = maxdis[i]**2
 
@@ -75,21 +97,11 @@ def dilate_points(np.ndarray[np.float64_t, ndim=2] points,
                   np.ndarray[np.float64_t, ndim=1] radius,
                   np.ndarray[np.float64_t, ndim=3] out,
                   ):
-    """
+    """Set out to 1 within radius[n] of each point n.
 
-    Parameters
-    ----------
-    points : ndarray
-        Coordinates in (x, y, z)
-
-    radius : float
-	The radius of the dilation
-
-    out : 3D-numpy array
-
-    Returns
-    -------
-    out
+    points is an (N, 3) array of (x, y, z) coordinates. Negative grid
+    indices wrap around, so that a molecule centered on the origin is
+    mapped periodically. Returns out.
     """
     cdef unsigned int n
     cdef int x, y, z, xmin, ymin, zmin, xmax, ymax, zmax
@@ -108,44 +120,35 @@ def dilate_points(np.ndarray[np.float64_t, ndim=2] points,
         ymax = <int> floor(points[n, 1] + radius[n])
         zmax = <int> floor(points[n, 2] + radius[n])
 
-        for x in range(xmin, xmax+1):
+        for x in range(xmin, xmax + 1):
             if (abs(x) >= out.shape[2]):
                 continue
             dx = x - points[n, 0]
             x2 = dx**2
-            for y in range(ymin, ymax+1):
+            for y in range(ymin, ymax + 1):
                 if (abs(y) >= out.shape[1]):
                     continue
                 dy = y - points[n, 1]
                 x2y2 = x2 + dy**2
-                for z in range(zmin, zmax+1):
+                for z in range(zmin, zmax + 1):
                     if (abs(z) >= out.shape[0]):
                         continue
                     dz = z - points[n, 2]
                     distance2 = x2y2 + dz**2
                     if distance2 <= radius2:
-                        out[z,y,x] = 1.0
+                        out[z, y, x] = 1.0
     return out
 
 
 @cython.boundscheck(False)
 def dilate_points_add(np.ndarray[np.float64_t, ndim=2] points,
-                  np.ndarray[np.float64_t, ndim=1] radius,
-                  np.ndarray[np.int32_t, ndim=3] out,
-                  ):
-    """Creates a mask from the points into the volume
+                      np.ndarray[np.float64_t, ndim=1] radius,
+                      np.ndarray[np.int32_t, ndim=3] out,
+                      ):
+    """Add 1 to out within radius[n] of each point n.
 
-    Parameters
-    ----------
-    points : ndarray
-
-    radius : float
-
-    out : 3D-numpy array
-
-    Returns
-    -------
-    out
+    points is an (N, 3) array of (x, y, z) coordinates; all grid points
+    within the radius must lie inside out. Returns out.
     """
     cdef unsigned int n
     cdef int x, y, z, xmin, ymin, zmin, xmax, ymax, zmax
@@ -163,17 +166,17 @@ def dilate_points_add(np.ndarray[np.float64_t, ndim=2] points,
         ymax = <int> floor(points[n, 1] + radius[n])
         zmax = <int> floor(points[n, 2] + radius[n])
 
-        for x in range(xmin, xmax+1):
+        for x in range(xmin, xmax + 1):
             dx = x - points[n, 0]
             x2 = dx**2
-            for y in range(ymin, ymax+1):
+            for y in range(ymin, ymax + 1):
                 dy = y - points[n, 1]
                 x2y2 = x2 + dy**2
-                for z in range(zmin, zmax+1):
+                for z in range(zmin, zmax + 1):
                     dz = z - points[n, 2]
                     distance2 = x2y2 + dz**2
                     if distance2 <= radius2:
-                        out[z,y,x] += 1
+                        out[z, y, x] += 1
 
     return out
 
@@ -183,7 +186,11 @@ def dilate_points_add(np.ndarray[np.float64_t, ndim=2] points,
 def binary_erosion(np.ndarray[np.float64_t, ndim=3] image,
                    np.ndarray[np.float64_t, ndim=3] out,
                    ):
+    """Erode image by one voxel into out and return out.
 
+    A nonzero voxel is kept when none of its six neighbours inside the grid
+    is zero; all other voxels are set to 0.
+    """
     cdef int nz, ny, nx, x, y, z
     nz = <int> image.shape[0]
     ny = <int> image.shape[1]
@@ -207,7 +214,7 @@ def binary_erosion(np.ndarray[np.float64_t, ndim=3] image,
                             out[z, y, x] = 0
                             continue
                     if y < ny - 1:
-                        if image[z, y+1, x] == 0:
+                        if image[z, y + 1, x] == 0:
                             out[z, y, x] = 0
                             continue
                     if z > 0:
@@ -215,7 +222,7 @@ def binary_erosion(np.ndarray[np.float64_t, ndim=3] image,
                             out[z, y, x] = 0
                             continue
                     if z < nz - 1:
-                        if image[z+1, y, x] == 0:
+                        if image[z + 1, y, x] == 0:
                             out[z, y, x] = 0
                             continue
                     out[z, y, x] = image[z, y, x]
@@ -227,10 +234,16 @@ def binary_erosion(np.ndarray[np.float64_t, ndim=3] image,
 
 @cython.boundscheck(False)
 def distance_restraint(np.ndarray[np.float64_t, ndim=2] points,
-                  np.ndarray[np.float64_t, ndim=1] mindis,
-                  np.ndarray[np.float64_t, ndim=1] maxdis,
-                  np.ndarray[np.int32_t, ndim=3] out,
-                  ):
+                       np.ndarray[np.float64_t, ndim=1] mindis,
+                       np.ndarray[np.float64_t, ndim=1] maxdis,
+                       np.ndarray[np.int32_t, ndim=3] out,
+                       ):
+    """Add 1 to out between mindis[n] and maxdis[n] from each point n.
+
+    The result counts, for each ligand position, the number of consistent
+    distance restraints. points holds the restraint centers as (x, y, z).
+    Grid points outside out are skipped. Returns out.
+    """
     cdef:
         unsigned int n
         int x, y, z, xmin, ymin, zmin, xmax, ymax, zmax
@@ -250,22 +263,22 @@ def distance_restraint(np.ndarray[np.float64_t, ndim=2] points,
         ymax = min(<int> floor(points[n, 1] + maxdis[n]), out.shape[1] - 1)
         zmax = min(<int> floor(points[n, 2] + maxdis[n]), out.shape[0] - 1)
 
-        for z in range(zmin, zmax+1):
+        for z in range(zmin, zmax + 1):
 
             z2 = (z - points[n, 2])**2
             if z2 > maxdis2:
                 continue
 
-            for y in range(ymin, ymax+1):
+            for y in range(ymin, ymax + 1):
 
                 y2z2 = (y - points[n, 1])**2 + z2
                 if y2z2 > maxdis2:
                     continue
 
-                for x in range(xmin, xmax+1):
+                for x in range(xmin, xmax + 1):
 
                     x2y2z2 = (x - points[n, 0])**2 + y2z2
                     if x2y2z2 <= maxdis2 and x2y2z2 >= mindis2:
-                        out[z,y,x] += 1
+                        out[z, y, x] += 1
 
     return out

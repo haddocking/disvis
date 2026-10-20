@@ -62,6 +62,7 @@ def format_numbers(numbers):
 
 
 def main():
+    """Print the active and passive residues."""
     args = parse_args()
 
     try:

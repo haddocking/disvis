@@ -31,7 +31,8 @@ def parse_args():
                    help="Use the unbound (u) or bound (b) structures. "
                         "Default is u.")
     p.add_argument('-vs', '--voxelspacing', type=float, default=1,
-                   help="Voxel spacing of the grid in angstrom. Default is 1A.")
+                   help="Voxel spacing of the grid in angstrom. "
+                   "Default is 1A.")
     p.add_argument('-ir', '--interaction-radius', type=float, default=3,
                    help="Radius of the interaction shell in angstrom. "
                         "Default is 3A.")
@@ -89,12 +90,13 @@ def interaction_and_clash_volume(receptor, ligand, voxelspacing,
 
 
 def main():
+    """Print the interaction and clash volume of each complex."""
     args = parse_args()
 
     pairs = find_pairs(args.directory, args.form)
     if not pairs:
-        sys.exit('No *_r_{0:s}.pdb / *_l_{0:s}.pdb pairs found in {1:s}'.format(
-            args.form, args.directory))
+        sys.exit('No *_r_{0:s}.pdb / *_l_{0:s}.pdb pairs found in '
+                 '{1:s}'.format(args.form, args.directory))
 
     print('{:<8s} {:>12s} {:>12s}'.format('#id', 'interaction', 'clash'))
     interaction_volumes = []

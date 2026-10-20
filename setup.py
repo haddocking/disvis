@@ -1,3 +1,4 @@
+"""Build and install DisVis."""
 import os.path
 from setuptools import setup
 from setuptools.extension import Extension
@@ -12,15 +13,15 @@ packages = ['disvis', 'disvis.IO']
 package_data = {'disvis': [os.path.join('data', '*.npy'), 'kernels.cl']}
 
 ext_modules = [Extension("disvis.libdisvis",
-                  [os.path.join("src", "libdisvis.pyx")],
-                  include_dirs=[numpy.get_include()],
-                  extra_compile_args=['-ffast-math']),
+                         [os.path.join("src", "libdisvis.pyx")],
+                         include_dirs=[numpy.get_include()],
+                         extra_compile_args=['-ffast-math']),
                Extension("disvis._extensions",
-                  [os.path.join("src", "_extensions.c")],
-                  include_dirs=[numpy.get_include()],
-                  extra_compile_args=['-ffast-math'],
-                  ),
-              ]
+                         [os.path.join("src", "_extensions.c")],
+                         include_dirs=[numpy.get_include()],
+                         extra_compile_args=['-ffast-math'],
+                         ),
+               ]
 
 # Generate the C sources in the build directory, out of the source tree.
 ext_modules = cythonize(ext_modules, build_dir='build',
@@ -40,13 +41,13 @@ setup(name="disvis",
       author_email='gvanzundert51@gmail.com',
       packages=packages,
       ext_modules=ext_modules,
-      package_data = package_data,
+      package_data=package_data,
       install_requires=requirements,
       extras_require=extras,
       python_requires='>=3.11',
       entry_points={
           'console_scripts': [
               'disvis = disvis.main:main',
-              ]
-              },
-     )
+          ]
+      },
+      )

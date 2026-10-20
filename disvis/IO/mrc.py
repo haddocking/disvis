@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import, print_function
+"""Reader and writer for MRC and CCP4 density files."""
 import sys
 import os.path
 from struct import pack, unpack
@@ -8,6 +8,11 @@ import numpy as np
 
 
 def parse_mrc(fid):
+    """Read an MRC or CCP4 file (a file name or binary file).
+
+    Returns the density as a [z, y, x] array, the voxel spacing and the
+    (x, y, z) origin.
+    """
     if isinstance(fid, str):
         with open(fid, 'rb') as f:
             return parse_mrc(f)
@@ -20,14 +25,16 @@ def parse_mrc(fid):
 
     return array, voxelspacing, origin
 
+
 class MRCFile(object):
-    """
-    Class for MRC-type files
+    """An MRC or CCP4 file and its header.
+
+    fmt is 'mrc', 'ccp4' or 'map'; by default it is taken from the file
+    extension.
     """
 
     def __init__(self, fid, fmt=None):
 
-    
         if hasattr(fid, 'read'):
             pass
         elif isinstance(fid, str):
@@ -53,8 +60,8 @@ class MRCFile(object):
         self._endian = endian
 
         self._fid.seek(0)
-        headertype = 'i'*10 + 'f'*6 + 'i'*3 + 'f'*3 + 'i'*3\
-               + 'f'*27 + 'c'*8 + 'f'*1 + 'i'*1 + 'c'*(80*10)
+        headertype = 'i' * 10 + 'f' * 6 + 'i' * 3 + 'f' * 3 + 'i' * 3\
+            + 'f' * 27 + 'c' * 8 + 'f' * 1 + 'i' * 1 + 'c' * (80 * 10)
         raw_header = unpack(endian + headertype, self._fid.read(1024))
         self._header = OrderedDict()
         self._header['nc'] = raw_header[0]
@@ -88,18 +95,23 @@ class MRCFile(object):
         self._header['xstart'] = raw_header[49]
         self._header['ystart'] = raw_header[50]
         self._header['zstart'] = raw_header[51]
-        self._header['map'] = b"".join(raw_header[52:56]).decode('ascii', 'replace')
-        self._header['machst'] = " ".join(hex(c[0]) for c in raw_header[56:60])
+        self._header['map'] = b"".join(
+            raw_header[52:56]).decode('ascii', 'replace')
+        self._header['machst'] = " ".join(
+            hex(c[0]) for c in raw_header[56:60])
         self._header['rms'] = raw_header[60]
         self._header['nlabel'] = raw_header[61]
-        self._header['label'] = b"".join(raw_header[62:862]).decode('ascii', 'replace').strip()
-    
+        self._header['label'] = b"".join(
+            raw_header[62:862]).decode('ascii', 'replace').strip()
+
     @property
     def fid(self):
+        """The open binary file."""
         return self._fid
 
     @property
     def fmt(self):
+        """The file format: 'mrc', 'ccp4' or 'map'."""
         return self._fmt
 
     @fmt.setter
@@ -110,46 +122,52 @@ class MRCFile(object):
 
     @property
     def header(self):
+        """The header fields, in file order."""
         return self._header
 
     @property
     def voxelspacing(self):
-        return self.header['xlength']/self.header['nx']
+        """The voxel spacing along x in Angstrom."""
+        return self.header['xlength'] / self.header['nx']
 
     @property
     def origin(self):
+        """The (x, y, z) origin in Angstrom.
+
+        For MRC files it is read from the origin fields, for CCP4 files it
+        is computed from the start indices.
+        """
         if self.fmt == 'mrc':
-            origin = (self.header['xstart'], 
-                    self.header['ystart'], self.header['zstart'])
+            origin = (self.header['xstart'],
+                      self.header['ystart'], self.header['zstart'])
         elif self.fmt in ('map', 'ccp4'):
-            order = (self.header['mapc'], 
-                    self.header['mapr'], self.header['maps'])
+            order = (self.header['mapc'],
+                     self.header['mapr'], self.header['maps'])
             if order == (1, 2, 3):
-                start = (self.header['ncstart'], 
-                        self.header['nrstart'], self.header['nsstart'])
-            elif order == (1,3,2):
-                start = (self.header['ncstart'], 
-                        self.header['nsstart'], self.header['nrstart'])
-            elif order == (2,1,3):
-                start = (self.header['nrstart'], 
-                        self.header['ncstart'], self.header['nsstart'])
-            elif order == (2,3,1):
-                start = (self.header['nrstart'], 
-                        self.header['nsstart'], self.header['ncstart'])
-            elif order == (3,1,2):
-                start = (self.header['nsstart'], 
-                        self.header['ncstart'], self.header['nrstart'])
-            elif order == (3,2,1):
-                start = (self.header['nsstart'], 
-                        self.header['nrstart'], self.header['ncstart'])
+                start = (self.header['ncstart'],
+                         self.header['nrstart'], self.header['nsstart'])
+            elif order == (1, 3, 2):
+                start = (self.header['ncstart'],
+                         self.header['nsstart'], self.header['nrstart'])
+            elif order == (2, 1, 3):
+                start = (self.header['nrstart'],
+                         self.header['ncstart'], self.header['nsstart'])
+            elif order == (2, 3, 1):
+                start = (self.header['nrstart'],
+                         self.header['nsstart'], self.header['ncstart'])
+            elif order == (3, 1, 2):
+                start = (self.header['nsstart'],
+                         self.header['ncstart'], self.header['nrstart'])
+            elif order == (3, 2, 1):
+                start = (self.header['nsstart'],
+                         self.header['nrstart'], self.header['ncstart'])
 
             origin = [x * self.voxelspacing for x in start]
         return origin
 
-
     @property
     def density(self):
-
+        """The density, read from the file, as a [z, y, x] array."""
         # determine nc, nr, ns and mode/datatype of density
         mode = self.header['mode']
         if mode == 0:
@@ -167,28 +185,33 @@ class MRCFile(object):
         ns = self.header['ns']
 
         self.fid.seek(1024)
-        density = np.fromfile(self.fid, dtype=self._endian + datatype).reshape((ns,nr,nc))
+        density = np.fromfile(self.fid, dtype=self._endian + datatype
+                              ).reshape((ns, nr, nc))
 
-        order = (self.header['mapc'], self.header['mapr'], self.header['maps'])
-        if order == (1,3,2):
+        order = (self.header['mapc'], self.header['mapr'],
+                 self.header['maps'])
+        if order == (1, 3, 2):
             density = np.swapaxes(density, 0, 1)
-        elif order == (2,1,3):
+        elif order == (2, 1, 3):
             density = np.swapaxes(density, 1, 2)
-        elif order == (2,3,1):
+        elif order == (2, 3, 1):
             density = np.swapaxes(density, 2, 0)
             density = np.swapaxes(density, 0, 1)
-        elif order == (3,1,2):
+        elif order == (3, 1, 2):
             density = np.swapaxes(density, 2, 1)
             density = np.swapaxes(density, 0, 2)
-        elif order == (3,2,1):
+        elif order == (3, 2, 1):
             density = np.swapaxes(density, 0, 2)
 
         return density
 
 
 def to_mrc(fid, volume, labels=[]):
+    """Write volume to the MRC file named fid.
 
-    voxelspacing = volume.voxelspacing
+    int8 arrays are written as int8, int16 and int32 arrays as int16, and
+    float32 and float64 arrays as float32. labels is not used yet.
+    """
     with open(fid, 'wb') as out:
 
         nz, ny, nx = volume.shape
@@ -242,14 +265,14 @@ def to_mrc(fid, volume, labels=[]):
 
         lskflg = 0
         out.write(pack('i', lskflg))
-        skwmat = [0.0]*9
+        skwmat = [0.0] * 9
         for f in skwmat:
             out.write(pack('f', f))
-        skwtrn = [0.0]*3
+        skwtrn = [0.0] * 3
         for f in skwtrn:
             out.write(pack('f', f))
 
-        fut_use = [0.0]*12
+        fut_use = [0.0] * 12
         for f in fut_use:
             out.write(pack('f', f))
 
@@ -261,11 +284,12 @@ def to_mrc(fid, volume, labels=[]):
             out.write(pack('c', c))
 
         if sys.byteorder == 'little':
-            machst = [b'\x44', b'\x41' ,b'\x00', b'\x00']
+            machst = [b'\x44', b'\x41', b'\x00', b'\x00']
         elif sys.byteorder == 'big':
-            machst = [b'\x11', b'\x11' ,b'\x00', b'\x00']
+            machst = [b'\x11', b'\x11', b'\x00', b'\x00']
         else:
-            raise ValueError("Byteorder {:} is not recognized".format(sys.byteorder))
+            raise ValueError(
+                "Byteorder {:} is not recognized".format(sys.byteorder))
 
         for c in machst:
             out.write(pack('c', c))
@@ -276,11 +300,11 @@ def to_mrc(fid, volume, labels=[]):
         # nlabels = min(len(labels), 10)
         # TODO labels not handled correctly
 
-        #for label in labels:
+        # for label in labels:
         #     list_label = [c for c in label]
         #     llabel = len(list_label)
         #     if llabel < 80:
-        #         
+        #
         #     # max 80 characters
         #     label = min(len(label), 80)
 

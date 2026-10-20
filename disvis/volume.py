@@ -1,14 +1,19 @@
-from __future__ import division
-
+"""A 3D density on a regular grid, with its MRC input and output."""
 import numpy as np
 
 from .libdisvis import binary_erosion
 from .IO.mrc import to_mrc, parse_mrc
 
+
 class Volume(object):
+    """A 3D array with a voxel spacing and an origin (in Angstrom).
+
+    The array is indexed as [z, y, x].
+    """
 
     @classmethod
     def fromfile(cls, fid):
+        """Read a volume from an MRC file (a file name or binary file)."""
         array, voxelspacing, origin = parse_mrc(fid)
         return cls(array, voxelspacing, origin)
 
@@ -20,10 +25,12 @@ class Volume(object):
 
     @property
     def array(self):
+        """The 3D array of the volume, indexed as [z, y, x]."""
         return self._array
 
     @property
     def voxelspacing(self):
+        """The distance between grid points in Angstrom."""
         return self._voxelspacing
 
     @voxelspacing.setter
@@ -32,6 +39,7 @@ class Volume(object):
 
     @property
     def origin(self):
+        """The (x, y, z) coordinates of the first grid point in Angstrom."""
         return np.asarray(self._origin, dtype=np.float64)
 
     @origin.setter
@@ -40,35 +48,50 @@ class Volume(object):
 
     @property
     def shape(self):
+        """The shape of the array, as (nz, ny, nx)."""
         return self.array.shape
 
     @property
     def dimensions(self):
-        return [x*self.voxelspacing for x in self.shape][::-1]
+        """The (x, y, z) size of the volume in Angstrom."""
+        return [x * self.voxelspacing for x in self.shape][::-1]
 
     @property
     def start(self):
-        return [x/self.voxelspacing for x in self.origin]
+        """The origin in grid units."""
+        return [x / self.voxelspacing for x in self.origin]
 
     @start.setter
     def start(self, start):
-        self._origin = [x*self.voxelspacing for x in start]
+        self._origin = [x * self.voxelspacing for x in start]
 
     def duplicate(self):
+        """Return a copy of the volume."""
         return Volume(self.array.copy(), voxelspacing=self.voxelspacing,
                       origin=self.origin)
+
     def tofile(self, fid):
+        """Write the volume to an MRC file (a file name or binary file)."""
         to_mrc(fid, self)
 
 # builders
+
+
 def zeros(shape, voxelspacing, origin):
+    """Return a volume of zeros with the given shape, spacing and origin."""
     return Volume(np.zeros(shape, dtype=np.float64), voxelspacing, origin)
 
+
 def zeros_like(volume):
-    return Volume(np.zeros_like(volume.array), volume.voxelspacing, volume.origin)
+    """Return a volume of zeros with the same grid as volume."""
+    return Volume(np.zeros_like(volume.array), volume.voxelspacing,
+                  volume.origin)
 
 # functions
+
+
 def erode(volume, iterations, out=None):
+    """Return the binary erosion of volume, repeated iterations times."""
     if out is None:
         out = zeros_like(volume)
         tmp = volume.array.copy()
@@ -78,7 +101,12 @@ def erode(volume, iterations, out=None):
 
     return out
 
+
 def radix235(ninit):
+    """Return the smallest integer >= ninit with only 2, 3 and 5 as factors.
+
+    FFTs are fastest for such sizes.
+    """
     while True:
         n = ninit
         divided = True
