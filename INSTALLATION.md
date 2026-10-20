@@ -1,18 +1,24 @@
 # Installation instructions for GPU-accelerated DisVis
 
 This document shows how to set up GPU-accelerated DisVis using the OpenCL
-framework. These instructions were tested on macOS 15 with an Apple M2 Pro GPU
-and Python 3.14. Note that the speed-up depends on the GPU: a power-efficient
+framework. These instructions were tested with Python 3.14 on macOS 15 (Apple
+M2 Pro GPU) and on Rocky Linux 9 (NVIDIA GeForce GTX 1080 Ti and RTX 6000 Ada
+GPUs, NVIDIA driver 555). Note that the speed-up depends on the GPU: a power-efficient
 integrated card may not be much faster than the multi-processor CPU version
 (`-p`).
 
 ## Requirements
 
-* An OpenCL 1.1+ enabled GPU and its OpenCL driver (included in macOS)
+* An OpenCL 1.1+ enabled GPU and its OpenCL driver (included in macOS; on
+  Linux with NVIDIA GPUs, part of the NVIDIA driver), and the OpenCL headers
+  (`CL/cl.h`) and loader (`libOpenCL.so`) on Linux
 * git
 * cmake and a C++ compiler (on macOS: `brew install cmake` and the Xcode
-  command line tools)
+  command line tools; cmake can also be installed with `pip install cmake`)
 * DisVis installed in a virtual environment, as described in README.md
+
+On a cluster, the OpenCL headers and libraries may only be installed on the
+GPU nodes: build clFFT and gpyfft there.
 
 All commands below are typed with the virtual environment activated, so that
 `$VIRTUAL_ENV` points to it.
@@ -51,7 +57,12 @@ finds them at run time
     done
     cd -
 
-On Linux, add `$VIRTUAL_ENV/lib` (or `lib64`) to `LD_LIBRARY_PATH` instead.
+On Linux, add the library directory to `LD_LIBRARY_PATH` instead, also
+whenever you run DisVis with `-g`, e.g. in your job script
+
+    export LD_LIBRARY_PATH="$VIRTUAL_ENV/lib:$LD_LIBRARY_PATH"
+
+(use `lib64` if clFFT was installed there).
 
 ## 3. gpyfft
 
@@ -62,11 +73,15 @@ gpyfft, the Python bindings to clFFT, is not on PyPI either
 
 Its `setup.py` contains hard-coded paths to clFFT. In the section for your
 operating system (`Darwin` for macOS, `Linux` for Linux), set them to the
-virtual environment
+virtual environment, using its full path (the output of `echo $VIRTUAL_ENV`)
 
-    CLFFT_DIR = os.environ['VIRTUAL_ENV']
+    CLFFT_DIR = r'/full/path/to/your/venv'
     CLFFT_LIB_DIRS = [os.path.join(CLFFT_DIR, 'lib')]
     CLFFT_INCL_DIRS = [os.path.join(CLFFT_DIR, 'include'), ]
+
+Do not use `os.environ['VIRTUAL_ENV']` here: some installers, such as *uv*,
+build packages in a temporary environment and change `VIRTUAL_ENV`. On some
+Linux systems clFFT is installed in `lib64` instead of `lib`.
 
 On Linux, also set `CL_INCL_DIRS` to the directory containing `CL/cl.h`
 (e.g. `[]` if the OpenCL headers are installed system-wide). Then type
