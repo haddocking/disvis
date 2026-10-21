@@ -122,6 +122,20 @@ python -W error -m unittest test_kernels test_cpu_vs_gpu   # GPU
 docstrings and license header as they are. The GPU tests need the GPU packages
 and fail without them.
 
+Codacy checks pull requests with Prospector (pylint and pydocstyle), using
+`.prospector.yaml`. It reports issues only on the lines a PR changes, and any
+new issue fails the check. To check locally:
+
+```bash
+uvx prospector --profile .prospector.yaml -s veryhigh \
+    --tool pylint --tool pydocstyle <changed files>
+```
+
+Locally, Prospector also reports older issues on unchanged lines; only those
+on changed lines matter. Prefer fixing an issue in the code; disable a rule in
+`.prospector.yaml` only for a deliberate style choice, with a comment saying
+why.
+
 ### Reference results
 
 `test-cases/*/example-results/` contains CPU and GPU reference results (see
