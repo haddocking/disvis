@@ -1,0 +1,5 @@
+# Changes to these files need a review from the core team.
+/CLAUDE.md        @haddocking/csbcore
+/AGENTS.md        @haddocking/csbcore
+/.prospector.yaml @haddocking/csbcore
+/.github/         @haddocking/csbcore
