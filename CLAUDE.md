@@ -70,7 +70,7 @@ disvis --version
 ```
 
 Analysis scripts are in `scripts/` (`analyze.py`, `analyze_interactions.py`,
-`plt-average-interactions.py`).
+`plt-average-interactions.py`, `interactions_to_bfactor.py`).
 
 ## Architecture
 
