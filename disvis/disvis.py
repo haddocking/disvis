@@ -26,7 +26,7 @@ from .libdisvis import (
 from ._extensions import rotate_grid3d
 
 
-class DisVis(object):
+class DisVis:
     """Search the accessible interaction space of two molecules.
 
     Set receptor and ligand (PDB objects), add the distance restraints, set
@@ -72,7 +72,7 @@ class DisVis(object):
         self.queue = None
         self._fftw = fftw and PYFFTW
         if print_callback is True:
-            print_callback = self._print_progress
+            print_callback = self.print_progress
         self.print_callback = print_callback
 
         # Output attributes
@@ -446,7 +446,12 @@ class DisVis(object):
             self._tot_complex - self._accessible_complexes[1:].sum())
 
     @staticmethod
-    def _print_progress(n, total, time0):
+    def print_progress(n, total, time0):
+        """Print the progress after rotation n of total, with an ETA.
+
+        time0 is the start time of the search. Nothing is printed when
+        stdout is not a terminal.
+        """
         m = n + 1
         pdone = m / total
         t = _time() - time0

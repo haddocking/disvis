@@ -15,7 +15,7 @@ def parse_pdb(pdbfile):
     if hasattr(pdbfile, 'read'):
         pass
     elif isinstance(pdbfile, str):
-        with open(pdbfile) as f:
+        with open(pdbfile, encoding='utf-8') as f:
             return parse_pdb(f)
     else:
         raise TypeError('Input should either be a file or string.')

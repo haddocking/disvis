@@ -20,7 +20,7 @@ class Kernels():
         self.context = ctx
 
         self.source_file = join(dirname(__file__), 'kernels.cl')
-        with open(self.source_file) as f:
+        with open(self.source_file, encoding='utf-8') as f:
             t = Template(f.read()).substitute(**values)
 
         self.program = cl.Program(ctx, t).build()

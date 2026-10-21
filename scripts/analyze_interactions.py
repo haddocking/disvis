@@ -95,7 +95,7 @@ def main():
     print('Passive residues ({:d}):'.format(passive_res.size))
     print(format_numbers(passive_res))
 
-    with open(args.out, 'w') as fh:
+    with open(args.out, 'w', encoding='utf-8') as fh:
         max_digits = str(len(str(residue_id.max())))
         max_float = str(len(str(int(ave_interactions.max()))) + 3)
         line = '{:<' + max_digits + 'd} {:>' + max_float + '.2f}\n'

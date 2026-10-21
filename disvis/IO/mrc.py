@@ -26,7 +26,7 @@ def parse_mrc(fid):
     return array, voxelspacing, origin
 
 
-class MRCFile(object):
+class MRCFile:
     """An MRC or CCP4 file and its header.
 
     fmt is 'mrc', 'ccp4' or 'map'; by default it is taken from the file

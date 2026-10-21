@@ -5,7 +5,7 @@ from .libdisvis import binary_erosion
 from .IO.mrc import to_mrc, parse_mrc
 
 
-class Volume(object):
+class Volume:
     """A 3D array with a voxel spacing and an origin (in Angstrom).
 
     The array is indexed as [z, y, x].

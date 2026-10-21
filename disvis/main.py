@@ -110,7 +110,7 @@ def parse_args():
     return p.parse_args()
 
 
-class Joiner(object):
+class Joiner:
     """Join file names with an output directory."""
 
     def __init__(self, directory):
@@ -121,7 +121,7 @@ class Joiner(object):
         return join(self.directory, fname)
 
 
-class Results(object):
+class Results:
     """Container for the combined results, like those of DisVis."""
 
     pass
@@ -136,7 +136,7 @@ def run_disvis_instance(queue, receptor, ligand, distance_restraints, rotmat,
     incremented after every rotation, so that the parent process can print
     the combined progress.
     """
-    def count_rotation(n, total, time0):
+    def count_rotation(_n, _total, _time0):
         with counter.get_lock():
             counter.value += 1
 
@@ -233,7 +233,7 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
         alive = [p for p in processes if p.is_alive()]
         done = counter.value
         if progress and done > 0:
-            DisVis._print_progress(done - 1, nrot, time0)
+            DisVis.print_progress(done - 1, nrot, time0)
         if not alive:
             break
         alive[0].join(timeout=1)
@@ -276,11 +276,10 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
                                            len(distance_restraints) + 1):
             occupancy[consistent_restraints] = Volume.fromfile(
                 fname_occupancy.format(consistent_restraints, 0))
+            total = occupancy[consistent_restraints].array
             for n in range(1, jobs):
-                occupancy[consistent_restraints]._array += (
-                    Volume.fromfile(fname_occupancy.format(
-                        consistent_restraints, n))._array
-                )
+                total += Volume.fromfile(fname_occupancy.format(
+                    consistent_restraints, n)).array
 
     # Combine the interaction analysis
     results.interaction_matrix = None
@@ -443,8 +442,8 @@ def main():
     norm = sum(accessible_complexes)
     digits = len(str(int(norm))) + 1
     cum_complexes = np.cumsum(np.asarray(accessible_complexes)[::-1])[::-1]
-    with open(joiner('accessible_complexes.out'),
-              'w') as f_accessible_complexes:
+    with open(joiner('accessible_complexes.out'), 'w',
+              encoding='utf-8') as f_accessible_complexes:
         write('Writing number of accessible complexes to: {:s}'.format(
             f_accessible_complexes.name))
         header = '# consistent restraints | accessible complexes |' +\
@@ -459,7 +458,8 @@ def main():
     # writing out violations
     violations = dv.violations
     cum_violations = violations[::-1].cumsum(axis=0)[::-1]
-    with open(joiner('violations.out'), 'w') as f_viol:
+    with open(joiner('violations.out'), 'w',
+              encoding='utf-8') as f_viol:
         write('Writing violations to file: {:s}'.format(f_viol.name))
         num_violations = violations.sum(axis=1)
         nrestraints = num_violations.shape[0]
@@ -512,7 +512,7 @@ def main():
         write(('Possible false-positive restraints (z-score > 1.0):' +
                ' {:d}' * nfalse_positives).format(*tuple(ind_false_positives)))
 
-    with open(joiner('z-score.out'), 'w') as f:
+    with open(joiner('z-score.out'), 'w', encoding='utf-8') as f:
         write('Writing z-score of each restraint to {:s}'.format(f.name))
         for n in range(zscore_violations.shape[0]):
             f.write('{:2d} {:6.3f} {:6.3f} {:6.3f}\n'.format(
@@ -524,7 +524,7 @@ def main():
         for n, vol in dv.occupancy_grids.items():
             # Normalize the occupancy grid
             if cum_complexes[n] > 0:
-                vol._array /= cum_complexes[n]
+                vol.array[...] /= cum_complexes[n]
             vol.tofile(joiner('occupancy_{:d}.mrc'.format(n)))
 
     # Write out interaction analysis
@@ -549,7 +549,7 @@ def main():
         ligand_cum_interactions = interaction_matrix.sum(
             axis=2)[::-1].cumsum(axis=0)[::-1]
         fname = joiner('receptor_interactions.txt')
-        with open(fname, 'w') as f:
+        with open(fname, 'w', encoding='utf-8') as f:
             # Write header
             f.write('#resi')
             for consistent_restraints in range(
@@ -573,7 +573,7 @@ def main():
                 f.write('\n')
 
         fname = joiner('ligand_interactions.txt')
-        with open(fname, 'w') as f:
+        with open(fname, 'w', encoding='utf-8') as f:
             # Write header
             f.write('#resi')
             for consistent_restraints in range(

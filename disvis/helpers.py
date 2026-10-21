@@ -26,7 +26,7 @@ def parse_interactions(f):
     each number of consistent restraints, the average number of interactions
     of each residue.
     """
-    with open(f) as fh:
+    with open(f, encoding='utf-8') as fh:
         words = fh.readline().split()
         if not words or words[0] != '#resi':
             raise ValueError(
@@ -55,7 +55,7 @@ def parse_interaction_selection(fname, pdb1, pdb2):
     for which the interactions are analysed. Returns the CA (protein) or
     O3' (nucleic acid) atoms of these residues.
     """
-    with open(fname) as fid:
+    with open(fname, encoding='utf-8') as fid:
         resi1 = [int(x) for x in fid.readline().split()]
         resi2 = [int(x) for x in fid.readline().split()]
 
@@ -79,7 +79,7 @@ def parse_restraints(fname, pdb1, pdb2):
     in pdb2, and the minimum and maximum distance. Returns a list of
     [pdb1 selection, pdb2 selection, mindis, maxdis].
     """
-    with open(fname) as fid:
+    with open(fname, encoding='utf-8') as fid:
         lines = fid.readlines()
 
     dist_restraints = []
@@ -109,5 +109,5 @@ def parse_restraints(fname, pdb1, pdb2):
 
 def dump_args(args, fname):
     """Dump the command-line arguments to a `.json` file."""
-    with open(fname, 'w') as f:
+    with open(fname, 'w', encoding='utf-8') as f:
         json.dump(vars(args), f, indent=4, sort_keys=True)

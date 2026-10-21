@@ -13,7 +13,7 @@ def parse_cif(infile):
     if hasattr(infile, 'read'):
         pass
     elif isinstance(infile, str):
-        infile = open(infile)
+        infile = open(infile, encoding='utf-8')
     else:
         raise TypeError("Input should either be a file or string.")
 

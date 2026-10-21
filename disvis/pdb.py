@@ -10,7 +10,7 @@ from .IO.mmcif import parse_cif
 from .elements import ELEMENTS
 
 
-class PDB(object):
+class PDB:
     """An atomic structure, stored as a NumPy structured array (data)."""
 
     @classmethod
