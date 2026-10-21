@@ -29,8 +29,6 @@ RNA polymerase II, use `1wcm_A.pdb 1wcm_E.pdb` as input.
   Python 3.14, NumPy 2).
 * `gpu/coarse` and `gpu/fine`: GPU runs with `-g` (Rocky Linux 9, NVIDIA RTX
   6000 Ada, Python 3.14).
-* `profile` (PRE5-PUP2 only): a single-core coarse run profiled with cProfile
-  (`profile.out`).
 
 The CPU output files (`accessible_complexes.out`, `violations.out`,
 `z-score.out` and `accessible_interaction_space.mrc`) are byte-identical across
