@@ -1,6 +1,7 @@
 """Input parsers and other helper functions."""
 from argparse import ArgumentTypeError
 import json
+from math import isfinite
 try:
     import pyopencl as cl
 except ImportError:
@@ -26,7 +27,7 @@ def positive_float(value):
         number = float(value)
     except ValueError:
         number = None
-    if number is None or not number > 0:
+    if number is None or not isfinite(number) or number <= 0:
         raise ArgumentTypeError(
             "{:s} is not a positive number".format(value))
     return number

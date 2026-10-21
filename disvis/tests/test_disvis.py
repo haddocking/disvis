@@ -169,7 +169,7 @@ class TestInputChecks(TestCase):
 
     def test_positive_float(self):
         self.assertEqual(positive_float('0.5'), 0.5)
-        for value in ('0', '-1', 'nan', 'abc'):
+        for value in ('0', '-1', 'nan', 'inf', 'abc'):
             with self.assertRaises(ArgumentTypeError):
                 positive_float(value)
 
