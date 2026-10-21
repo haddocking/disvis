@@ -194,6 +194,15 @@ outputs the following files:
   receptor and ligand molecule. Each column denotes the minimal number of
   consistent restraints of each complex for which interactions were counted.
 
+To visualize the most contacted residues, write the average number of
+interactions into the B-factor column of the receptor or ligand PDB file
+
+    python scripts/interactions_to_bfactor.py receptor.pdb receptor_interactions.txt N
+
+where *N* is one of the column numbers of the interaction file. This writes
+*receptor_interactions.pdb*, which can be colored on B-factor, e.g. with
+`spectrum b, blue_red` in PyMOL or `color bfactor` in ChimeraX.
+
 
 Licensing
 ---------

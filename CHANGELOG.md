@@ -28,6 +28,9 @@ Changes compared with 2.3.0, the last Python 2 release.
 - MRC files are closed after reading.
 - `scripts/analyze.py` and `scripts/analyze_interactions.py` were rewritten
   for the current code and output format.
+- New `scripts/interactions_to_bfactor.py` writes the average number of
+  interactions of each residue into the B-factor column of a PDB file, for
+  coloring the most contacted residues (#12).
 
 ### Results
 
