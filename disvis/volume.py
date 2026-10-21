@@ -107,6 +107,9 @@ def radix235(ninit):
 
     FFTs are fastest for such sizes.
     """
+    if ninit < 1:
+        raise ValueError(
+            "Grid size should be at least 1, got {}.".format(ninit))
     while True:
         n = ninit
         divided = True

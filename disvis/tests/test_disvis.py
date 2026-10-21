@@ -2,12 +2,15 @@
 
 Run from the disvis/tests directory.
 """
+from argparse import ArgumentTypeError
 from unittest import TestCase, main
 
 import numpy as np
 
 from disvis.pdb import PDB
 from disvis.disvis import DisVis
+from disvis.helpers import positive_float
+from disvis.volume import radix235
 
 
 class TestDisVis(TestCase):
@@ -151,6 +154,24 @@ class TestDisVis(TestCase):
         dv._initialize()
         dv._cpu_init()
         dv._cpu_search()
+
+
+class TestInputChecks(TestCase):
+
+    def test_radix235(self):
+        self.assertEqual(radix235(1), 1)
+        self.assertEqual(radix235(7), 8)
+        self.assertEqual(radix235(31), 32)
+        self.assertEqual(radix235(121), 125)
+        for n in (0, -3):
+            with self.assertRaises(ValueError):
+                radix235(n)
+
+    def test_positive_float(self):
+        self.assertEqual(positive_float('0.5'), 0.5)
+        for value in ('0', '-1', 'nan', 'abc'):
+            with self.assertRaises(ArgumentTypeError):
+                positive_float(value)
 
 
 if __name__ == '__main__':

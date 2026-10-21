@@ -1,0 +1,4 @@
+# Sources of the compiled extensions, needed to build from the sdist
+include src/libdisvis.pyx
+include src/_extensions.c
+include CHANGELOG.md INSTALLATION.md

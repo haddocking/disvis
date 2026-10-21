@@ -13,7 +13,7 @@ import numpy as np
 from disvis import DisVis, PDB, Volume, __version__
 from disvis.rotations import proportional_orientations, quat_to_rotmat
 from disvis.helpers import (dump_args, parse_interaction_selection,
-                            parse_restraints)
+                            parse_restraints, positive_float)
 
 
 def parse_args():
@@ -38,7 +38,7 @@ def parse_args():
                    'Default is 15 degrees.')
 
     p.add_argument('-vs', '--voxelspacing', dest='voxelspacing',
-                   metavar='<float>', type=float, default=1,
+                   metavar='<float>', type=positive_float, default=1,
                    help='Voxel spacing of search grid in angstrom. '
                    'Default is 1A.')
 

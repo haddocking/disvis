@@ -16,6 +16,7 @@ import sys
 import numpy as np
 
 from disvis import PDB
+from disvis.helpers import positive_float
 from disvis.libdisvis import dilate_points
 from disvis.volume import radix235
 
@@ -30,7 +31,7 @@ def parse_args():
     p.add_argument('-f', '--form', choices=('u', 'b'), default='u',
                    help="Use the unbound (u) or bound (b) structures. "
                         "Default is u.")
-    p.add_argument('-vs', '--voxelspacing', type=float, default=1,
+    p.add_argument('-vs', '--voxelspacing', type=positive_float, default=1,
                    help="Voxel spacing of the grid in angstrom. "
                    "Default is 1A.")
     p.add_argument('-ir', '--interaction-radius', type=float, default=3,

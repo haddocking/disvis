@@ -14,10 +14,13 @@ Changes compared with 2.3.0, the last Python 2 release.
 - New `gpu` extra (`pip install '.[gpu]'`) for pyopencl; clFFT and gpyfft
   must still be installed by hand (see `INSTALLATION.md`).
 - Docker image based on Python 3.12.
+- The source distribution (sdist) includes the extension sources, so it can
+  be built and installed.
 
 ### Fixes and changes
 
 - New `--version` option, and `disvis.__version__`.
+- A zero or negative voxel spacing (`-vs`) is rejected; DisVis used to hang.
 - `-p` works with the spawn start method (macOS).
 - With `-p`, one progress line for all processes, updated in place.
 - `disvis.log` is overwritten instead of appended to, and is also written

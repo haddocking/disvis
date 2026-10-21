@@ -1,4 +1,5 @@
 """Input parsers and other helper functions."""
+from argparse import ArgumentTypeError
 import json
 try:
     import pyopencl as cl
@@ -17,6 +18,18 @@ def get_queue():
         queue = None
 
     return queue
+
+
+def positive_float(value):
+    """Return value as a float; an argparse type for positive numbers."""
+    try:
+        number = float(value)
+    except ValueError:
+        number = None
+    if number is None or not number > 0:
+        raise ArgumentTypeError(
+            "{:s} is not a positive number".format(value))
+    return number
 
 
 def parse_interactions(f):
