@@ -1,4 +1,5 @@
 """OpenCL kernels for the GPU-accelerated search."""
+
 from os.path import dirname, join
 from string import Template
 
@@ -7,7 +8,7 @@ import pyopencl as cl
 from pyopencl.elementwise import ElementwiseKernel
 
 
-class Kernels():
+class Kernels:
     """The OpenCL kernels used by DisVis, compiled for one context.
 
     The kernels of kernels.cl are compiled after substituting values, a
@@ -26,8 +27,9 @@ class Kernels():
         self.program = cl.Program(ctx, t).build()
         # Retrieve every kernel once: each program.<name> access creates a
         # new kernel object.
-        self._kernels = {k.function_name: k
-                         for k in self.program.all_kernels()}
+        self._kernels = {
+            k.function_name: k for k in self.program.all_kernels()
+        }
         # Global and local workitems for all kernels
         self._gws_rotate_points3d = (8 * 32 * 8 * 8,)
         self._gws_rotate_grid3d = (96, 64, 1)
@@ -138,7 +140,8 @@ class Kernels():
         """Rotate the points by rotmat (a float16) and store them in out."""
         args = (points.data, np.int32(points.shape[0]), rotmat, out.data)
         self._kernels['rotate_points3d'](
-            queue, self._gws_rotate_points3d, None, *args)
+            queue, self._gws_rotate_points3d, None, *args
+        )
 
     def rotate_grid3d(self, queue, grid, rotmat, out):
         """Rotate the grid around its origin into out.
@@ -148,7 +151,8 @@ class Kernels():
         """
         args = (grid.data, rotmat, out.data)
         self._kernels['rotate_grid3d'](
-            queue, self._gws_rotate_grid3d, None, *args)
+            queue, self._gws_rotate_grid3d, None, *args
+        )
 
     def dilate_point_add(self, queue, centers, mindis, maxdis, restspace):
         """Add 1 to restspace within the distance range of each restraint.
@@ -158,7 +162,8 @@ class Kernels():
         """
         args = (centers.data, mindis.data, maxdis.data, restspace.data)
         self._kernels['dilate_point_add'](
-            queue, self._gws_dilate_point_add, None, *args)
+            queue, self._gws_dilate_point_add, None, *args
+        )
 
     def histogram(self, queue, data, hist):
         """Add to hist[n - 1] the number of grid points of data equal to n.
@@ -167,23 +172,35 @@ class Kernels():
         """
         args = (data.data, hist.data)
         self._kernels['histogram'](
-            queue, self._gws_histogram, self._lws_histogram, *args)
+            queue, self._gws_histogram, self._lws_histogram, *args
+        )
 
-    def count_violations(self, queue, centers, mindis2, maxdis2, interspace,
-                         viol):
+    def count_violations(
+        self, queue, centers, mindis2, maxdis2, interspace, viol
+    ):
         """Count how often each restraint is violated, and add it to viol.
 
         viol[n - 1, i] counts the violations of restraint i in the complexes
         consistent with n restraints. centers holds the restraint centers in
         grid units, mindis2 and maxdis2 the squared distance ranges.
         """
-        args = (centers.data, mindis2.data, maxdis2.data, interspace.data,
-                viol.data)
-        self._kernels['count_violations'](queue, self._gws_count_violations,
-                                          self._lws_count_violations, *args)
+        args = (
+            centers.data,
+            mindis2.data,
+            maxdis2.data,
+            interspace.data,
+            viol.data,
+        )
+        self._kernels['count_violations'](
+            queue,
+            self._gws_count_violations,
+            self._lws_count_violations,
+            *args,
+        )
 
-    def count_interactions(self, queue, fixed_coor, scanning_coor, interspace,
-                           nconsistent, hist):
+    def count_interactions(
+        self, queue, fixed_coor, scanning_coor, interspace, nconsistent, hist
+    ):
         """Count the interactions between the selected residues.
 
         For the complexes consistent with exactly nconsistent restraints,
@@ -191,8 +208,16 @@ class Kernels():
         the scanning molecule is within the interaction cutoff of residue
         j of the fixed molecule.
         """
-        args = (fixed_coor.data, scanning_coor.data, interspace.data,
-                np.int32(nconsistent), hist.data)
+        args = (
+            fixed_coor.data,
+            scanning_coor.data,
+            interspace.data,
+            np.int32(nconsistent),
+            hist.data,
+        )
         self._kernels['count_interactions'](
-            queue, self._gws_count_interactions,
-            self._lws_count_interactions, *args)
+            queue,
+            self._gws_count_interactions,
+            self._lws_count_interactions,
+            *args,
+        )

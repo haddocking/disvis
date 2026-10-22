@@ -1,4 +1,5 @@
 """Reader and writer for MRC and CCP4 density files."""
+
 import sys
 import os.path
 from struct import pack, unpack
@@ -51,17 +52,27 @@ class MRCFile:
 
         self._fid.seek(212)
         machst = hex(self._fid.read(1)[0])
-        if (machst == '0x44'):
+        if machst == '0x44':
             endian = '<'
-        elif (machst == '0x11'):
+        elif machst == '0x11':
             endian = '>'
         else:
-            raise IOError("Could not determine the endianness of the file")
+            raise OSError("Could not determine the endianness of the file")
         self._endian = endian
 
         self._fid.seek(0)
-        headertype = 'i' * 10 + 'f' * 6 + 'i' * 3 + 'f' * 3 + 'i' * 3\
-            + 'f' * 27 + 'c' * 8 + 'f' * 1 + 'i' * 1 + 'c' * (80 * 10)
+        headertype = (
+            'i' * 10
+            + 'f' * 6
+            + 'i' * 3
+            + 'f' * 3
+            + 'i' * 3
+            + 'f' * 27
+            + 'c' * 8
+            + 'f' * 1
+            + 'i' * 1
+            + 'c' * (80 * 10)
+        )
         raw_header = unpack(endian + headertype, self._fid.read(1024))
         self._header = OrderedDict()
         self._header['nc'] = raw_header[0]
@@ -95,14 +106,15 @@ class MRCFile:
         self._header['xstart'] = raw_header[49]
         self._header['ystart'] = raw_header[50]
         self._header['zstart'] = raw_header[51]
-        self._header['map'] = b"".join(
-            raw_header[52:56]).decode('ascii', 'replace')
-        self._header['machst'] = " ".join(
-            hex(c[0]) for c in raw_header[56:60])
+        self._header['map'] = b"".join(raw_header[52:56]).decode(
+            'ascii', 'replace'
+        )
+        self._header['machst'] = " ".join(hex(c[0]) for c in raw_header[56:60])
         self._header['rms'] = raw_header[60]
         self._header['nlabel'] = raw_header[61]
-        self._header['label'] = b"".join(
-            raw_header[62:862]).decode('ascii', 'replace').strip()
+        self._header['label'] = (
+            b"".join(raw_header[62:862]).decode('ascii', 'replace').strip()
+        )
 
     @property
     def fid(self):
@@ -138,29 +150,53 @@ class MRCFile:
         is computed from the start indices.
         """
         if self.fmt == 'mrc':
-            origin = (self.header['xstart'],
-                      self.header['ystart'], self.header['zstart'])
+            origin = (
+                self.header['xstart'],
+                self.header['ystart'],
+                self.header['zstart'],
+            )
         elif self.fmt in ('map', 'ccp4'):
-            order = (self.header['mapc'],
-                     self.header['mapr'], self.header['maps'])
+            order = (
+                self.header['mapc'],
+                self.header['mapr'],
+                self.header['maps'],
+            )
             if order == (1, 2, 3):
-                start = (self.header['ncstart'],
-                         self.header['nrstart'], self.header['nsstart'])
+                start = (
+                    self.header['ncstart'],
+                    self.header['nrstart'],
+                    self.header['nsstart'],
+                )
             elif order == (1, 3, 2):
-                start = (self.header['ncstart'],
-                         self.header['nsstart'], self.header['nrstart'])
+                start = (
+                    self.header['ncstart'],
+                    self.header['nsstart'],
+                    self.header['nrstart'],
+                )
             elif order == (2, 1, 3):
-                start = (self.header['nrstart'],
-                         self.header['ncstart'], self.header['nsstart'])
+                start = (
+                    self.header['nrstart'],
+                    self.header['ncstart'],
+                    self.header['nsstart'],
+                )
             elif order == (2, 3, 1):
-                start = (self.header['nrstart'],
-                         self.header['nsstart'], self.header['ncstart'])
+                start = (
+                    self.header['nrstart'],
+                    self.header['nsstart'],
+                    self.header['ncstart'],
+                )
             elif order == (3, 1, 2):
-                start = (self.header['nsstart'],
-                         self.header['ncstart'], self.header['nrstart'])
+                start = (
+                    self.header['nsstart'],
+                    self.header['ncstart'],
+                    self.header['nrstart'],
+                )
             elif order == (3, 2, 1):
-                start = (self.header['nsstart'],
-                         self.header['nrstart'], self.header['ncstart'])
+                start = (
+                    self.header['nsstart'],
+                    self.header['nrstart'],
+                    self.header['ncstart'],
+                )
 
             origin = [x * self.voxelspacing for x in start]
         return origin
@@ -177,7 +213,7 @@ class MRCFile:
         elif mode == 2:
             datatype = 'f4'
         else:
-            raise IOError("Datatype of density is not recoginized")
+            raise OSError("Datatype of density is not recoginized")
 
         # read the density and reshape it
         nc = self.header['nc']
@@ -185,11 +221,11 @@ class MRCFile:
         ns = self.header['ns']
 
         self.fid.seek(1024)
-        density = np.fromfile(self.fid, dtype=self._endian + datatype
-                              ).reshape((ns, nr, nc))
+        density = np.fromfile(self.fid, dtype=self._endian + datatype).reshape(
+            (ns, nr, nc)
+        )
 
-        order = (self.header['mapc'], self.header['mapr'],
-                 self.header['maps'])
+        order = (self.header['mapc'], self.header['mapr'], self.header['maps'])
         if order == (1, 3, 2):
             density = np.swapaxes(density, 0, 1)
         elif order == (2, 1, 3):
@@ -206,14 +242,13 @@ class MRCFile:
         return density
 
 
-def to_mrc(fid, volume, labels=[]):
+def to_mrc(fid, volume, labels=None):
     """Write volume to the MRC file named fid.
 
     int8 arrays are written as int8, int16 and int32 arrays as int16, and
     float32 and float64 arrays as float32. labels is not used yet.
     """
     with open(fid, 'wb') as out:
-
         nz, ny, nx = volume.shape
         out.write(pack('i', nx))
         out.write(pack('i', ny))
@@ -289,7 +324,8 @@ def to_mrc(fid, volume, labels=[]):
             machst = [b'\x11', b'\x11', b'\x00', b'\x00']
         else:
             raise ValueError(
-                "Byteorder {:} is not recognized".format(sys.byteorder))
+                "Byteorder {:} is not recognized".format(sys.byteorder)
+            )
 
         for c in machst:
             out.write(pack('c', c))

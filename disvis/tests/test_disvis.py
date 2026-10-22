@@ -2,6 +2,7 @@
 
 Run from the disvis/tests directory.
 """
+
 from argparse import ArgumentTypeError
 from unittest import TestCase, main
 
@@ -14,7 +15,6 @@ from disvis.volume import radix235
 
 
 class TestDisVis(TestCase):
-
     def setUp(self):
         self.dv = DisVis()
         self.receptor = PDB.fromfile('data/single-atom.pdb')
@@ -26,7 +26,8 @@ class TestDisVis(TestCase):
         offset = 0
         voxelspacing = 1
         shape, origin = self.dv._minimal_volume_parameters(
-            coor1, coor2, offset, voxelspacing)
+            coor1, coor2, offset, voxelspacing
+        )
         offset = np.linalg.norm(coor2 - coor2.mean(axis=0), axis=1).max()
 
         self.assertEqual(shape, [9, 8, 5])
@@ -108,17 +109,20 @@ class TestDisVis(TestCase):
         self.assertTrue(np.allclose(dv._rsurf, dv._intervol))
         self.assertTrue(np.allclose(dv._rcore, dv._clashvol))
         self.assertTrue(np.allclose(dv._intervol, dv._interacting))
-        self.assertTrue(np.allclose(dv._clashvol,
-                                    np.logical_not(dv._not_clashing)))
-        self.assertTrue(np.allclose(dv._interspace,
-                                    dv._interacting - dv._clashvol))
+        self.assertTrue(
+            np.allclose(dv._clashvol, np.logical_not(dv._not_clashing))
+        )
+        self.assertTrue(
+            np.allclose(dv._interspace, dv._interacting - dv._clashvol)
+        )
 
     def test_get_restraints_center(self):
         dv = self.dv
 
         # 90 degree rotation around Z-axis
-        rotmat = np.asarray([[0, -1, 0], [1, 0, 0], [0, 0, 1]],
-                            dtype=np.float64)
+        rotmat = np.asarray(
+            [[0, -1, 0], [1, 0, 0], [0, 0, 1]], dtype=np.float64
+        )
         # Set required attributes to test function
         dv._lrestraints = np.asarray([[2, 0, 0]], dtype=np.float64)
         dv._rot_lrestraints = np.zeros_like(dv._lrestraints)
@@ -126,10 +130,12 @@ class TestDisVis(TestCase):
         dv._rrestraints = np.asarray([[1, 0, 0]], dtype=np.float64)
 
         dv._get_restraints_center(rotmat)
-        self.assertTrue(np.allclose(dv._rot_lrestraints,
-                                    np.array([[0, 2, 0]])))
-        self.assertTrue(np.allclose(dv._restraints_center,
-                                    np.array([[1, -2, 0]])))
+        self.assertTrue(
+            np.allclose(dv._rot_lrestraints, np.array([[0, 2, 0]]))
+        )
+        self.assertTrue(
+            np.allclose(dv._restraints_center, np.array([[1, -2, 0]]))
+        )
 
     def test_get_restraint_space(self):
         dv = self.dv
@@ -157,7 +163,6 @@ class TestDisVis(TestCase):
 
 
 class TestInputChecks(TestCase):
-
     def test_radix235(self):
         self.assertEqual(radix235(1), 1)
         self.assertEqual(radix235(7), 8)

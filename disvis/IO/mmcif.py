@@ -1,4 +1,5 @@
 """Reader for mmCIF files."""
+
 from collections import OrderedDict
 import numpy as np
 
@@ -20,25 +21,31 @@ def parse_cif(infile):
     atom_site = OrderedDict()
     with infile as f:
         for line in f:
-
             if line.startswith('_atom_site.'):
                 words = line.split('.')
                 atom_site[words[1].strip()] = []
 
             if line.startswith('ATOM'):
                 words = line.split()
-                for key, word in zip(atom_site, words):
+                for key, word in zip(atom_site, words, strict=False):
                     atom_site[key].append(word)
 
     natoms = len(atom_site['id'])
-    dtype = [('atom_id', np.int64), ('name', np.str_, 4),
-             ('resn', np.str_, 4), ('chain', np.str_, 2),
-             ('resi', np.int64), ('x', np.float64),
-             ('y', np.float64), ('z', np.float64),
-             ('occupancy', np.float64), ('bfactor', np.float64),
-             ('element', np.str_, 2), ('charge', np.str_, 2),
-             ('model', np.int64),
-             ]
+    dtype = [
+        ('atom_id', np.int64),
+        ('name', np.str_, 4),
+        ('resn', np.str_, 4),
+        ('chain', np.str_, 2),
+        ('resi', np.int64),
+        ('x', np.float64),
+        ('y', np.float64),
+        ('z', np.float64),
+        ('occupancy', np.float64),
+        ('bfactor', np.float64),
+        ('element', np.str_, 2),
+        ('charge', np.str_, 2),
+        ('model', np.int64),
+    ]
 
     cifdata = np.zeros(natoms, dtype=dtype)
     cifdata['atom_id'] = np.asarray(atom_site['id'], dtype=np.int64)
@@ -60,5 +67,6 @@ def parse_cif(infile):
 
 if __name__ == '__main__':
     import sys
+
     infile = sys.argv[1]
     data = parse_cif(infile)

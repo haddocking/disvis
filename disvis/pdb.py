@@ -1,4 +1,5 @@
 """An atomic structure read from a PDB or mmCIF file."""
+
 import os.path
 import operator
 from collections.abc import Iterable
@@ -37,8 +38,9 @@ class PDB:
     def atomnumber(self):
         """The atomic number of each atom."""
         elements, ind = np.unique(self.data['element'], return_inverse=True)
-        atomnumbers = np.asarray([ELEMENTS[e].number for e in elements],
-                                 dtype=np.float64)
+        atomnumbers = np.asarray(
+            [ELEMENTS[e].number for e in elements], dtype=np.float64
+        )
         return atomnumbers[ind]
 
     @property
@@ -80,8 +82,9 @@ class PDB:
     def mass(self):
         """The atomic mass of each atom."""
         elements, ind = np.unique(self.data['element'], return_inverse=True)
-        mass = np.asarray([ELEMENTS[e].mass for e in elements],
-                          dtype=np.float64)
+        mass = np.asarray(
+            [ELEMENTS[e].mass for e in elements], dtype=np.float64
+        )
         return mass[ind]
 
     @property
@@ -105,12 +108,13 @@ class PDB:
 
     def rmsd(self, pdb):
         """Return the RMSD to pdb, which must have the same atom order."""
-        return np.sqrt(((self.coor - pdb.coor)**2).mean() * 3)
+        return np.sqrt(((self.coor - pdb.coor) ** 2).mean() * 3)
 
     def rotate(self, rotmat):
         """Rotate the coordinates in place by the 3x3 matrix rotmat."""
-        self.data['x'], self.data['y'], self.data['z'] =\
-            np.dot(rotmat, self.coor.T)
+        self.data['x'], self.data['y'], self.data['z'] = np.dot(
+            rotmat, self.coor.T
+        )
 
     def translate(self, vector):
         """Translate the coordinates in place by vector."""
@@ -156,6 +160,7 @@ class PDB:
     def vdw_radius(self):
         """The van der Waals radius of each atom."""
         elements, ind = np.unique(self.data['element'], return_inverse=True)
-        rvdw = np.asarray([ELEMENTS[e].vdwrad for e in elements],
-                          dtype=np.float64)
+        rvdw = np.asarray(
+            [ELEMENTS[e].vdwrad for e in elements], dtype=np.float64
+        )
         return rvdw[ind]

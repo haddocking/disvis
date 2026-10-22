@@ -234,3 +234,9 @@ Radeon HD 7730M for Linux)
 
 Reference results and timings for the test cases, on CPUs and GPUs, are in
 `test-cases/README.md`.
+
+
+## Contributing
+
+See `CONTRIBUTING.md` for the development setup, code style, tests and pull
+requests.

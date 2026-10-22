@@ -46,5 +46,6 @@ Changes compared with 2.3.0, the last Python 2 release.
 - New CPU and GPU reference results for the test cases, and
   `test-cases/README.md` with benchmarks.
 - Fixed the outdated GPU unit tests.
-- PEP8 formatting and docstrings throughout the code.
-- Issue and pull-request templates.
+- Code formatted and linted with ruff (configuration in `pyproject.toml`),
+  with docstrings throughout.
+- Issue and pull-request templates, and `CONTRIBUTING.md` for developers.

@@ -10,6 +10,7 @@ matched by residue number only, as in DisVis.
 The most contacted residues can then be shown by coloring on B-factor, e.g.
 `spectrum b, blue_red` in PyMOL or `color bfactor` in ChimeraX.
 """
+
 from argparse import ArgumentParser
 import sys
 
@@ -20,17 +21,21 @@ def parse_args():
     """Parse the command-line arguments."""
     p = ArgumentParser(description=__doc__)
 
-    p.add_argument('pdb',
-                   help='PDB file of the receptor or ligand')
+    p.add_argument('pdb', help='PDB file of the receptor or ligand')
 
-    p.add_argument('f_inter',
-                   help='Interaction file of the same molecule')
+    p.add_argument('f_inter', help='Interaction file of the same molecule')
 
-    p.add_argument('nrestraints', type=int,
-                   help='Number of consistent restraints')
+    p.add_argument(
+        'nrestraints', type=int, help='Number of consistent restraints'
+    )
 
-    p.add_argument('-o', '--out', dest='out', default=None,
-                   help='Output PDB file (default: <pdb>_interactions.pdb)')
+    p.add_argument(
+        '-o',
+        '--out',
+        dest='out',
+        default=None,
+        help='Output PDB file (default: <pdb>_interactions.pdb)',
+    )
 
     args = p.parse_args()
     if args.out is None:
@@ -50,9 +55,11 @@ def set_bfactors(lines, bfactors):
         if line.startswith(('ATOM  ', 'HETATM')):
             record = line.rstrip('\n').ljust(66)
             bfactor = bfactors.get(int(record[22:26]), 0.0)
-            line = '{:s}{:6.2f}{:s}\n'.format(
-                record[:60], bfactor, record[66:])
-        out.append(line)
+            out.append(
+                '{:s}{:6.2f}{:s}\n'.format(record[:60], bfactor, record[66:])
+            )
+        else:
+            out.append(line)
     return out
 
 
@@ -68,23 +75,36 @@ def main():
         sys.exit(str(e))
     if args.nrestraints not in data:
         available = sorted(k for k in data if k != 'residues')
-        sys.exit('No interactions for {:d} consistent restraints in {:s}. '
-                 'Available: {:s}'.format(
-                     args.nrestraints, args.f_inter,
-                     ', '.join(str(x) for x in available)))
+        sys.exit(
+            'No interactions for {:d} consistent restraints in {:s}. '
+            'Available: {:s}'.format(
+                args.nrestraints,
+                args.f_inter,
+                ', '.join(str(x) for x in available),
+            )
+        )
 
-    bfactors = dict(zip(data['residues'], data[args.nrestraints]))
-    pdb_residues = {int(line[22:26]) for line in lines
-                    if line.startswith(('ATOM  ', 'HETATM'))}
+    bfactors = dict(zip(data['residues'], data[args.nrestraints], strict=True))
+    pdb_residues = {
+        int(line[22:26])
+        for line in lines
+        if line.startswith(('ATOM  ', 'HETATM'))
+    }
     missing = sorted(set(bfactors) - pdb_residues)
     if missing:
-        sys.exit('Residues of {:s} not found in {:s}: {:s}'.format(
-            args.f_inter, args.pdb, ', '.join(str(x) for x in missing)))
+        sys.exit(
+            'Residues of {:s} not found in {:s}: {:s}'.format(
+                args.f_inter, args.pdb, ', '.join(str(x) for x in missing)
+            )
+        )
 
     with open(args.out, 'w', encoding='utf-8') as fh:
         fh.writelines(set_bfactors(lines, bfactors))
-    print('Wrote {:s} ({:d} residues with interactions, max {:.3f})'.format(
-        args.out, len(bfactors), max(bfactors.values(), default=0.0)))
+    print(
+        'Wrote {:s} ({:d} residues with interactions, max {:.3f})'.format(
+            args.out, len(bfactors), max(bfactors.values(), default=0.0)
+        )
+    )
 
 
 if __name__ == '__main__':
