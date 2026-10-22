@@ -12,11 +12,15 @@ Two test cases, each with reference results and timings on different hardware.
 From the test-case directory, a coarse run (9.72° rotational sampling, 7416
 rotations, 2 Å grid)
 
-    disvis O14250.pdb Q9UT97.pdb restraints.dat -a 9.72 -vs 2 -p 8 -d coarse
+```bash
+disvis O14250.pdb Q9UT97.pdb restraints.dat -a 9.72 -vs 2 -p 8 -d coarse
+```
 
 and a fine run (5.27°, 53256 rotations, 1 Å grid)
 
-    disvis O14250.pdb Q9UT97.pdb restraints.dat -a 5.27 -vs 1 -p 8 -d fine
+```bash
+disvis O14250.pdb Q9UT97.pdb restraints.dat -a 5.27 -vs 1 -p 8 -d fine
+```
 
 Use `-g` instead of `-p 8` to run on the GPU (see `INSTALLATION.md`). For
 RNA polymerase II, use `1wcm_A.pdb 1wcm_E.pdb` as input.

@@ -28,39 +28,49 @@ All commands below are typed with the virtual environment activated, so that
 Install the optional GPU requirements of DisVis (pyopencl and Mako) from the
 DisVis directory
 
-    pip install '.[gpu]'
+```bash
+pip install '.[gpu]'
+```
 
 and check that your GPU is found
 
-    python -c "import pyopencl as cl; print([d.name for p in cl.get_platforms() for d in p.get_devices()])"
+```bash
+python -c "import pyopencl as cl; print([d.name for p in cl.get_platforms() for d in p.get_devices()])"
+```
 
 ## 2. clFFT
 
 clFFT, the OpenCL FFT library, is not maintained anymore and must be built
 from source. Here it is installed into the virtual environment
 
-    git clone https://github.com/clMathLibraries/clFFT.git
-    mkdir clFFT/build && cd clFFT/build
-    cmake ../src -DCMAKE_BUILD_TYPE=Release -DBUILD_CLIENT=OFF -DBUILD_TEST=OFF \
-        -DBUILD_EXAMPLES=OFF -DBUILD_CALLBACK_CLIENT=OFF \
-        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_INSTALL_PREFIX="$VIRTUAL_ENV"
-    make -j 8 && make install
-    cd ../..
+```bash
+git clone https://github.com/clMathLibraries/clFFT.git
+mkdir clFFT/build && cd clFFT/build
+cmake ../src -DCMAKE_BUILD_TYPE=Release -DBUILD_CLIENT=OFF -DBUILD_TEST=OFF \
+    -DBUILD_EXAMPLES=OFF -DBUILD_CALLBACK_CLIENT=OFF \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_INSTALL_PREFIX="$VIRTUAL_ENV"
+make -j 8 && make install
+cd ../..
+```
 
 On macOS, give the libraries their full path as install name, so that gpyfft
 finds them at run time
 
-    cd "$VIRTUAL_ENV/lib"
-    for lib in clFFT StatTimer; do
-        install_name_tool -id "$VIRTUAL_ENV/lib/lib$lib.2.dylib" lib$lib.2.*.*.dylib
-        codesign -f -s - lib$lib.2.*.*.dylib
-    done
-    cd -
+```bash
+cd "$VIRTUAL_ENV/lib"
+for lib in clFFT StatTimer; do
+    install_name_tool -id "$VIRTUAL_ENV/lib/lib$lib.2.dylib" lib$lib.2.*.*.dylib
+    codesign -f -s - lib$lib.2.*.*.dylib
+done
+cd -
+```
 
 On Linux, add the library directory to `LD_LIBRARY_PATH` instead, also
 whenever you run DisVis with `-g`, e.g. in your job script
 
-    export LD_LIBRARY_PATH="$VIRTUAL_ENV/lib:$LD_LIBRARY_PATH"
+```bash
+export LD_LIBRARY_PATH="$VIRTUAL_ENV/lib:$LD_LIBRARY_PATH"
+```
 
 (use `lib64` if clFFT was installed there).
 
@@ -68,16 +78,20 @@ whenever you run DisVis with `-g`, e.g. in your job script
 
 gpyfft, the Python bindings to clFFT, is not on PyPI either
 
-    git clone https://github.com/geggo/gpyfft.git
-    cd gpyfft
+```bash
+git clone https://github.com/geggo/gpyfft.git
+cd gpyfft
+```
 
 Its `setup.py` contains hard-coded paths to clFFT. In the section for your
 operating system (`Darwin` for macOS, `Linux` for Linux), set them to the
 virtual environment, using its full path (the output of `echo $VIRTUAL_ENV`)
 
-    CLFFT_DIR = r'/full/path/to/your/venv'
-    CLFFT_LIB_DIRS = [os.path.join(CLFFT_DIR, 'lib')]
-    CLFFT_INCL_DIRS = [os.path.join(CLFFT_DIR, 'include'), ]
+```python
+CLFFT_DIR = r'/full/path/to/your/venv'
+CLFFT_LIB_DIRS = [os.path.join(CLFFT_DIR, 'lib')]
+CLFFT_INCL_DIRS = [os.path.join(CLFFT_DIR, 'include'), ]
+```
 
 Do not use `os.environ['VIRTUAL_ENV']` here: some installers, such as *uv*,
 build packages in a temporary environment and change `VIRTUAL_ENV`. On some
@@ -86,19 +100,25 @@ Linux systems clFFT is installed in `lib64` instead of `lib`.
 On Linux, also set `CL_INCL_DIRS` to the directory containing `CL/cl.h`
 (e.g. `[]` if the OpenCL headers are installed system-wide). Then type
 
-    pip install .
-    cd ..
+```bash
+pip install .
+cd ..
+```
 
 ## 4. Test
 
 From the `disvis/tests` directory, run the GPU tests
 
-    python -m unittest test_kernels test_cpu_vs_gpu
+```bash
+python -m unittest test_kernels test_cpu_vs_gpu
+```
 
 and run DisVis with the `-g` option, e.g. on the PRE5-PUP2 test case
 
-    cd test-cases/PRE5-PUP2-complex
-    disvis O14250.pdb Q9UT97.pdb restraints.dat -a 9.72 -vs 2 -g -d gpu-results
+```bash
+cd test-cases/PRE5-PUP2-complex
+disvis O14250.pdb Q9UT97.pdb restraints.dat -a 9.72 -vs 2 -g -d gpu-results
+```
 
 The results should agree with the GPU results in `example-results/gpu/coarse`
 and the CPU results in `example-results/cpu/coarse` to within single-precision
