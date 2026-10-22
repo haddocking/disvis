@@ -83,7 +83,8 @@ python -W error -m unittest test_disvis                    # CPU only
 python -W error -m unittest test_kernels test_cpu_vs_gpu   # GPU
 ```
 
-The GPU tests need the GPU packages and fail without them.
+The GPU tests are skipped when the GPU packages (pyopencl, gpyfft) or an
+OpenCL GPU are missing.
 
 ### Reference results
 

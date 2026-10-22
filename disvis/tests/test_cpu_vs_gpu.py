@@ -1,29 +1,33 @@
 """Compare the CPU and GPU implementations step by step.
 
-Run from the disvis/tests directory; needs a GPU and pyopencl.
+Run from the disvis/tests directory; skipped without the GPU packages
+(pyopencl, gpyfft) or an OpenCL GPU.
 """
 
-from unittest import TestCase, main
+from unittest import TestCase, main, skipIf
 from os.path import join
 
 import numpy as np
 
 from disvis import PDB
-from disvis.disvis import DisVis
+from disvis.disvis import PYOPENCL, DisVis
 from disvis.helpers import (
     get_queue,
     parse_restraints,
     parse_interaction_selection,
 )
 
+QUEUE = get_queue() if PYOPENCL else None
 
+
+@skipIf(QUEUE is None, 'needs pyopencl, gpyfft and an OpenCL GPU')
 class TestCPUvsGPU(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.dv = DisVis()
         cls.gdv = DisVis()
 
-        cls.gdv.queue = get_queue()
+        cls.gdv.queue = QUEUE
 
         receptor = PDB.fromfile(join('data', 'O14250.pdb'))
         ligand = PDB.fromfile(join('data', 'Q9UT97.pdb'))

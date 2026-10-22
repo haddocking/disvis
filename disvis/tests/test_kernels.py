@@ -1,21 +1,29 @@
 """Tests of the OpenCL kernels.
 
-Run from the disvis/tests directory; needs a GPU and pyopencl.
+Run from the disvis/tests directory; skipped without the GPU packages
+(pyopencl, gpyfft) or an OpenCL GPU.
 """
 
-from unittest import TestCase, main
+from unittest import TestCase, main, skipIf
 
 import numpy as np
-import pyopencl.array as cl_array
 
+from disvis.disvis import PYOPENCL
 from disvis.helpers import get_queue
-from disvis.kernels import Kernels
+
+if PYOPENCL:
+    import pyopencl.array as cl_array
+
+    from disvis.kernels import Kernels
+
+QUEUE = get_queue() if PYOPENCL else None
 
 
+@skipIf(QUEUE is None, 'needs pyopencl, gpyfft and an OpenCL GPU')
 class TestKernels(TestCase):
     @classmethod
     def setUpClass(self):
-        self.queue = get_queue()
+        self.queue = QUEUE
         self.shape = (5, 4, 3)
         self.size = 5 * 4 * 3
         self.values = {
