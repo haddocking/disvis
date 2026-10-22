@@ -1,0 +1,5 @@
+# Mechanical reformatting, skipped by git blame (GitHub uses this file
+# automatically; locally: git config blame.ignoreRevsFile .git-blame-ignore-revs)
+
+# Format the code with ruff
+da27d0a7cb78f423c8ccb2acbf4825c6676a6656
