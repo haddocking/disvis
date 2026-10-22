@@ -5,6 +5,7 @@ Usage: plt-average-interactions.py <interactions file> <output image>
 The input has two columns: residue number and average number of
 interactions.
 """
+
 import sys
 
 import matplotlib.pyplot as plt

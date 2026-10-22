@@ -5,6 +5,7 @@ Reads a receptor_interactions.txt or ligand_interactions.txt file, written by
 of interactions, in complexes consistent with at least the given number of
 restraints, exceeds the active and passive cutoffs.
 """
+
 from argparse import ArgumentParser
 import sys
 
@@ -23,30 +24,49 @@ def parse_args():
     p = ArgumentParser(description=__doc__)
 
     # positional
-    p.add_argument('f_inter',
-                   help='Interaction file')
+    p.add_argument('f_inter', help='Interaction file')
 
-    p.add_argument('nrestraints', type=int,
-                   help='Number of consistent restraints')
+    p.add_argument(
+        'nrestraints', type=int, help='Number of consistent restraints'
+    )
 
     # optional
-    p.add_argument('-ac', '--active-cutoff', dest='active_cutoff',
-                   default=DEFAULT_ACTIVE_CUTOFF, type=float,
-                   help="Minimum number of average interactions for a "
-                        "residue to be considered 'active'.")
+    p.add_argument(
+        '-ac',
+        '--active-cutoff',
+        dest='active_cutoff',
+        default=DEFAULT_ACTIVE_CUTOFF,
+        type=float,
+        help="Minimum number of average interactions for a "
+        "residue to be considered 'active'.",
+    )
 
-    p.add_argument('-pc', '--passive-cutoff', dest='passive_cutoff',
-                   default=DEFAULT_PASSIVE_CUTOFF, type=float,
-                   help="Minimum number of average interactions for a "
-                        "residue to be considered 'passive'.")
+    p.add_argument(
+        '-pc',
+        '--passive-cutoff',
+        dest='passive_cutoff',
+        default=DEFAULT_PASSIVE_CUTOFF,
+        type=float,
+        help="Minimum number of average interactions for a "
+        "residue to be considered 'passive'.",
+    )
 
-    p.add_argument('-o', '--out', dest='out',
-                   default=DEFAULT_OUT,
-                   help='File name of output')
+    p.add_argument(
+        '-o',
+        '--out',
+        dest='out',
+        default=DEFAULT_OUT,
+        help='File name of output',
+    )
 
     # flags
-    p.add_argument('-s', '--sort', dest='sort', action='store_true',
-                   help='Sort the residues by most contacted')
+    p.add_argument(
+        '-s',
+        '--sort',
+        dest='sort',
+        action='store_true',
+        help='Sort the residues by most contacted',
+    )
 
     args = p.parse_args()
 
@@ -71,9 +91,12 @@ def main():
         sys.exit(str(e))
     if args.nrestraints not in data:
         available = sorted(k for k in data if k != 'residues')
-        sys.exit('No interactions for {:d} consistent restraints in {:s}. '
-                 'Available: {:s}'.format(args.nrestraints, args.f_inter,
-                                          format_numbers(available)))
+        sys.exit(
+            'No interactions for {:d} consistent restraints in {:s}. '
+            'Available: {:s}'.format(
+                args.nrestraints, args.f_inter, format_numbers(available)
+            )
+        )
 
     # extract data into arrays
     residue_id = asarray(data['residues'])
@@ -86,8 +109,9 @@ def main():
 
     active_res = residue_id[ave_interactions >= args.active_cutoff]
 
-    passive_indices = (ave_interactions >= args.passive_cutoff) & \
-        (ave_interactions < args.active_cutoff)
+    passive_indices = (ave_interactions >= args.passive_cutoff) & (
+        ave_interactions < args.active_cutoff
+    )
     passive_res = residue_id[passive_indices]
 
     print('Active residues ({:d}):'.format(active_res.size))

@@ -1,4 +1,5 @@
 """Real 3D FFTs on the GPU with clFFT, through gpyfft."""
+
 from gpyfft import GpyFFT
 
 G = GpyFFT()
@@ -25,11 +26,14 @@ class RFFTn:
         elements = 1
         for i in shape:
             elements *= i
-        if (elements > (2.0**24.0)):
+        if elements > (2.0**24.0):
             from math import log
+
             power = log(elements, 2)
-            raise ValueError('The maximum number of elements for clFFT is '
-                             '2^24, currently you want 2^{:.2f}'.format(power))
+            raise ValueError(
+                'The maximum number of elements for clFFT is '
+                '2^24, currently you want 2^{:.2f}'.format(power)
+            )
 
         ndim = len(shape)
         if ndim > 3:
@@ -88,9 +92,12 @@ class iRFFTn:
             elements *= i
         if elements > 2**24:
             from math import log
+
             power = log(elements, 2)
-            raise ValueError('The maximum number of elements for clFFT is '
-                             '2^24, currently you want 2^{:.2f}'.format(power))
+            raise ValueError(
+                'The maximum number of elements for clFFT is '
+                '2^24, currently you want 2^{:.2f}'.format(power)
+            )
 
         ndim = len(shape)
         if ndim > 3:
@@ -129,6 +136,7 @@ class iRFFTn:
 
     def __call__(self, queue, inarray, outarray):
         """Enqueue the transform of inarray into outarray on queue."""
-        self.plan.enqueue_transform(queue, inarray.data, outarray.data,
-                                    direction_forward=False)
+        self.plan.enqueue_transform(
+            queue, inarray.data, outarray.data, direction_forward=False
+        )
         self.baked = True

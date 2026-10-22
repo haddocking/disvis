@@ -1,4 +1,5 @@
 """Visualise and quantify the accessible interaction space of complexes."""
+
 from importlib.metadata import version
 
 from .disvis import DisVis

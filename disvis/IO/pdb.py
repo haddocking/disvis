@@ -1,4 +1,5 @@
 """Reader for PDB files."""
+
 from collections import defaultdict
 from ..elements import element_from_name
 
@@ -28,12 +29,10 @@ def parse_pdb(pdbfile):
 
     model_number = 1
     for line in pdbfile:
-
         if line.startswith(MODEL):
             model_number = int(line[10:14])
 
         elif line.startswith((ATOM, HETATM)):
-
             pdb['model'].append(model_number)
             pdb['atom_id'].append(int(line[6:11].strip()))
             name = line[12:16].strip()
@@ -56,15 +55,23 @@ def parse_pdb(pdbfile):
             pdb['charge'].append(line[78:80])
 
     natoms = len(pdb['name'])
-    dtype = [('atom_id', np.int64), ('name', np.str_, 4),
-             ('resn', np.str_, 4), ('chain', np.str_, 1),
-             ('resi', np.int64), ('x', np.float64),
-             ('y', np.float64), ('z', np.float64),
-             ('occupancy', np.float64), ('bfactor', np.float64),
-             ('element', np.str_, 2), ('charge', np.str_, 2),
-             ('model', np.int64), ('i_code', np.str_, 1),
-             ('alt_loc', np.str_, 1)
-             ]
+    dtype = [
+        ('atom_id', np.int64),
+        ('name', np.str_, 4),
+        ('resn', np.str_, 4),
+        ('chain', np.str_, 1),
+        ('resi', np.int64),
+        ('x', np.float64),
+        ('y', np.float64),
+        ('z', np.float64),
+        ('occupancy', np.float64),
+        ('bfactor', np.float64),
+        ('element', np.str_, 2),
+        ('charge', np.str_, 2),
+        ('model', np.int64),
+        ('i_code', np.str_, 1),
+        ('alt_loc', np.str_, 1),
+    ]
 
     pdbdata = np.zeros(natoms, dtype=dtype)
     for key, value in pdb.items():

@@ -1,4 +1,5 @@
 """A 3D density on a regular grid, with its MRC input and output."""
+
 import numpy as np
 
 from .libdisvis import binary_erosion
@@ -67,12 +68,16 @@ class Volume:
 
     def duplicate(self):
         """Return a copy of the volume."""
-        return Volume(self.array.copy(), voxelspacing=self.voxelspacing,
-                      origin=self.origin)
+        return Volume(
+            self.array.copy(),
+            voxelspacing=self.voxelspacing,
+            origin=self.origin,
+        )
 
     def tofile(self, fid):
         """Write the volume to an MRC file (a file name or binary file)."""
         to_mrc(fid, self)
+
 
 # builders
 
@@ -84,8 +89,10 @@ def zeros(shape, voxelspacing, origin):
 
 def zeros_like(volume):
     """Return a volume of zeros with the same grid as volume."""
-    return Volume(np.zeros_like(volume.array), volume.voxelspacing,
-                  volume.origin)
+    return Volume(
+        np.zeros_like(volume.array), volume.voxelspacing, volume.origin
+    )
+
 
 # functions
 
@@ -109,7 +116,8 @@ def radix235(ninit):
     """
     if ninit < 1:
         raise ValueError(
-            "Grid size should be at least 1, got {}.".format(ninit))
+            "Grid size should be at least 1, got {}.".format(ninit)
+        )
     while True:
         n = ninit
         divided = True

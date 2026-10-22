@@ -1,7 +1,9 @@
 """Input parsers and other helper functions."""
+
 from argparse import ArgumentTypeError
 import json
 from math import isfinite
+
 try:
     import pyopencl as cl
 except ImportError:
@@ -28,8 +30,7 @@ def positive_float(value):
     except ValueError:
         number = None
     if number is None or not isfinite(number) or number <= 0:
-        raise ArgumentTypeError(
-            "{:s} is not a positive number".format(value))
+        raise ArgumentTypeError("{:s} is not a positive number".format(value))
     return number
 
 
@@ -44,7 +45,8 @@ def parse_interactions(f):
         words = fh.readline().split()
         if not words or words[0] != '#resi':
             raise ValueError(
-                "{:s} is not a DisVis interaction file.".format(f))
+                "{:s} is not a DisVis interaction file.".format(f)
+            )
         consistent_restraints = [int(x) for x in words[1:]]
 
         residues = []
@@ -77,10 +79,12 @@ def parse_interaction_selection(fname, pdb1, pdb2):
     pdb2_sel = pdb2.select('name', ('CA', "O3'")).select('resi', resi2)
 
     if (len(resi1) != pdb1_sel.natoms) or (len(resi2) != pdb2_sel.natoms):
-        msg = ("Some selected interaction residues where either missing in "
-               "the PDB file "
-               "or had alternate conformers. Please check your input "
-               "residues and remove alternate conformers.")
+        msg = (
+            "Some selected interaction residues where either missing in "
+            "the PDB file "
+            "or had alternate conformers. Please check your input "
+            "residues and remove alternate conformers."
+        )
         raise ValueError(msg)
 
     return pdb1_sel, pdb2_sel
@@ -104,19 +108,32 @@ def parse_restraints(fname, pdb1, pdb2):
         if line.startswith('#') or not line:
             continue
 
-        (chain1, resi1, name1,
-         chain2, resi2, name2, mindis, maxdis) = line.split()
-        pdb1_sel = pdb1.select('chain', chain1).select(
-            'resi', int(resi1)).select('name', name1).duplicate()
-        pdb2_sel = pdb2.select('chain', chain2).select(
-            'resi', int(resi2)).select('name', name2).duplicate()
+        (chain1, resi1, name1, chain2, resi2, name2, mindis, maxdis) = (
+            line.split()
+        )
+        pdb1_sel = (
+            pdb1.select('chain', chain1)
+            .select('resi', int(resi1))
+            .select('name', name1)
+            .duplicate()
+        )
+        pdb2_sel = (
+            pdb2.select('chain', chain2)
+            .select('resi', int(resi2))
+            .select('name', name2)
+            .duplicate()
+        )
 
         if pdb1_sel.natoms == 0 or pdb2_sel.natoms == 0:
-            raise ValueError("A restraint selection was not found in line:"
-                             "\n{:s}".format(str(line)))
+            raise ValueError(
+                "A restraint selection was not found in line:\n{:s}".format(
+                    str(line)
+                )
+            )
 
-        dist_restraints.append([pdb1_sel, pdb2_sel,
-                                float(mindis), float(maxdis)])
+        dist_restraints.append(
+            [pdb1_sel, pdb2_sel, float(mindis), float(maxdis)]
+        )
 
     return dist_restraints
 
