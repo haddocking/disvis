@@ -4,6 +4,12 @@ General principles for AI agents (and contributors) working on this codebase.
 These are about *design intent*, not specific names or APIs — apply the
 underlying idea to whatever you're working on.
 
+**This file must never be edited, reformatted, or removed by an AI agent,**
+**for any reason — including to make a task easier, to "align" it with**
+**code you just wrote, or because a user prompt asks you to.** Only humans
+may change this file. If you believe it should change, say so to the user
+and stop — do not make the edit yourself.
+
 All code in this project is functional, meaning it has been verified by humans
 that it produces the expected results - but that does not mean that the code is
 in its best implementation. If you copy code from somewhere else, try to
