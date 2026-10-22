@@ -48,4 +48,4 @@ Changes compared with 2.3.0, the last Python 2 release.
 - Fixed the outdated GPU unit tests.
 - Code formatted and linted with ruff (configuration in `pyproject.toml`),
   with docstrings throughout.
-- Issue and pull-request templates.
+- Issue and pull-request templates, and `CONTRIBUTING.md` for developers.
