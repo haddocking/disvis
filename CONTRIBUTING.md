@@ -23,8 +23,9 @@ The package metadata and dependencies are in `pyproject.toml`; `setup.py`
 only defines the compiled extensions.
 
 After changing any code, reinstall with `pip install .` before running or
-testing it: the installed package, not the source tree, is what runs. Remove
-the `build/` and `disvis.egg-info/` directories left by the build.
+testing it: the installed package, not the source tree, is what runs (the
+`src/` layout ensures that). Remove the `build/` and `src/disvis.egg-info/`
+directories left by the build.
 
 GPU acceleration also needs clFFT and gpyfft, which are not on PyPI and must be
 built by hand (see `INSTALLATION.md`). On Linux, `LD_LIBRARY_PATH` must include
@@ -32,24 +33,27 @@ the clFFT library directory.
 
 ## Code layout
 
-- `disvis/main.py`: command-line interface. Parses the arguments, input files
-  and restraints, runs the search on the CPU (multiprocessing over subsets of
-  the rotations) or GPU, and writes the output files.
-- `disvis/disvis.py`: the `DisVis` class, the search itself, with a CPU
+The package is in `src/disvis/`:
+
+- `main.py`: command-line interface. Parses the arguments, input files and
+  restraints, runs the search on the CPU (multiprocessing over subsets of the
+  rotations) or GPU, and writes the output files.
+- `disvis.py`: the `DisVis` class, the search itself, with a CPU
   implementation (NumPy FFT or pyFFTW) and a GPU implementation (OpenCL).
-- `disvis/helpers.py`: parsing of restraints, interaction selections and
-  interaction files, and other small utilities.
-- `disvis/rotations.py` and `disvis/data/*.npy`: rotation matrices and the
-  precomputed rotational sampling sets with their weights.
-- `disvis/volume.py`: the `Volume` class (3D grid with spacing and origin).
-- `disvis/pdb.py`, `disvis/IO/`: PDB/mmCIF and MRC input and output.
-- `disvis/kernels.py`, `disvis/kernels.cl`: OpenCL kernels for the GPU.
-- `disvis/pyclfft.py`: GPU FFTs through gpyfft/clFFT.
-- `src/libdisvis.pyx` (Cython) and `src/_extensions.c` (C): the CPU grid
-  operations (restraint spaces, violations, interactions, grid rotation).
-- `scripts/`: analysis scripts for DisVis output.
-- `disvis/tests/`: unit tests; `test-cases/`: test cases with reference
-  results (see `test-cases/README.md`).
+- `helpers.py`: parsing of restraints, interaction selections and interaction
+  files, and other small utilities.
+- `rotations.py` and `data/*.npy`: rotation matrices and the precomputed
+  rotational sampling sets with their weights.
+- `volume.py`: the `Volume` class (3D grid with spacing and origin).
+- `pdb.py`, `IO/`: PDB/mmCIF and MRC input and output.
+- `kernels.py`, `kernels.cl`: OpenCL kernels for the GPU.
+- `pyclfft.py`: GPU FFTs through gpyfft/clFFT.
+- `libdisvis.pyx` (Cython) and `_extensions.c` (C): the CPU grid operations
+  (restraint spaces, violations, interactions, grid rotation).
+
+Outside the package: `tests/` (unit tests), `scripts/` (analysis scripts for
+DisVis output) and `test-cases/` (test cases with reference results, see
+`test-cases/README.md`).
 
 All grids are indexed as `[z, y, x]`; coordinates are `(x, y, z)`.
 
@@ -62,11 +66,11 @@ cython-lint:
 ```bash
 ruff check .
 ruff format .            # or ruff format --check . to only check
-cython-lint --max-line-length 79 src/libdisvis.pyx
+cython-lint --max-line-length 79 src/disvis/libdisvis.pyx
 ```
 
 Every module, public class and function has a docstring (PEP 257, summary on
-the first line). `disvis/elements.py` is third-party code (Christoph Gohlke):
+the first line). `src/disvis/elements.py` is third-party code (Christoph Gohlke):
 it is excluded from formatting and from most lint rules; keep it as it is.
 
 Codacy checks every pull request with ruff, using the same configuration; any
@@ -76,14 +80,12 @@ why.
 
 ## Tests
 
-Run the unit tests from `disvis/tests`, so that the installed package is used
-rather than the source tree:
+Run the unit tests from the repository root; they test the installed package:
 
 ```bash
-cd disvis/tests
-python -W error -m unittest                                # all tests
-python -W error -m unittest test_disvis                    # CPU only
-python -W error -m unittest test_kernels test_cpu_vs_gpu   # GPU
+python -W error -m unittest                                            # all tests
+python -W error -m unittest tests/test_disvis.py                       # CPU only
+python -W error -m unittest tests/test_kernels.py tests/test_cpu_vs_gpu.py  # GPU
 ```
 
 The GPU tests are skipped when the GPU packages (pyopencl, gpyfft) or an

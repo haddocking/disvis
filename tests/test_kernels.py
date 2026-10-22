@@ -1,7 +1,7 @@
 """Tests of the OpenCL kernels.
 
-Run from the disvis/tests directory; skipped without the GPU packages
-(pyopencl, gpyfft) or an OpenCL GPU.
+Run from the repository root with python -m unittest. Skipped without the
+GPU packages (pyopencl, gpyfft) or an OpenCL GPU.
 """
 
 from unittest import TestCase, main, skipIf

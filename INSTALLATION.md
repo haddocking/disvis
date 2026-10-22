@@ -107,10 +107,10 @@ cd ..
 
 ## 4. Test
 
-From the `disvis/tests` directory, run the GPU tests
+From the DisVis directory, run the GPU tests
 
 ```bash
-python -m unittest test_kernels test_cpu_vs_gpu
+python -m unittest tests/test_kernels.py tests/test_cpu_vs_gpu.py
 ```
 
 and run DisVis with the `-g` option, e.g. on the PRE5-PUP2 test case

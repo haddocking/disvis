@@ -13,6 +13,9 @@ Changes compared with 2.3.0, the last Python 2 release.
 - The package metadata, dependencies and build requirements are in
   `pyproject.toml`; `setup.py` only defines the compiled extensions. New `dev`
   extra (`pip install '.[dev]'`: ruff and cython-lint).
+- src layout: the package is in `src/disvis/` (with the extension sources), the
+  unit tests in `tests/`; run them from the repository root with
+  `python -m unittest`. The sdist includes the tests.
 - New `gpu` extra (`pip install '.[gpu]'`) for pyopencl; clFFT and gpyfft
   must still be installed by hand (see `INSTALLATION.md`).
 - Docker image based on Python 3.12.

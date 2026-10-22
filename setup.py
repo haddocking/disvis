@@ -13,13 +13,13 @@ from setuptools.extension import Extension
 ext_modules = [
     Extension(
         "disvis.libdisvis",
-        [os.path.join("src", "libdisvis.pyx")],
+        [os.path.join("src", "disvis", "libdisvis.pyx")],
         include_dirs=[numpy.get_include()],
         extra_compile_args=['-ffast-math'],
     ),
     Extension(
         "disvis._extensions",
-        [os.path.join("src", "_extensions.c")],
+        [os.path.join("src", "disvis", "_extensions.c")],
         include_dirs=[numpy.get_include()],
         extra_compile_args=['-ffast-math'],
     ),

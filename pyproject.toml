@@ -45,11 +45,14 @@ disvis = "disvis.main:main"
 # numpy.get_include() and cythonize().
 
 [tool.setuptools.packages.find]
-include = ["disvis*"]
-exclude = ["disvis.tests*"]
+where = ["src"]
 
 [tool.setuptools.package-data]
 disvis = ["data/*.npy", "kernels.cl"]
+
+[tool.setuptools.exclude-package-data]
+# Sources of the compiled extensions: in the sdist, not in the wheel
+disvis = ["*.pyx", "*.c"]
 
 [tool.ruff]
 line-length = 79
@@ -74,9 +77,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"disvis/elements.py" = ["D", "UP", "PL", "B"]  # third-party code
-"disvis/tests/*" = ["D"]
+"src/disvis/elements.py" = ["D", "UP", "PL", "B"]  # third-party code
+"tests/*" = ["D"]
 
 [tool.ruff.format]
 quote-style = "preserve"
-exclude = ["disvis/elements.py"]  # third-party code, kept as is
+exclude = ["src/disvis/elements.py"]  # third-party code, kept as is
