@@ -35,11 +35,13 @@ For GPU hardware acceleration the following packages are also required
 
 **DisVis** is best installed in a virtual environment. Open a terminal and type
 
-    git clone https://github.com/haddocking/disvis.git
-    cd disvis
-    python3 -m venv .venv
-    source .venv/bin/activate
-    pip install .
+```bash
+git clone https://github.com/haddocking/disvis.git
+cd disvis
+python3 -m venv .venv
+source .venv/bin/activate
+pip install .
+```
 
 The build dependencies (NumPy and Cython) and the run-time dependencies (NumPy
 and pyFFTW) are installed automatically by *pip*. After installation, the
@@ -47,7 +49,9 @@ command line tool *disvis* should be at your disposal.
 
 For GPU acceleration, install the optional GPU requirements with
 
-    pip install '.[gpu]'
+```bash
+pip install '.[gpu]'
+```
 
 and build clFFT and gpyfft, which are not available from PyPI, as described in
 INSTALLATION.md.
@@ -58,7 +62,9 @@ INSTALLATION.md.
 Make sure git, the Python header files and a C compiler are available, e.g. on
 Debian/Ubuntu
 
-    sudo apt-get install git python3-dev python3-venv build-essential
+```bash
+sudo apt-get install git python3-dev python3-venv build-essential
+```
 
 If you are working on a Fedora system, use *dnf* and the *python3-devel* and *gcc* packages.
 Follow the general instructions above to install **DisVis**.
@@ -68,11 +74,15 @@ Follow the general instructions above to install **DisVis**.
 
 Install the Xcode command line tools, which provide git and a C compiler
 
-    xcode-select --install
+```bash
+xcode-select --install
+```
 
 and a recent Python 3, e.g. with [*brew*](https://brew.sh)
 
-    brew install python
+```bash
+brew install python
+```
 
 Follow the general instructions above to install **DisVis**.
 
@@ -89,17 +99,23 @@ Follow the general instructions above to install **DisVis**.
 
 The general pattern to invoke *disvis* is
 
-    disvis <pdb1> <pdb2> <distance-restraints-file>
+```bash
+disvis <pdb1> <pdb2> <distance-restraints-file>
+```
 
 where `<pdb1>` is the fixed chain, `<pdb2>` is the scanning chain and 
 `<distance-restraints-file>` is a text-file
 containing the distance restraints in the following format
 
-     <chainid 1> <resid 1> <atomname 1> <chainid 2> <resid 2> <atomname 2> <mindis> <maxdis>
+```text
+<chainid 1> <resid 1> <atomname 1> <chainid 2> <resid 2> <atomname 2> <mindis> <maxdis>
+```
 
 As an example
     
-    A 18 CA F 27 CB 10.0 20.0
+```text
+A 18 CA F 27 CB 10.0 20.0
+```
 
 This puts a distance restraint between the CA-atom of residue 18 of 
 chain A of pdb1 and the CB-atom of residue 27 of chain F of pdb2 that 
@@ -112,24 +128,32 @@ lines are ignored.
 
 To get a help screen with available options and explanation type
             
-    disvis --help
+```bash
+disvis --help
+```
 
 Some examples to get you started. To perform a 5.27 degree rotational search and store the results
 in the directory *results/*
 
-    disvis 1wcm_A.pdb 1wcm_E.pdb restraints.dat -a 5.27 -d results
+```bash
+disvis 1wcm_A.pdb 1wcm_E.pdb restraints.dat -a 5.27 -d results
+```
 
 Note that the directory is created if it doesn't exist.
 
 To perform a 9.72 degree rotational search with 16 processors and a voxel spacing of 2A
 
-    disvis O14250.pdb Q9UT97.pdb restraints.dat -a 9.72 -p 16 -vs 2
+```bash
+disvis O14250.pdb Q9UT97.pdb restraints.dat -a 9.72 -p 16 -vs 2
+```
 
 To offload computations to the GPU (if the requirements are met) and increase
 the maximum allowed volume of clashes as well as the minimum required volume of
 interaction, and set the interaction radius to 2A
 
-    disvis 1wcm_A.pdb 1wcm_E.pdb restraints.dat -g -cv 6000 -iv 7000 -ir 2
+```bash
+disvis 1wcm_A.pdb 1wcm_E.pdb restraints.dat -g -cv 6000 -iv 7000 -ir 2
+```
 
 To perform a grid occupancy analysis for complexes consistent with at least N
 restraints, include the `-oa` or `--occupancy-analysis` flag to the command. By
@@ -139,7 +163,9 @@ analysis for complexes consistent with a lower number of restraints, use the
 `-ic` or `--interaction-restraints-cutoff` option, followed by the minimum
 number of required consistent restraints. Thus the command
 
-    disvis 1wcm_A.pdb 1wcm_E.pdb restraints.dat -oa -ic 5
+```bash
+disvis 1wcm_A.pdb 1wcm_E.pdb restraints.dat -oa -ic 5
+```
 
 will make an occupancy grid for complexes consistent with at least 5
 restraints, and higher.
@@ -155,8 +181,10 @@ interaction analysis is particularly expensive, only complexes consistent with
 again be used. Also limit the selected residues to only the solvent accessible
 ones. A simple example for the selection-file
 
-    1 2 3 4
-    101 302 888
+```text
+1 2 3 4
+101 302 888
+```
 
 This will select residue numbers 1, 2, 3, and 4 for the receptor, and 101, 302,
 and 888 for the ligand.
@@ -197,7 +225,9 @@ outputs the following files:
 To visualize the most contacted residues, write the average number of
 interactions into the B-factor column of the receptor or ligand PDB file
 
-    python scripts/interactions_to_bfactor.py receptor.pdb receptor_interactions.txt N
+```bash
+python scripts/interactions_to_bfactor.py receptor.pdb receptor_interactions.txt N
+```
 
 where *N* is one of the column numbers of the interaction file. This writes
 *receptor_interactions.pdb*, which can be colored on B-factor, e.g. with

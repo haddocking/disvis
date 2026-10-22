@@ -27,8 +27,7 @@ improve it, do not assume it is already optimal.
 ## Rules for agents
 
 - Reinstall (`pip install .`) after every code change before running or
-  testing, and run the unit tests from `disvis/tests`: the source tree has no
-  compiled extensions.
+  testing; run the unit tests from the repository root with `python -m unittest`.
 - The CPU output must stay byte-identical to the reference results. Compare the
   coarse runs of both test cases after any change to the search, and say so
   explicitly if a change alters the output on purpose.
@@ -36,4 +35,4 @@ improve it, do not assume it is already optimal.
   them. On a cluster, run them through the batch system, not on the login node.
 - Never create or push tags unless explicitly asked: a `v*` tag publishes the
   Docker image.
-- Leave `disvis/elements.py` (third-party code) as it is.
+- Leave `src/disvis/elements.py` (third-party code) as it is.
