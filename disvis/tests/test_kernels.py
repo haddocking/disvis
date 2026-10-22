@@ -82,7 +82,7 @@ class TestKernels(TestCase):
         # Every grid point counts the restraints it is consistent with.
         z, y, x = np.indices(self.shape)
         answer = np.zeros(self.shape, dtype=np.int32)
-        for (cx, cy, cz, _), maxdis in zip(center, [1, 2, 1]):
+        for (cx, cy, cz, _), maxdis in zip(center, [1, 2, 1], strict=True):
             dis2 = (x - cx)**2 + (y - cy)**2 + (z - cz)**2
             answer += dis2 <= maxdis**2
         self.assertTrue(np.array_equal(answer, cl_out.get()))

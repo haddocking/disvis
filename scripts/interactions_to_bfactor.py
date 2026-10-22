@@ -50,9 +50,10 @@ def set_bfactors(lines, bfactors):
         if line.startswith(('ATOM  ', 'HETATM')):
             record = line.rstrip('\n').ljust(66)
             bfactor = bfactors.get(int(record[22:26]), 0.0)
-            line = '{:s}{:6.2f}{:s}\n'.format(
-                record[:60], bfactor, record[66:])
-        out.append(line)
+            out.append('{:s}{:6.2f}{:s}\n'.format(
+                record[:60], bfactor, record[66:]))
+        else:
+            out.append(line)
     return out
 
 
@@ -73,7 +74,8 @@ def main():
                      args.nrestraints, args.f_inter,
                      ', '.join(str(x) for x in available)))
 
-    bfactors = dict(zip(data['residues'], data[args.nrestraints]))
+    bfactors = dict(zip(data['residues'], data[args.nrestraints],
+                        strict=True))
     pdb_residues = {int(line[22:26]) for line in lines
                     if line.startswith(('ATOM  ', 'HETATM'))}
     missing = sorted(set(bfactors) - pdb_residues)

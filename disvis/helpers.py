@@ -98,9 +98,9 @@ def parse_restraints(fname, pdb1, pdb2):
 
     dist_restraints = []
 
-    for line in lines:
+    for raw_line in lines:
         # ignore comments and empty lines
-        line = line.strip()
+        line = raw_line.strip()
         if line.startswith('#') or not line:
             continue
 

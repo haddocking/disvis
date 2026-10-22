@@ -193,8 +193,7 @@ def mp_cpu_disvis(receptor, ligand, rotmat, weights, distance_restraints,
     # in case more processes are requested than the number
     # of rotations sampled
     nrot = rotmat.shape[0]
-    if jobs > nrot:
-        jobs = nrot
+    jobs = min(jobs, nrot)
     nrot_per_job = nrot // jobs
     write('Number of processors used: {:d}'.format(jobs))
     write('Number of rotations per job: {:d}'.format(nrot_per_job))

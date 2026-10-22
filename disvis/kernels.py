@@ -7,7 +7,7 @@ import pyopencl as cl
 from pyopencl.elementwise import ElementwiseKernel
 
 
-class Kernels():
+class Kernels:
     """The OpenCL kernels used by DisVis, compiled for one context.
 
     The kernels of kernels.cl are compiled after substituting values, a

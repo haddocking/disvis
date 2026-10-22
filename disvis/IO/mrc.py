@@ -56,7 +56,7 @@ class MRCFile:
         elif (machst == '0x11'):
             endian = '>'
         else:
-            raise IOError("Could not determine the endianness of the file")
+            raise OSError("Could not determine the endianness of the file")
         self._endian = endian
 
         self._fid.seek(0)
@@ -177,7 +177,7 @@ class MRCFile:
         elif mode == 2:
             datatype = 'f4'
         else:
-            raise IOError("Datatype of density is not recoginized")
+            raise OSError("Datatype of density is not recoginized")
 
         # read the density and reshape it
         nc = self.header['nc']
@@ -206,7 +206,7 @@ class MRCFile:
         return density
 
 
-def to_mrc(fid, volume, labels=[]):
+def to_mrc(fid, volume, labels=None):
     """Write volume to the MRC file named fid.
 
     int8 arrays are written as int8, int16 and int32 arrays as int16, and

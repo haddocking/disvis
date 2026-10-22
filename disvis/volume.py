@@ -95,7 +95,7 @@ def erode(volume, iterations, out=None):
     if out is None:
         out = zeros_like(volume)
         tmp = volume.array.copy()
-        for i in range(iterations):
+        for _ in range(iterations):
             binary_erosion(tmp, out.array)
             tmp[:] = out.array[:]
 

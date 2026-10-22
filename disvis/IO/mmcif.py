@@ -27,7 +27,7 @@ def parse_cif(infile):
 
             if line.startswith('ATOM'):
                 words = line.split()
-                for key, word in zip(atom_site, words):
+                for key, word in zip(atom_site, words, strict=False):
                     atom_site[key].append(word)
 
     natoms = len(atom_site['id'])
