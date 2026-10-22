@@ -3,9 +3,9 @@ name: build and publish the image
 
 on:
   push:
-    # run only against tags
+    # run only against version tags
     tags:
-      - "*"
+      - "v*"
 
 env:
   REGISTRY: ghcr.io

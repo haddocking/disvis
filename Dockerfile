@@ -1,6 +1,6 @@
-FROM python:2.7.18
+FROM python:3.12
 WORKDIR /opt/software
 COPY . .
-RUN  pip install numpy pyfftw && pip install  .
+RUN  pip install --no-cache-dir .
 WORKDIR /data
 ENTRYPOINT [ "disvis" ]

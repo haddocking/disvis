@@ -1,11 +1,17 @@
-from unittest import TestCase, main, skipIf
+"""Compare the CPU and GPU implementations step by step.
+
+Run from the disvis/tests directory; needs a GPU and pyopencl.
+"""
+from unittest import TestCase, main
 from os.path import join
 
 import numpy as np
 
-from disvis import PDB, Volume
+from disvis import PDB
 from disvis.disvis import DisVis
-from disvis.helpers import get_queue, parse_restraints, parse_interaction_selection
+from disvis.helpers import (get_queue, parse_restraints,
+                            parse_interaction_selection)
+
 
 class TestCPUvsGPU(TestCase):
 
@@ -18,13 +24,15 @@ class TestCPUvsGPU(TestCase):
 
         receptor = PDB.fromfile(join('data', 'O14250.pdb'))
         ligand = PDB.fromfile(join('data', 'Q9UT97.pdb'))
-        restraints = parse_restraints(join('data', 'restraints.dat'), receptor, ligand)
-        rselect, lselect = parse_interaction_selection(join('data',
-            'selection.res'), receptor, ligand)
+        restraints = parse_restraints(join('data', 'restraints.dat'),
+                                      receptor, ligand)
+        rselect, lselect = parse_interaction_selection(
+            join('data', 'selection.res'), receptor, ligand)
 
         # Identity rotation and rotation around z-axis
         rotations = np.asarray([[[1, 0, 0], [0, 1, 0], [0, 0, 1]],
-                                [[0, -1, 0], [1, 0, 0], [0, 0, 1]]], dtype=np.float64)
+                                [[0, -1, 0], [1, 0, 0], [0, 0, 1]]],
+                               dtype=np.float64)
 
         cls.dv.receptor = receptor
         cls.gdv.receptor = receptor
@@ -52,6 +60,8 @@ class TestCPUvsGPU(TestCase):
         c_rotmat = self.dv.rotations[0]
         g_rotmat = self.gdv._cl_rotations[0]
         weight = np.float64(1)
+        # The GPU works in single precision, as in DisVis._gpu_search.
+        gweight = np.float32(weight)
 
         self.dv._rotate_lcore(c_rotmat)
         self.gdv._cl_rotate_lcore(g_rotmat)
@@ -64,9 +74,11 @@ class TestCPUvsGPU(TestCase):
         self.assertTrue(test)
         test = np.allclose(self.dv._intervol, self.gdv._cl_intervol.get())
         self.assertTrue(test)
-        test = np.allclose(self.dv._not_clashing, self.gdv._cl_not_clashing.get())
+        test = np.allclose(self.dv._not_clashing,
+                           self.gdv._cl_not_clashing.get())
         self.assertTrue(test)
-        test = np.allclose(self.dv._interacting, self.gdv._cl_interacting.get())
+        test = np.allclose(self.dv._interacting,
+                           self.gdv._cl_interacting.get())
         self.assertTrue(test)
         test = np.allclose(self.dv._interspace, self.gdv._cl_interspace.get())
         self.assertTrue(test)
@@ -74,10 +86,10 @@ class TestCPUvsGPU(TestCase):
         self.dv._get_restraints_center(c_rotmat)
         self.gdv._cl_get_restraints_center(g_rotmat)
         test = np.allclose(self.dv._rot_lrestraints,
-                self.gdv._cl_rot_lrestraints.get()[:, :3])
+                           self.gdv._cl_rot_lrestraints.get()[:, :3])
         self.assertTrue(test)
         test = np.allclose(self.dv._restraints_center,
-                self.gdv._cl_restraints_center.get()[:, :3])
+                           self.gdv._cl_restraints_center.get()[:, :3])
         self.assertTrue(test)
 
         self.dv._get_restraint_space()
@@ -85,46 +97,47 @@ class TestCPUvsGPU(TestCase):
         c_restspace = self.dv._restspace
         g_restspace = self.gdv._cl_restspace.get()
         # The restraints space can differ slightly because of roundoff errors
-        # in the distance calculation. 
+        # in the distance calculation.
         loc = (c_restspace != g_restspace).nonzero()
         diff = (c_restspace != g_restspace).sum()
         self.assertLessEqual(diff, 1)
         # Cheat here by adjusting the restspace on the CPU version for easier
         # further testing
-        for l in zip(loc):
-            self.dv._restspace[l] = g_restspace[l]
+        for ind in zip(loc):
+            self.dv._restspace[ind] = g_restspace[ind]
 
         self.dv._get_reduced_interspace()
         self.gdv._cl_get_reduced_interspace()
-        test = np.allclose(self.dv._red_interspace, self.gdv._cl_red_interspace.get())
+        test = np.allclose(self.dv._red_interspace,
+                           self.gdv._cl_red_interspace.get())
         self.assertTrue(test)
 
         self.dv._count_complexes(weight)
-        self.gdv._cl_count_complexes(weight)
+        self.gdv._cl_count_complexes(gweight)
         test = np.allclose(self.dv._consistent_complexes[1:],
-                self.gdv._cl_consistent_complexes.get())
+                           self.gdv._cl_consistent_complexes.get())
         self.assertTrue(test)
-        print self.dv._consistent_complexes[1:]
-        print self.gdv._cl_consistent_complexes.get()
+        print(self.dv._consistent_complexes[1:])
+        print(self.gdv._cl_consistent_complexes.get())
 
         self.dv._count_violations(weight)
-        self.gdv._cl_count_violations(weight)
+        self.gdv._cl_count_violations(gweight)
         test = np.allclose(self.dv._violations, self.gdv._cl_violations.get())
         self.assertTrue(test)
 
         self.dv._get_occupancy_grids(weight)
-        self.gdv._cl_get_occupancy_grids(weight)
+        self.gdv._cl_get_occupancy_grids(gweight)
         for i in (7, 6, 5):
-            test = np.allclose(self.dv._occ_grid[i], self.gdv._cl_occ_grid[i].get())
+            test = np.allclose(self.dv._occ_grid[i],
+                               self.gdv._cl_occ_grid[i].get())
             self.assertTrue(test)
 
         self.dv._get_interaction_matrix(c_rotmat, weight)
-        self.gdv._cl_get_interaction_matrix(g_rotmat, weight)
+        self.gdv._cl_get_interaction_matrix(g_rotmat, gweight)
         c_im = self.dv._interaction_matrix[2]
         g_im = self.gdv._cl_interaction_matrix[2]
         test = np.allclose(c_im, g_im.get())
         self.assertTrue(test)
-        
 
         # Check second rotation
         c_rotmat = self.dv.rotations[1]
@@ -141,9 +154,11 @@ class TestCPUvsGPU(TestCase):
         self.assertTrue(test)
         test = np.allclose(self.dv._intervol, self.gdv._cl_intervol.get())
         self.assertTrue(test)
-        test = np.allclose(self.dv._not_clashing, self.gdv._cl_not_clashing.get())
+        test = np.allclose(self.dv._not_clashing,
+                           self.gdv._cl_not_clashing.get())
         self.assertTrue(test)
-        test = np.allclose(self.dv._interacting, self.gdv._cl_interacting.get())
+        test = np.allclose(self.dv._interacting,
+                           self.gdv._cl_interacting.get())
         self.assertTrue(test)
         test = np.allclose(self.dv._interspace, self.gdv._cl_interspace.get())
         self.assertTrue(test)
@@ -151,10 +166,10 @@ class TestCPUvsGPU(TestCase):
         self.dv._get_restraints_center(c_rotmat)
         self.gdv._cl_get_restraints_center(g_rotmat)
         test = np.allclose(self.dv._rot_lrestraints,
-                self.gdv._cl_rot_lrestraints.get()[:, :3])
+                           self.gdv._cl_rot_lrestraints.get()[:, :3])
         self.assertTrue(test)
         test = np.allclose(self.dv._restraints_center,
-                self.gdv._cl_restraints_center.get()[:, :3])
+                           self.gdv._cl_restraints_center.get()[:, :3])
         self.assertTrue(test)
 
         self.dv._get_restraint_space()
@@ -162,44 +177,45 @@ class TestCPUvsGPU(TestCase):
         c_restspace = self.dv._restspace
         g_restspace = self.gdv._cl_restspace.get()
         # The restraints space can differ slightly because of roundoff errors
-        # in the distance calculation. 
+        # in the distance calculation.
         loc = (c_restspace != g_restspace).nonzero()
         diff = (c_restspace != g_restspace).sum()
         self.assertLessEqual(diff, 1)
         # Cheat here by adjusting the restspace on the CPU version for easier
         # further testing
-        for l in zip(loc):
-            self.dv._restspace[l] = g_restspace[l]
+        for ind in zip(loc):
+            self.dv._restspace[ind] = g_restspace[ind]
 
         self.dv._get_reduced_interspace()
         self.gdv._cl_get_reduced_interspace()
-        test = np.allclose(self.dv._red_interspace, self.gdv._cl_red_interspace.get())
+        test = np.allclose(self.dv._red_interspace,
+                           self.gdv._cl_red_interspace.get())
         self.assertTrue(test)
 
         self.dv._count_complexes(weight)
-        self.gdv._cl_count_complexes(weight)
+        self.gdv._cl_count_complexes(gweight)
         test = np.allclose(self.dv._consistent_complexes[1:],
-                self.gdv._cl_consistent_complexes.get())
+                           self.gdv._cl_consistent_complexes.get())
         self.assertTrue(test)
 
         self.dv._count_violations(weight)
-        self.gdv._cl_count_violations(weight)
+        self.gdv._cl_count_violations(gweight)
         test = np.allclose(self.dv._violations, self.gdv._cl_violations.get())
         self.assertTrue(test)
 
         self.dv._get_occupancy_grids(weight)
-        self.gdv._cl_get_occupancy_grids(weight)
+        self.gdv._cl_get_occupancy_grids(gweight)
         for i in (7, 6, 5):
-            test = np.allclose(self.dv._occ_grid[i], self.gdv._cl_occ_grid[i].get())
+            test = np.allclose(self.dv._occ_grid[i],
+                               self.gdv._cl_occ_grid[i].get())
             self.assertTrue(test)
 
         self.dv._get_interaction_matrix(c_rotmat, weight)
-        self.gdv._cl_get_interaction_matrix(g_rotmat, weight)
+        self.gdv._cl_get_interaction_matrix(g_rotmat, gweight)
         c_im = self.dv._interaction_matrix[2]
         g_im = self.gdv._cl_interaction_matrix[2]
         test = np.allclose(c_im, g_im.get())
         self.assertTrue(test)
-
 
 
 if __name__ == '__main__':

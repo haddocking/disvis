@@ -1,65 +1,83 @@
-from __future__ import print_function, division
-import sys
-from argparse import ArgumentParser, FileType
+"""Classify residues as active or passive from a DisVis interaction analysis.
 
-from numpy import argsort, asarray, savetxt
+Reads a receptor_interactions.txt or ligand_interactions.txt file, written by
+`disvis --interaction-selection`, and selects the residues whose average number
+of interactions, in complexes consistent with at least the given number of
+restraints, exceeds the active and passive cutoffs.
+"""
+from argparse import ArgumentParser
+import sys
+
+from numpy import argsort, asarray
 from disvis.helpers import parse_interactions
 
 
 # default values
 DEFAULT_ACTIVE_CUTOFF = 1.0
 DEFAULT_PASSIVE_CUTOFF = 0.1
-DEFAULT_OUT = open('average-interactions.out', 'w')
+DEFAULT_OUT = 'average-interactions.out'
 
 
 def parse_args():
-
-    p = ArgumentParser()
+    """Parse the command-line arguments."""
+    p = ArgumentParser(description=__doc__)
 
     # positional
-    p.add_argument('f_inter', type=file,
-        help='Interaction file')
+    p.add_argument('f_inter',
+                   help='Interaction file')
 
     p.add_argument('nrestraints', type=int,
-        help='Number of consistent restraints')
+                   help='Number of consistent restraints')
 
     # optional
     p.add_argument('-ac', '--active-cutoff', dest='active_cutoff',
-        default=DEFAULT_ACTIVE_CUTOFF, type=float,
-        help="Minimum number of average interactions for a residue to be "
-        "considered 'active'.")
+                   default=DEFAULT_ACTIVE_CUTOFF, type=float,
+                   help="Minimum number of average interactions for a "
+                        "residue to be considered 'active'.")
 
     p.add_argument('-pc', '--passive-cutoff', dest='passive_cutoff',
-        default=DEFAULT_PASSIVE_CUTOFF, type=float,
-        help="Minimum number of average interactions for a residue to be considered 'passive'.")
+                   default=DEFAULT_PASSIVE_CUTOFF, type=float,
+                   help="Minimum number of average interactions for a "
+                        "residue to be considered 'passive'.")
 
-    p.add_argument('-o', '--out', dest='out', type=FileType('w'),
-        default=DEFAULT_OUT,
-        help='File name of output')
+    p.add_argument('-o', '--out', dest='out',
+                   default=DEFAULT_OUT,
+                   help='File name of output')
 
     # flags
     p.add_argument('-s', '--sort', dest='sort', action='store_true',
-        help='Sort the residues by most contacted')
+                   help='Sort the residues by most contacted')
 
     args = p.parse_args()
 
     if args.nrestraints < 0:
-         raise ValueError("Number of restraints should be > 0")
+        raise ValueError("Number of restraints should be >= 0")
 
     return args
 
 
-def main():
+def format_numbers(numbers):
+    """Return the numbers as a comma-separated string."""
+    return ', '.join(str(x) for x in numbers)
 
+
+def main():
+    """Print the active and passive residues."""
     args = parse_args()
 
-    data = parse_interactions(args.f_inter.name)
+    try:
+        data = parse_interactions(args.f_inter)
+    except (OSError, ValueError) as e:
+        sys.exit(str(e))
+    if args.nrestraints not in data:
+        available = sorted(k for k in data if k != 'residues')
+        sys.exit('No interactions for {:d} consistent restraints in {:s}. '
+                 'Available: {:s}'.format(args.nrestraints, args.f_inter,
+                                          format_numbers(available)))
 
     # extract data into arrays
-    residue_index = asarray(range(len(data[args.nrestraints]['interactions'])))
     residue_id = asarray(data['residues'])
-    ave_interactions = asarray(data[args.nrestraints]['interactions']) /\
-        data[args.nrestraints]['total']
+    ave_interactions = asarray(data[args.nrestraints])
 
     if args.sort:
         order = argsort(ave_interactions)[::-1]
@@ -68,16 +86,16 @@ def main():
 
     active_res = residue_id[ave_interactions >= args.active_cutoff]
 
-    passive_indices = (ave_interactions >= args.passive_cutoff) &\
+    passive_indices = (ave_interactions >= args.passive_cutoff) & \
         (ave_interactions < args.active_cutoff)
     passive_res = residue_id[passive_indices]
 
     print('Active residues ({:d}):'.format(active_res.size))
-    print(str(list(active_res))[1: -1])
+    print(format_numbers(active_res))
     print('Passive residues ({:d}):'.format(passive_res.size))
-    print(str(list(passive_res))[1: -1])
+    print(format_numbers(passive_res))
 
-    with args.out as fh:
+    with open(args.out, 'w', encoding='utf-8') as fh:
         max_digits = str(len(str(residue_id.max())))
         max_float = str(len(str(int(ave_interactions.max()))) + 3)
         line = '{:<' + max_digits + 'd} {:>' + max_float + '.2f}\n'
@@ -85,5 +103,5 @@ def main():
             fh.write(line.format(residue_id[n], ave_interactions[n]))
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

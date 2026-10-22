@@ -1,3 +1,4 @@
+"""Real 3D FFTs on the GPU with clFFT, through gpyfft."""
 from gpyfft import GpyFFT
 
 G = GpyFFT()
@@ -5,21 +6,30 @@ G = GpyFFT()
 IMAGINARY = 3
 REAL = 5
 
+
 def builder(context, shape, direction_forward=True):
+    """Not implemented."""
     pass
-    
+
+
 class RFFTn:
+    """A real-to-complex FFT plan of the given shape (up to 3D).
+
+    The transform is called as plan(queue, inarray, outarray), with
+    pyopencl arrays. clFFT supports at most 2^24 elements.
+    """
+
     def __init__(self, context, shape):
-        # The maximum number of elements of the transform is 2^24 
-	# in clFFT (single precision)
+        # The maximum number of elements of the transform is 2^24
+        # in clFFT (single precision)
         elements = 1
         for i in shape:
-	    elements *= i
+            elements *= i
         if (elements > (2.0**24.0)):
             from math import log
             power = log(elements, 2)
-            raise ValueError('The maximum number of elements for clFFT is 2^24, currently you want 2^{:.2f}'.format(power))
-	    
+            raise ValueError('The maximum number of elements for clFFT is '
+                             '2^24, currently you want 2^{:.2f}'.format(power))
 
         ndim = len(shape)
         if ndim > 3:
@@ -27,7 +37,7 @@ class RFFTn:
 
         self.context = context
         self.shape = tuple(shape)
-        self.ft_shape = (shape[0]//2 + 1, shape[1], shape[2])
+        self.ft_shape = (shape[0] // 2 + 1, shape[1], shape[2])
         self.ndim = ndim
 
         self.plan = G.create_plan(context, self.shape)
@@ -35,43 +45,52 @@ class RFFTn:
         self.plan.layouts = (REAL, IMAGINARY)
 
         if ndim == 3:
-            self.plan.strides_in = (shape[1]*shape[2], shape[2], 1)
+            self.plan.strides_in = (shape[1] * shape[2], shape[2], 1)
         elif ndim == 2:
             self.plan.strides_in = (shape[1], 1)
         elif ndim == 1:
-            self.plan.strides_in = (1,) 
+            self.plan.strides_in = (1,)
 
         if ndim == 3:
-            self.plan.strides_out = (shape[1]*shape[2], shape[2], 1)
+            self.plan.strides_out = (shape[1] * shape[2], shape[2], 1)
         elif ndim == 2:
-            self.plan.strides_out = (shape[1], 1) 
+            self.plan.strides_out = (shape[1], 1)
         elif ndim == 1:
             self.plan.strides_out = (1,)
 
         self.baked = False
 
     def bake(self, queues):
+        """Compile the plan for queues, if not done yet."""
         if not self.baked:
             self.plan.bake(queues)
             self.baked = True
 
     def __call__(self, queue, inarray, outarray):
+        """Enqueue the transform of inarray into outarray on queue."""
         self.plan.enqueue_transform(queue, inarray.data, outarray.data)
         self.baked = True
 
 
 class iRFFTn:
+    """A complex-to-real (inverse) FFT plan of the given shape (up to 3D).
+
+    The transform is called as plan(queue, inarray, outarray), with
+    pyopencl arrays. clFFT supports at most 2^24 elements.
+    """
+
     def __init__(self, context, shape):
 
-        # The maximum number of elements of the transform is 2^24 
-	# in clFFT (single precision)
+        # The maximum number of elements of the transform is 2^24
+        # in clFFT (single precision)
         elements = 1
-	for i in shape:
-	    elements *= i
-	if elements > 2**24:
-	    from math import log
-	    power = log(elements, 2)
-	    raise ValueError('The maximum number of elements for clFFT is 2^24, currently you want 2^{:.2f}'.format(power))
+        for i in shape:
+            elements *= i
+        if elements > 2**24:
+            from math import log
+            power = log(elements, 2)
+            raise ValueError('The maximum number of elements for clFFT is '
+                             '2^24, currently you want 2^{:.2f}'.format(power))
 
         ndim = len(shape)
         if ndim > 3:
@@ -80,21 +99,21 @@ class iRFFTn:
         self.context = context
         self.shape = tuple(shape)
         self.ndim = ndim
-        self.ft_shape = (shape[0]//2 + 1, shape[1], shape[2])
+        self.ft_shape = (shape[0] // 2 + 1, shape[1], shape[2])
 
         self.plan = G.create_plan(context, self.shape)
         self.plan.inplace = False
         self.plan.layouts = (IMAGINARY, REAL)
 
         if ndim == 3:
-            self.plan.strides_out = (shape[1]*shape[2], shape[2], 1)
+            self.plan.strides_out = (shape[1] * shape[2], shape[2], 1)
         elif ndim == 2:
             self.plan.strides_out = (shape[1], 1)
         elif ndim == 1:
             self.plan.strides_out = (1,)
 
         if ndim == 3:
-            self.plan.strides_in = (shape[1]*shape[2], shape[2], 1)
+            self.plan.strides_in = (shape[1] * shape[2], shape[2], 1)
         elif ndim == 2:
             self.plan.strides_in = (shape[1], 1)
         elif ndim == 1:
@@ -103,13 +122,13 @@ class iRFFTn:
         self.baked = False
 
     def bake(self, queues):
+        """Compile the plan for queues, if not done yet."""
         if not self.baked:
             self.plan.bake(queues)
             self.baked = True
 
     def __call__(self, queue, inarray, outarray):
+        """Enqueue the transform of inarray into outarray on queue."""
         self.plan.enqueue_transform(queue, inarray.data, outarray.data,
                                     direction_forward=False)
         self.baked = True
-
-

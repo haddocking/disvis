@@ -1,18 +1,25 @@
-2015-03-12 11:26:41,035 Reading fixed model from: O14250.pdb
-2015-03-12 11:26:41,058 Reading scanning model from: Q9UT97.pdb
-2015-03-12 11:26:41,081 Reading in rotations.
-2015-03-12 11:26:41,110 Requested rotational sampling density: 9.72
-2015-03-12 11:26:41,110 Real rotational sampling density: 9.72
-2015-03-12 11:26:41,110 Number of rotations: 7416
-2015-03-12 11:26:41,110 Reading in restraints from file: restraints.dat
-2015-03-12 11:26:41,144 Number of distance restraints: 7
-2015-03-12 11:26:41,144 Voxel spacing set to: 2.00
-2015-03-12 11:26:41,145 Interaction radius set to: 3.00
-2015-03-12 11:26:41,145 Minimum required interaction volume: 300.00
-2015-03-12 11:26:41,145 Maximum allowed volume of clashes: 200.00
-2015-03-12 11:34:47,336 Writing accessible interaction space to: results/coarse/accessible_interaction_space.mrc
-2015-03-12 11:34:47,348 Writing number of accessible complexes to: results/coarse/accessible_complexes.out
-2015-03-12 11:34:47,349 Writing violations to file: results/coarse/violations.out
-2015-03-12 11:34:47,350 Possible false-positive restraints (z-score > 1.0): 1 2
-2015-03-12 11:34:47,350 Writing z-score of each restraint to results/coarse/z-score.out
-2015-03-12 11:34:47,350 Total time passed: 8m  6s
+2026-10-19 20:49:41,471 Reading fixed model from: O14250.pdb
+2026-10-19 20:49:41,475 Reading scanning model from: Q9UT97.pdb
+2026-10-19 20:49:41,479 Reading in rotations.
+2026-10-19 20:49:41,480 Requested rotational sampling density: 9.72
+2026-10-19 20:49:41,480 Real rotational sampling density: 9.72
+2026-10-19 20:49:41,480 Number of rotations: 7416
+2026-10-19 20:49:41,480 Reading in restraints from file: restraints.dat
+2026-10-19 20:49:41,480 Number of distance restraints: 7
+2026-10-19 20:49:41,480 Voxel spacing set to: 2.00
+2026-10-19 20:49:41,480 Interaction radius set to: 3.00
+2026-10-19 20:49:41,480 Minimum required interaction volume: 300.00
+2026-10-19 20:49:41,481 Maximum allowed volume of clashes: 200.00
+2026-10-19 20:49:41,481 Number of processors used: 8
+2026-10-19 20:49:41,481 Number of rotations per job: 927
+2026-10-19 20:49:41,481 Creating jobs
+2026-10-19 20:49:41,493 Starting jobs
+2026-10-19 20:49:42,279 Waiting for jobs to finish
+2026-10-19 20:49:55,902 Searching done. Combining results
+2026-10-19 20:49:55,904 Cleaning
+2026-10-19 20:49:55,905 Writing accessible interaction space to: /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/coarse/accessible_interaction_space.mrc
+2026-10-19 20:49:55,907 Writing number of accessible complexes to: /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/coarse/accessible_complexes.out
+2026-10-19 20:49:55,908 Writing violations to file: /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/coarse/violations.out
+2026-10-19 20:49:55,908 Possible false-positive restraints (z-score > 1.0): 1 2
+2026-10-19 20:49:55,908 Writing z-score of each restraint to /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/coarse/z-score.out
+2026-10-19 20:49:55,908 Total time passed: 0m 14s

@@ -15,95 +15,74 @@ to the highest number of consistent restraints at every position in space.
 
 ## Requirements
 
-* Python2.7
+* Python 3.11+
 * NumPy
+* pyFFTW (FFTW3 bindings, for fast Fourier transforms)
+* A C compiler (to build the extension modules)
 
-Optional for faster CPU version
-
-* FFTW3
-* pyFFTW
+NumPy and pyFFTW are installed automatically by *pip*; pyFFTW comes as a
+prebuilt package that includes FFTW3 for Linux, macOS and Windows.
 
 For GPU hardware acceleration the following packages are also required
 
 * OpenCL1.1+
-* [pyopencl](https://github.com/pyopencl/pyopencl)
+* [pyopencl](https://github.com/pyopencl/pyopencl) and Mako
 * [clFFT](https://github.com/clMathLibraries/clFFT)
 * [gpyfft](https://github.com/geggo/gpyfft)
-
-Recommended for installation
-
-* [git](https://git-scm.com/download)
-* [pip](https://pip.pypa.io/en/latest/installing.html)
-* Cython
 
 
 ## Installation
 
-If the requirements are met, **DisVis** can be installed by opening a terminal
-and typing
+**DisVis** is best installed in a virtual environment. Open a terminal and type
 
     git clone https://github.com/haddocking/disvis.git
     cd disvis
-    python setup.py install
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install .
 
-The last command might require administrator priviliges for system wide installation.
-After installation, the command line tool *disvis* should be at your disposal.
+The build dependencies (NumPy and Cython) and the run-time dependencies (NumPy
+and pyFFTW) are installed automatically by *pip*. After installation, the
+command line tool *disvis* should be at your disposal.
 
-If you are starting from a clean system, then read the installation instructions 
-below to prepare your particular operating system.
-The INSTALLATION.md file contains instructions for accessing GPU acceleration on MacOSX.
+For GPU acceleration, install the optional GPU requirements with
+
+    pip install '.[gpu]'
+
+and build clFFT and gpyfft, which are not available from PyPI, as described in
+INSTALLATION.md.
 
 
 ### Linux
 
-First install git and check whether the Python header files and the Python
-package manager *pip*, are available by typing
+Make sure git, the Python header files and a C compiler are available, e.g. on
+Debian/Ubuntu
 
-    sudo apt-get install git python-dev python-pip
+    sudo apt-get install git python3-dev python3-venv build-essential
 
-If you are working on a Fedora system, replace *apt-get* with *yum*.
-The final step to prepare you system is installing the Python dependencies
-
-    sudo pip install numpy cython
-
-Wait untill the installation is finished.
-Your system is now ready. Follow the general instructions above to install **DisVis**.
+If you are working on a Fedora system, use *dnf* and the *python3-devel* and *gcc* packages.
+Follow the general instructions above to install **DisVis**.
 
 
 ### MacOSX
 
-First install [*git*](https://git-scm.com/download) for MacOSX (this might already be present on your system)
-by either installing it from the website or using *brew*
+Install the Xcode command line tools, which provide git and a C compiler
 
-    brew install git
+    xcode-select --install
 
-Next, install [*pip*](https://pip.pypa.io/en/latest/installing.html), 
-the official Python package manager. 
-Either follow the link and install *pip* using
-their installation instructions or open a terminal and type
+and a recent Python 3, e.g. with [*brew*](https://brew.sh)
 
-    sudo easy_install pip
+    brew install python
 
-The final step to prepare your system, is installing the Python dependencies.
-In a terminal, type
-
-    sudo pip install numpy cython
-
-Wait till the compilation and installation is finished. 
-Your system is now properly prepared. Follow the general instructions above to install **DisVis**.
+Follow the general instructions above to install **DisVis**.
 
 
 ### Windows
 
-First install [*git*](https://git-scm.com/download) for Windows, as it also comes
-with a handy *bash* shell.
-
-For Windows it easiest to install a Python distribution with NumPy and Cython
-(and many other) packages included, such as [Anaconda](https://continuum.io/downloads).
-Follow the installation instructions on their website.
-
-Next open a *bash* shell that was shipped with *git*. Follow the general instructions
-above to install **DisVis**.
+Install [*git*](https://git-scm.com/download) for Windows, a Python 3
+distribution, such as [Anaconda](https://www.anaconda.com/download), and the
+[Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/).
+Follow the general instructions above to install **DisVis**.
 
 
 ## Usage
@@ -215,6 +194,15 @@ outputs the following files:
   receptor and ligand molecule. Each column denotes the minimal number of
   consistent restraints of each complex for which interactions were counted.
 
+To visualize the most contacted residues, write the average number of
+interactions into the B-factor column of the receptor or ligand PDB file
+
+    python scripts/interactions_to_bfactor.py receptor.pdb receptor_interactions.txt N
+
+where *N* is one of the column numbers of the interaction file. This writes
+*receptor_interactions.pdb*, which can be colored on B-factor, e.g. with
+`spectrum b, blue_red` in PyMOL or `color bfactor` in ChimeraX.
+
 
 Licensing
 ---------
@@ -236,8 +224,13 @@ Gohlke.
 | Operating System| CPU single | CPU multi | GPU |
 | --------------- | ---------- | --------- | --- |
 |Linux            | Yes        | Yes       | Yes |
-|MacOSX           | Yes        | Yes       | No  |
+|MacOSX           | Yes        | Yes       | Yes |
 |Windows          | Yes        | Fail      | No  |
 
 The GPU version has been tested on:
-NVIDIA GeForce GTX 680 and AMD Radeon HD 7730M for Linux
+NVIDIA GeForce GTX 1080 Ti and RTX 6000 Ada for Linux, and Apple M2 Pro for
+macOS (and, with the earlier Python 2 version, NVIDIA GeForce GTX 680 and AMD
+Radeon HD 7730M for Linux)
+
+Reference results and timings for the test cases, on CPUs and GPUs, are in
+`test-cases/README.md`.

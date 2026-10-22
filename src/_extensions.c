@@ -190,7 +190,7 @@ fail:
     // Clean up objects
     Py_XDECREF(py_grid);
     Py_XDECREF(py_rotmat);
-    PyArray_XDECREF_ERR(py_out);
+    Py_XDECREF(py_out);
     return NULL;
 }
 
@@ -202,10 +202,19 @@ static PyMethodDef mymethods[] = {
 };
 
 
-PyMODINIT_FUNC
-init_extensions(void)
-{
-    (void) Py_InitModule("_extensions", mymethods);
-    import_array();
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "_extensions",
+    NULL,
+    -1,
+    mymethods
 };
+
+
+PyMODINIT_FUNC
+PyInit__extensions(void)
+{
+    import_array();
+    return PyModule_Create(&moduledef);
+}
 

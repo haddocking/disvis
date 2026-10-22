@@ -1,0 +1,16 @@
+{
+    "angle": 5.27,
+    "directory": "/trinity/login/abonvin/haddock_git/disvis/linux-tests/gpu-ref-gpu002/pre5_fine",
+    "gpu": true,
+    "interaction_radius": 3.0,
+    "interaction_restraints_cutoff": null,
+    "interaction_selection": null,
+    "ligand": "Q9UT97.pdb",
+    "max_clash": 200,
+    "min_interaction": 300,
+    "nproc": 1,
+    "occupancy_analysis": false,
+    "receptor": "O14250.pdb",
+    "restraints": "restraints.dat",
+    "voxelspacing": 1.0
+}

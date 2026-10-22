@@ -157,6 +157,7 @@ class Element(object):
         values: Isotope(relative atomic mass, abundance)
 
     """
+
     def __init__(self, number, symbol, name, **kwargs):
         self.number = number
         self.symbol = symbol
@@ -300,6 +301,7 @@ class Isotope(object):
 
 class ElementsDict(object):
     """Ordered dict of Elements with lookup by number, symbol, and name."""
+
     def __init__(self, *elements):
         self._list = []
         self._dict = {}
@@ -333,7 +335,7 @@ class ElementsDict(object):
             try:
                 start, stop, step = key.indices(len(self._list))
                 return self._list[slice(start - 1, stop - 1, step)]
-            except:
+            except Exception:
                 raise KeyError
 
 
@@ -1741,12 +1743,20 @@ SERIES = {
     9: 'Lanthanides',
     10: 'Actinides'}
 
+
 def element_from_name(name, hetatm=False):
+    """Guess the element from a PDB atom name (columns 13-16).
+
+    For HETATM records, the first two columns are tried first (e.g. CA is
+    calcium). Otherwise the first letter is used, and 'C' if it is not an
+    element.
+    """
     # Parse HETATM based on Position (eg. CA vs. Ca)
     if hetatm:
         # element should occupy first two columns
-        e=name[0:2].strip()
-        # if not identifiable by this approach the first alphabetical character will be tried (as for ATOM entries)
+        e = name[0:2].strip()
+        # if not identifiable by this approach the first alphabetical
+        # character will be tried (as for ATOM entries)
         if e.isalpha() and e.title() in ELEMENTS:
             return e.title()
     # Assume first alphabetical character is the elment
@@ -1757,6 +1767,7 @@ def element_from_name(name, hetatm=False):
             else:
                 break
     return 'C'
+
 
 def _descriptions(symbol):
     """Delay load descriptions."""
@@ -2659,5 +2670,3 @@ if __name__ == "__main__":
         print(repr(ele), '\n')
     import doctest
     doctest.testmod(verbose=False)
-
-

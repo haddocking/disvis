@@ -1,9 +1,16 @@
+"""Tests of the CPU search steps.
+
+Run from the disvis/tests directory.
+"""
+from argparse import ArgumentTypeError
 from unittest import TestCase, main
 
 import numpy as np
 
 from disvis.pdb import PDB
 from disvis.disvis import DisVis
+from disvis.helpers import positive_float
+from disvis.volume import radix235
 
 
 class TestDisVis(TestCase):
@@ -18,7 +25,8 @@ class TestDisVis(TestCase):
         coor2 = np.asarray([[1, 0, 0], [-1, 0, 0]], dtype=np.float64)
         offset = 0
         voxelspacing = 1
-        shape, origin = self.dv._minimal_volume_parameters(coor1, coor2, offset, voxelspacing)
+        shape, origin = self.dv._minimal_volume_parameters(
+            coor1, coor2, offset, voxelspacing)
         offset = np.linalg.norm(coor2 - coor2.mean(axis=0), axis=1).max()
 
         self.assertEqual(shape, [9, 8, 5])
@@ -56,8 +64,8 @@ class TestDisVis(TestCase):
         dv._initialize()
         dv._cpu_init()
 
-        self.assertEqual(dv._mindis[0] , 0.5)
-        self.assertEqual(dv._maxdis[0] , 2.25)
+        self.assertEqual(dv._mindis[0], 0.5)
+        self.assertEqual(dv._maxdis[0], 2.25)
 
     def test_rotate_lcore(self):
         dv = self.dv
@@ -90,25 +98,27 @@ class TestDisVis(TestCase):
         dv.min_interaction = 0.1
         dv._initialize()
         dv._cpu_init()
-        
+
         # Manually set rot_lcore for tests
         dv._rot_lcore = np.zeros_like(dv._lcore)
         dv._rot_lcore[0, 0, 0] = 1
 
         dv._get_interaction_space()
-        
+
         self.assertTrue(np.allclose(dv._rsurf, dv._intervol))
         self.assertTrue(np.allclose(dv._rcore, dv._clashvol))
         self.assertTrue(np.allclose(dv._intervol, dv._interacting))
-        self.assertTrue(np.allclose(dv._clashvol, np.logical_not(dv._not_clashing)))
-        self.assertTrue(np.allclose(dv._interspace, dv._interacting - dv._clashvol))
+        self.assertTrue(np.allclose(dv._clashvol,
+                                    np.logical_not(dv._not_clashing)))
+        self.assertTrue(np.allclose(dv._interspace,
+                                    dv._interacting - dv._clashvol))
 
     def test_get_restraints_center(self):
         dv = self.dv
 
         # 90 degree rotation around Z-axis
-        rotmat = np.asarray([[0, -1, 0], [1, 0, 0], [0, 0, 1]], dtype=np.float64)
-        restraint = [self.receptor, self.ligand, 0, 4.5]
+        rotmat = np.asarray([[0, -1, 0], [1, 0, 0], [0, 0, 1]],
+                            dtype=np.float64)
         # Set required attributes to test function
         dv._lrestraints = np.asarray([[2, 0, 0]], dtype=np.float64)
         dv._rot_lrestraints = np.zeros_like(dv._lrestraints)
@@ -116,8 +126,10 @@ class TestDisVis(TestCase):
         dv._rrestraints = np.asarray([[1, 0, 0]], dtype=np.float64)
 
         dv._get_restraints_center(rotmat)
-        self.assertTrue(np.allclose(dv._rot_lrestraints, np.array([[0, 2, 0]])))
-        self.assertTrue(np.allclose(dv._restraints_center, np.array([[1, -2, 0]])))
+        self.assertTrue(np.allclose(dv._rot_lrestraints,
+                                    np.array([[0, 2, 0]])))
+        self.assertTrue(np.allclose(dv._restraints_center,
+                                    np.array([[1, -2, 0]])))
 
     def test_get_restraint_space(self):
         dv = self.dv
@@ -128,7 +140,7 @@ class TestDisVis(TestCase):
         dv._restspace = np.empty((5, 7, 9), np.int32)
 
         dv._get_restraint_space()
-        #print dv._restspace
+        # print dv._restspace
 
     def test_cpu_search(self):
         dv = self.dv
@@ -142,6 +154,24 @@ class TestDisVis(TestCase):
         dv._initialize()
         dv._cpu_init()
         dv._cpu_search()
+
+
+class TestInputChecks(TestCase):
+
+    def test_radix235(self):
+        self.assertEqual(radix235(1), 1)
+        self.assertEqual(radix235(7), 8)
+        self.assertEqual(radix235(31), 32)
+        self.assertEqual(radix235(121), 125)
+        for n in (0, -3):
+            with self.assertRaises(ValueError):
+                radix235(n)
+
+    def test_positive_float(self):
+        self.assertEqual(positive_float('0.5'), 0.5)
+        for value in ('0', '-1', 'nan', 'inf', 'abc'):
+            with self.assertRaises(ArgumentTypeError):
+                positive_float(value)
 
 
 if __name__ == '__main__':

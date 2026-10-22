@@ -1,14 +1,22 @@
+"""Reader for PDB files."""
 from collections import defaultdict
 from ..elements import element_from_name
 
 import numpy as np
 
-def parse_pdb(pdbfile):
 
-    if isinstance(pdbfile, file):
+def parse_pdb(pdbfile):
+    """Read the ATOM and HETATM records of a PDB file.
+
+    pdbfile is a file name or an open text file. Returns a NumPy structured
+    array with one record per atom. Elements missing from columns 77-78 are
+    derived from the atom names.
+    """
+    if hasattr(pdbfile, 'read'):
         pass
     elif isinstance(pdbfile, str):
-        pdbfile = open(pdbfile)
+        with open(pdbfile, encoding='utf-8') as f:
+            return parse_pdb(f)
     else:
         raise TypeError('Input should either be a file or string.')
 
@@ -48,18 +56,18 @@ def parse_pdb(pdbfile):
             pdb['charge'].append(line[78:80])
 
     natoms = len(pdb['name'])
-    dtype = [('atom_id', np.int64), ('name', np.str_, 4), 
-             ('resn', np.str_, 4), ('chain', np.str_, 1), 
+    dtype = [('atom_id', np.int64), ('name', np.str_, 4),
+             ('resn', np.str_, 4), ('chain', np.str_, 1),
              ('resi', np.int64), ('x', np.float64),
-             ('y', np.float64), ('z', np.float64), 
+             ('y', np.float64), ('z', np.float64),
              ('occupancy', np.float64), ('bfactor', np.float64),
              ('element', np.str_, 2), ('charge', np.str_, 2),
              ('model', np.int64), ('i_code', np.str_, 1),
              ('alt_loc', np.str_, 1)
              ]
-             
+
     pdbdata = np.zeros(natoms, dtype=dtype)
-    for key, value in pdb.iteritems():
+    for key, value in pdb.items():
         pdbdata[key] = value
 
     return pdbdata
