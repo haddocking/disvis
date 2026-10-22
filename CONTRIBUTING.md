@@ -16,8 +16,11 @@ git clone https://github.com/haddocking/disvis.git
 cd disvis
 python -m venv .venv
 source .venv/bin/activate
-pip install .            # or pip install '.[gpu]' for pyopencl and mako
+pip install '.[dev]'     # with ruff and cython-lint; add gpu for pyopencl and mako
 ```
+
+The package metadata and dependencies are in `pyproject.toml`; `setup.py`
+only defines the compiled extensions.
 
 After changing any code, reinstall with `pip install .` before running or
 testing it: the installed package, not the source tree, is what runs. Remove
@@ -135,8 +138,8 @@ Checklist:
 
 ## Releases
 
-The version is set in `setup.py` only; `disvis.__version__` reads it from the
-installed package metadata. To release, update the version and
+The version is set in `pyproject.toml` only; `disvis.__version__` reads it
+from the installed package metadata. To release, update the version and
 `CHANGELOG.md`, merge, then tag `main` as `vX.Y.Z` and create a GitHub release.
 Pushing a `v*` tag runs `.github/workflows/docker-publish.yml`, which publishes
 the Docker image to ghcr.io. Only CSBcore can create `v*` tags.

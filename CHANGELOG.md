@@ -9,8 +9,10 @@ Changes compared with 2.3.0, the last Python 2 release.
 - Python 3.11 or newer and NumPy 2; Python 2 is no longer supported.
 - pyFFTW is now a requirement, installed automatically; it is about twice as
   fast as the NumPy FFT.
-- Cython 3 is needed to build; the generated `src/libdisvis.c` was removed
-  and the build requirements are listed in `pyproject.toml`.
+- Cython 3 is needed to build; the generated `src/libdisvis.c` was removed.
+- The package metadata, dependencies and build requirements are in
+  `pyproject.toml`; `setup.py` only defines the compiled extensions. New `dev`
+  extra (`pip install '.[dev]'`: ruff and cython-lint).
 - New `gpu` extra (`pip install '.[gpu]'`) for pyopencl; clFFT and gpyfft
   must still be installed by hand (see `INSTALLATION.md`).
 - Docker image based on Python 3.12.
@@ -45,7 +47,8 @@ Changes compared with 2.3.0, the last Python 2 release.
 - Updated `README.md` and `INSTALLATION.md` (GPU set-up on macOS and Linux).
 - New CPU and GPU reference results for the test cases, and
   `test-cases/README.md` with benchmarks.
-- Fixed the outdated GPU unit tests.
+- Fixed the outdated GPU unit tests; they are skipped without pyopencl,
+  gpyfft or an OpenCL GPU.
 - Code formatted and linted with ruff (configuration in `pyproject.toml`),
   with docstrings throughout.
 - Issue and pull-request templates, and `CONTRIBUTING.md` for developers.

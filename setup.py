@@ -1,19 +1,14 @@
-"""Build and install DisVis."""
+"""Build the compiled extensions of DisVis.
+
+The package metadata is in pyproject.toml.
+"""
 
 import os.path
-from setuptools import setup
-from setuptools.extension import Extension
 
 import numpy
 from Cython.Build import cythonize
-
-description = (
-    'Quantifying and visualizing the interaction space '
-    'of distance-constrained macromolecular complexes'
-)
-
-packages = ['disvis', 'disvis.IO']
-package_data = {'disvis': [os.path.join('data', '*.npy'), 'kernels.cl']}
+from setuptools import setup
+from setuptools.extension import Extension
 
 ext_modules = [
     Extension(
@@ -35,28 +30,4 @@ ext_modules = cythonize(
     ext_modules, build_dir='build', compiler_directives={'language_level': 3}
 )
 
-# pyFFTW roughly halves the run time compared with the NumPy FFT.
-requirements = ["numpy", "pyfftw"]
-# GPU acceleration also needs clFFT and gpyfft, which are not on PyPI; see
-# INSTALLATION.md.
-extras = {'gpu': ['pyopencl', 'mako']}
-
-setup(
-    name="disvis",
-    version='3.0.0',
-    description=description,
-    url="https://github.com/haddocking/disvis",
-    author='Gydo C.P. van Zundert',
-    author_email='gvanzundert51@gmail.com',
-    packages=packages,
-    ext_modules=ext_modules,
-    package_data=package_data,
-    install_requires=requirements,
-    extras_require=extras,
-    python_requires='>=3.11',
-    entry_points={
-        'console_scripts': [
-            'disvis = disvis.main:main',
-        ]
-    },
-)
+setup(ext_modules=ext_modules)
