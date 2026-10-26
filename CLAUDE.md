@@ -18,7 +18,7 @@ improve it, do not assume it is already optimal.
 ## Where to find things
 
 - `README.md`: what DisVis does, its usage, options and output files.
-- `INSTALLATION.md`: GPU set-up (pyopencl, clFFT, gpyfft).
+- `INSTALLATION.md`: GPU set-up (pyopencl, pyvkfft).
 - `CONTRIBUTING.md`: development setup, code layout, code style, tests,
   reference results, pull requests and releases. Follow it.
 - `test-cases/README.md`: the test cases, reference results and benchmarks.
