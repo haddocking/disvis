@@ -64,7 +64,8 @@ Changes compared with 2.3.0, the last Python 2 release.
   pyvkfft or an OpenCL GPU.
 - Code formatted and linted with ruff (configuration in `pyproject.toml`),
   with docstrings throughout.
-- GitHub workflow running the linters, the unit tests (Linux and macOS,
-  Python 3.11–3.14), the coarse test cases against the CPU references, and
-  the GPU code on the CPU with pocl.
+- GitHub workflow running the linters, the unit tests (Linux, macOS and
+  Windows, Python 3.11–3.14), the coarse test cases against the CPU
+  references (`tests/check_test_cases.py`), and the GPU unit tests on the CPU
+  with pocl. Ruff also limits the complexity of functions (C901).
 - Issue and pull-request templates, and `CONTRIBUTING.md` for developers.

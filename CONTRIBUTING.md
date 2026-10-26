@@ -74,10 +74,10 @@ Every module, public class and function has a docstring (PEP 257, summary on
 the first line). `src/disvis/elements.py` is third-party code (Christoph Gohlke):
 it is excluded from formatting and from most lint rules; keep it as it is.
 
-Codacy checks every pull request with ruff, using the same configuration; any
-new issue fails the check. Prefer fixing an issue in the code; disable a rule
-in `pyproject.toml` only for a deliberate style choice, with a comment saying
-why.
+Functions are limited to a McCabe complexity of 10 (ruff rule C901); the few
+older functions above it are marked with `# noqa: C901` until they are split
+up. Prefer fixing an issue in the code; disable a rule in `pyproject.toml`
+only for a deliberate style choice, with a comment saying why.
 
 ## Tests
 
@@ -99,21 +99,17 @@ They are skipped when the GPU packages or an OpenCL device are missing.
 `test-cases/README.md`). The CPU output files (`accessible_complexes.out`,
 `violations.out`, `z-score.out` and `accessible_interaction_space.mrc`) must
 stay **byte-identical** to the references. After any change to the search,
-compare at least the coarse runs of both test cases:
+run at least the coarse runs of both test cases, which
+`tests/check_test_cases.py` runs and compares with the references:
 
 ```bash
-cd test-cases/PRE5-PUP2-complex
-disvis O14250.pdb Q9UT97.pdb restraints.dat -a 9.72 -vs 2 -p 8 -d coarse
-for f in accessible_complexes.out violations.out z-score.out \
-         accessible_interaction_space.mrc; do
-    cmp coarse/$f example-results/cpu/coarse/$f
-done
+python tests/check_test_cases.py -p 8      # coarse, on the CPU
+python tests/check_test_cases.py --fine    # fine: takes from minutes to hours
+python tests/check_test_cases.py --gpu     # compared with the GPU references
 ```
 
-and the same for `test-cases/RNA-polymerase-II/A-E` with
-`1wcm_A.pdb 1wcm_E.pdb`. GPU results agree with the CPU references to about
-1e-5 (single precision), with identical z-scores. The fine runs take from
-minutes to hours.
+GPU results agree with the CPU references to about 1e-5 (single precision),
+with identical z-scores.
 
 If a change intentionally alters the output, explain why in the pull request,
 and update the reference results and `test-cases/README.md`.
@@ -127,6 +123,11 @@ template. Before it can be merged, a pull request needs:
   `.github/CODEOWNERS`),
 - all review conversations resolved,
 - the Codacy check passing, on a branch that is up to date with `main`.
+
+The GitHub workflow (`.github/workflows/ci.yml`) runs on every pull request:
+ruff and cython-lint, the unit tests on Linux, macOS and Windows with Python
+3.11–3.14, the coarse test cases with `tests/check_test_cases.py`, and the GPU
+unit tests on the CPU with pocl. Run the same checks locally before pushing.
 
 Checklist:
 

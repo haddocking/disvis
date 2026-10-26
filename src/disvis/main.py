@@ -260,7 +260,7 @@ def run_disvis_instance(
     queue.put(dv.accessible_complexes)
 
 
-def mp_cpu_disvis(
+def mp_cpu_disvis(  # noqa: C901
     receptor,
     ligand,
     rotmat,
@@ -453,7 +453,7 @@ def write(line):
     logging.info(line)
 
 
-def main():
+def main():  # noqa: C901
     """Run disvis from the command line and write the results."""
     args = parse_args()
 

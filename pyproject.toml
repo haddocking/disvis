@@ -59,7 +59,7 @@ target-version = "py311"
 extend-exclude = ["test-cases"]
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "D", "B", "UP", "PL"]
+select = ["E", "W", "F", "D", "B", "UP", "PL", "C90"]
 ignore = [
     "D107",     # __init__ arguments are documented in the class docstring
     "D203",     # conflicts with D211 (no blank line before class docstring)
@@ -76,8 +76,12 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"src/disvis/elements.py" = ["D", "UP", "PL", "B"]  # third-party code
+"src/disvis/elements.py" = ["D", "UP", "PL", "B", "C90"]  # third-party code
 "tests/*" = ["D"]
+
+[tool.ruff.lint.mccabe]
+# Functions above this complexity are marked with noqa: C901 until refactored.
+max-complexity = 10
 
 [tool.ruff.format]
 quote-style = "preserve"
