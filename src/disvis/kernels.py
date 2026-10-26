@@ -33,7 +33,7 @@ class Kernels:
         # Global and local workitems for all kernels
         self._gws_rotate_points3d = (8 * 32 * 8 * 8,)
         self._gws_rotate_grid3d = (96, 64, 1)
-        self._gws_dilate_point_add = (32, 32, 1)
+        self._gws_reduced_interspace = (96 * 256,)
 
         self._lws_histogram = (96,)
         self._gws_histogram = (96 * 32,)
@@ -74,6 +74,29 @@ class Kernels:
             "float *in1, float *in2, float *out",
             """out[i] = in1[i] - in2[i];
                 """,
+        )
+
+        self.conj_multiply = ElementwiseKernel(
+            ctx,
+            "cfloat_t *in1, cfloat_t *in2, cfloat_t *out",
+            "out[i] = cfloat_mul(cfloat_conj(in1[i]), in2[i]);",
+        )
+
+        # Interaction space: not clashing and interacting enough, after
+        # rounding the volumes to whole voxels.
+        self.interaction_space = ElementwiseKernel(
+            ctx,
+            "float *clashvol, float *intervol, float max_clash, "
+            "float min_interaction, int *out",
+            "out[i] = ((round(clashvol[i]) <= max_clash) && "
+            "(round(intervol[i]) >= min_interaction)) ? 1 : 0;",
+        )
+
+        # total += w * x, for one-element arrays, as two separate operations
+        self.add_weighted = ElementwiseKernel(
+            ctx,
+            "float *total, float *x, float w",
+            "float tmp = x[i] * w; total[i] = total[i] + tmp;",
         )
 
         self.conj = ElementwiseKernel(
@@ -154,15 +177,26 @@ class Kernels:
             queue, self._gws_rotate_grid3d, None, *args
         )
 
-    def dilate_point_add(self, queue, centers, mindis, maxdis, restspace):
-        """Add 1 to restspace within the distance range of each restraint.
+    def reduced_interspace(
+        self, queue, centers, mindis, maxdis, interspace, red, access
+    ):
+        """Count the consistent restraints in the interaction space.
 
-        centers holds the restraint centers in grid units, mindis and
-        maxdis the distance ranges.
+        red is set to the number of restraints each translation in
+        interspace (nonzero) is consistent with, and 0 elsewhere; access is
+        set to the maximum of access and red. centers holds the restraint
+        centers in grid units, mindis and maxdis the distance ranges.
         """
-        args = (centers.data, mindis.data, maxdis.data, restspace.data)
-        self._kernels['dilate_point_add'](
-            queue, self._gws_dilate_point_add, None, *args
+        args = (
+            centers.data,
+            mindis.data,
+            maxdis.data,
+            interspace.data,
+            red.data,
+            access.data,
+        )
+        self._kernels['reduced_interspace'](
+            queue, self._gws_reduced_interspace, None, *args
         )
 
     def histogram(self, queue, data, hist):

@@ -577,18 +577,7 @@ class DisVis:
             )
 
         # Int32
-        arr_names = (
-            'interspace red_interspace restspace access_interspace'
-        ).split()
-        for arr_name in arr_names:
-            setattr(
-                self,
-                '_cl_' + arr_name,
-                cl_array.zeros(q, self._cl_shape, dtype=np.int32),
-            )
-
-        # Boolean
-        arr_names = 'not_clashing interacting'.split()
+        arr_names = 'interspace red_interspace access_interspace'.split()
         for arr_name in arr_names:
             setattr(
                 self,
@@ -598,7 +587,7 @@ class DisVis:
 
         # Complex64
         self._ft_shape = ft_shape(self._shape)
-        arr_names = 'lcore lcore_conj rcore rsurf tmp'.split()
+        arr_names = 'lcore rcore rsurf tmp'.split()
         for arr_name in arr_names:
             setattr(
                 self,
@@ -725,24 +714,17 @@ class DisVis:
     def _cl_get_interaction_space(self):
         k = self._cl_kernels
         self._cl_fft.rfftn(self._cl_rot_lcore, self._cl_ft_lcore)
-        k.conj(self._cl_ft_lcore, self._cl_ft_lcore_conj)
-        k.cmultiply(self._cl_ft_lcore_conj, self._cl_ft_rcore, self._cl_ft_tmp)
+        k.conj_multiply(self._cl_ft_lcore, self._cl_ft_rcore, self._cl_ft_tmp)
         self._cl_fft.irfftn(self._cl_ft_tmp, self._cl_clashvol)
-        k.round(self._cl_clashvol, self._cl_clashvol)
-        k.cmultiply(self._cl_ft_lcore_conj, self._cl_ft_rsurf, self._cl_ft_tmp)
+        k.conj_multiply(self._cl_ft_lcore, self._cl_ft_rsurf, self._cl_ft_tmp)
         self._cl_fft.irfftn(self._cl_ft_tmp, self._cl_intervol)
-        k.round(self._cl_intervol, self._cl_intervol)
-
-        k.less_equal(
-            self._cl_clashvol, self._cl_grid_max_clash, self._cl_not_clashing
-        )
-        k.greater_equal(
+        # Translations that do not clash and interact enough
+        k.interaction_space(
+            self._cl_clashvol,
             self._cl_intervol,
+            self._cl_grid_max_clash,
             self._cl_grid_min_interaction,
-            self._cl_interacting,
-        )
-        k.logical_and(
-            self._cl_not_clashing, self._cl_interacting, self._cl_interspace
+            self._cl_interspace,
         )
 
     def _cl_get_restraints_center(self, rotmat):
@@ -756,27 +738,25 @@ class DisVis:
             self._cl_restraints_center,
         )
 
-    def _cl_get_restraint_space(self):
-        k = self._cl_kernels
-        k.set_to_i32(np.int32(0), self._cl_restspace)
-        k.dilate_point_add(
+    def _cl_get_reduced_interspace(self):
+        # The number of consistent restraints in the interaction space, and
+        # the accessible interaction space (the highest number so far)
+        self._cl_kernels.reduced_interspace(
             self.queue,
             self._cl_restraints_center,
             self._cl_mindis,
             self._cl_maxdis,
-            self._cl_restspace,
-        )
-
-    def _cl_get_reduced_interspace(self):
-        self._cl_kernels.multiply_int32(
-            self._cl_restspace, self._cl_interspace, self._cl_red_interspace
+            self._cl_interspace,
+            self._cl_red_interspace,
+            self._cl_access_interspace,
         )
 
     def _cl_count_complexes(self, weight):
         # Count all sampled complexes
-        self._cl_tot_complex += (
-            cl_array.sum(self._cl_interspace, dtype=np.dtype(np.float32))
-            * weight
+        self._cl_kernels.add_weighted(
+            self._cl_tot_complex,
+            cl_array.sum(self._cl_interspace, dtype=np.dtype(np.float32)),
+            weight,
         )
         self._cl_kernels.set_to_i32(np.int32(0), self._cl_hist)
 
@@ -799,13 +779,6 @@ class DisVis:
         )
         self._cl_kernels.multiply_add(
             self._cl_viol_hist, weight, self._cl_violations
-        )
-
-    def _cl_get_access_interspace(self):
-        cl_array.maximum(
-            self._cl_red_interspace,
-            self._cl_access_interspace,
-            self._cl_access_interspace,
         )
 
     def _cl_get_interaction_matrix(self, rotmat, weight):
@@ -871,15 +844,12 @@ class DisVis:
             # Rotate the restraints and determine the center point
             self._cl_get_restraints_center(rotmat)
 
-            self._cl_get_restraint_space()
-
             # Check for each complex how many restraints are consistent
             self._cl_get_reduced_interspace()
 
             # Do some analysis such as counting complexes and violations
             self._cl_count_complexes(weight)
             self._cl_count_violations(weight)
-            self._cl_get_access_interspace()
 
             # Optional analyses
             if self.occupancy_analysis:

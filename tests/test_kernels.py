@@ -109,30 +109,51 @@ class TestKernels(TestCase):
         answer[0, 1, 0] = 1
         self.assertTrue(np.allclose(answer, self.cl_out.get()))
 
-    def test_dilate_point_add(self):
-        k = self.p.program.dilate_point_add
+    def test_reduced_interspace(self):
+        k = self.p.program.reduced_interspace
 
         center = np.array(
             [[0, 0, 0, 0], [0, 0, 0, 0], [2, 3, 4, 0]], dtype=np.float32
         )
+        maxdis = [1, 2, 1]
+        # Translations in the interaction space: all but the first slice
+        interspace = np.ones(self.shape, dtype=np.int32)
+        interspace[0] = 0
+        # Accessible interaction space so far: 1 everywhere
+        access = np.ones(self.shape, dtype=np.int32)
 
         cl_center = cl_array.to_device(self.queue, center)
         cl_mindis = cl_array.zeros(self.queue, 3, dtype=np.float32)
         cl_maxdis = cl_array.to_device(
-            self.queue, np.array([1, 2, 1], dtype=np.float32)
+            self.queue, np.array(maxdis, dtype=np.float32)
         )
-        cl_out = cl_array.zeros(self.queue, self.shape, dtype=np.int32)
+        cl_interspace = cl_array.to_device(self.queue, interspace)
+        cl_red = cl_array.zeros(self.queue, self.shape, dtype=np.int32)
+        cl_access = cl_array.to_device(self.queue, access)
 
-        args = (cl_center.data, cl_mindis.data, cl_maxdis.data, cl_out.data)
-        k(self.queue, (5, 5, 5), None, *args)
+        args = (
+            cl_center.data,
+            cl_mindis.data,
+            cl_maxdis.data,
+            cl_interspace.data,
+            cl_red.data,
+            cl_access.data,
+        )
+        k(self.queue, (64,), None, *args)
 
-        # Every grid point counts the restraints it is consistent with.
+        # Every translation in the interaction space counts the restraints
+        # it is consistent with; the others are 0.
         z, y, x = np.indices(self.shape)
         answer = np.zeros(self.shape, dtype=np.int32)
-        for (cx, cy, cz, _), maxdis in zip(center, [1, 2, 1], strict=True):
+        for (cx, cy, cz, _), dmax in zip(center, maxdis, strict=True):
             dis2 = (x - cx) ** 2 + (y - cy) ** 2 + (z - cz) ** 2
-            answer += dis2 <= maxdis**2
-        self.assertTrue(np.array_equal(answer, cl_out.get()))
+            answer += dis2 <= dmax**2
+        answer *= interspace
+        self.assertTrue(np.array_equal(answer, cl_red.get()))
+        self.assertTrue(
+            np.array_equal(np.maximum(answer, access), cl_access.get())
+        )
+        self.assertGreater(answer.max(), 1)
 
     def test_histogram(self):
         k = self.p.program.histogram

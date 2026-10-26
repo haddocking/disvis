@@ -93,16 +93,13 @@ class TestCPUvsGPU(TestCase):
 
         self.dv._get_interaction_space()
         self.gdv._cl_get_interaction_space()
-        test = np.allclose(self.dv._clashvol, self.gdv._cl_clashvol.get())
-        self.assertTrue(test)
-        test = np.allclose(self.dv._intervol, self.gdv._cl_intervol.get())
-        self.assertTrue(test)
+        # The GPU volumes are rounded when the interaction space is made.
         test = np.allclose(
-            self.dv._not_clashing, self.gdv._cl_not_clashing.get()
+            self.dv._clashvol, np.round(self.gdv._cl_clashvol.get())
         )
         self.assertTrue(test)
         test = np.allclose(
-            self.dv._interacting, self.gdv._cl_interacting.get()
+            self.dv._intervol, np.round(self.gdv._cl_intervol.get())
         )
         self.assertTrue(test)
         test = np.allclose(self.dv._interspace, self.gdv._cl_interspace.get())
@@ -121,25 +118,16 @@ class TestCPUvsGPU(TestCase):
         self.assertTrue(test)
 
         self.dv._get_restraint_space()
-        self.gdv._cl_get_restraint_space()
-        c_restspace = self.dv._restspace
-        g_restspace = self.gdv._cl_restspace.get()
-        # The restraints space can differ slightly because of roundoff errors
-        # in the distance calculation.
-        loc = (c_restspace != g_restspace).nonzero()
-        diff = (c_restspace != g_restspace).sum()
-        self.assertLessEqual(diff, 1)
-        # Cheat here by adjusting the restspace on the CPU version for easier
-        # further testing
-        for ind in zip(loc):
-            self.dv._restspace[ind] = g_restspace[ind]
-
         self.dv._get_reduced_interspace()
         self.gdv._cl_get_reduced_interspace()
-        test = np.allclose(
-            self.dv._red_interspace, self.gdv._cl_red_interspace.get()
-        )
-        self.assertTrue(test)
+        c_red = self.dv._red_interspace
+        g_red = self.gdv._cl_red_interspace.get()
+        # The number of consistent restraints can differ slightly because of
+        # roundoff errors in the distance calculation.
+        loc = (c_red != g_red).nonzero()
+        self.assertLessEqual((c_red != g_red).sum(), 1)
+        # Use the GPU values on the CPU for easier further testing
+        self.dv._red_interspace[loc] = g_red[loc]
 
         self.dv._count_complexes(weight)
         self.gdv._cl_count_complexes(gweight)
@@ -182,16 +170,13 @@ class TestCPUvsGPU(TestCase):
 
         self.dv._get_interaction_space()
         self.gdv._cl_get_interaction_space()
-        test = np.allclose(self.dv._clashvol, self.gdv._cl_clashvol.get())
-        self.assertTrue(test)
-        test = np.allclose(self.dv._intervol, self.gdv._cl_intervol.get())
-        self.assertTrue(test)
+        # The GPU volumes are rounded when the interaction space is made.
         test = np.allclose(
-            self.dv._not_clashing, self.gdv._cl_not_clashing.get()
+            self.dv._clashvol, np.round(self.gdv._cl_clashvol.get())
         )
         self.assertTrue(test)
         test = np.allclose(
-            self.dv._interacting, self.gdv._cl_interacting.get()
+            self.dv._intervol, np.round(self.gdv._cl_intervol.get())
         )
         self.assertTrue(test)
         test = np.allclose(self.dv._interspace, self.gdv._cl_interspace.get())
@@ -210,25 +195,16 @@ class TestCPUvsGPU(TestCase):
         self.assertTrue(test)
 
         self.dv._get_restraint_space()
-        self.gdv._cl_get_restraint_space()
-        c_restspace = self.dv._restspace
-        g_restspace = self.gdv._cl_restspace.get()
-        # The restraints space can differ slightly because of roundoff errors
-        # in the distance calculation.
-        loc = (c_restspace != g_restspace).nonzero()
-        diff = (c_restspace != g_restspace).sum()
-        self.assertLessEqual(diff, 1)
-        # Cheat here by adjusting the restspace on the CPU version for easier
-        # further testing
-        for ind in zip(loc):
-            self.dv._restspace[ind] = g_restspace[ind]
-
         self.dv._get_reduced_interspace()
         self.gdv._cl_get_reduced_interspace()
-        test = np.allclose(
-            self.dv._red_interspace, self.gdv._cl_red_interspace.get()
-        )
-        self.assertTrue(test)
+        c_red = self.dv._red_interspace
+        g_red = self.gdv._cl_red_interspace.get()
+        # The number of consistent restraints can differ slightly because of
+        # roundoff errors in the distance calculation.
+        loc = (c_red != g_red).nonzero()
+        self.assertLessEqual((c_red != g_red).sum(), 1)
+        # Use the GPU values on the CPU for easier further testing
+        self.dv._red_interspace[loc] = g_red[loc]
 
         self.dv._count_complexes(weight)
         self.gdv._cl_count_complexes(gweight)
@@ -295,7 +271,6 @@ class TestInteractionsCoarseGrid(TestCase):
         cpu._get_restraints_center(rotmat)
         gpu._cl_get_restraints_center(gpu._cl_rotations[0])
         cpu._get_restraint_space()
-        gpu._cl_get_restraint_space()
         gpu._cl_get_reduced_interspace()
         # Use the same reduced interaction space, so that roundoff
         # differences in the restraint space do not matter.
