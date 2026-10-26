@@ -80,6 +80,10 @@ class DisVis:
         self.interaction_restraints_cutoff = None
         self.occupancy_analysis = False
         self.queue = None
+        # Rotations between waits for the GPU in the search: commands on
+        # the queue run in order, so waiting after every step only leaves
+        # the GPU idle while Python enqueues the next one.
+        self._cl_sync_interval = 10
         self._fftw = fftw and PYFFTW
         if print_callback is True:
             print_callback = self.print_progress
@@ -717,7 +721,6 @@ class DisVis:
         self._cl_kernels.rotate_grid3d(
             self.queue, self._cl_lcore, rotmat, self._cl_rot_lcore
         )
-        self.queue.finish()
 
     def _cl_get_interaction_space(self):
         k = self._cl_kernels
@@ -741,7 +744,6 @@ class DisVis:
         k.logical_and(
             self._cl_not_clashing, self._cl_interacting, self._cl_interspace
         )
-        self.queue.finish()
 
     def _cl_get_restraints_center(self, rotmat):
         k = self._cl_kernels
@@ -753,7 +755,6 @@ class DisVis:
             self._cl_rot_lrestraints,
             self._cl_restraints_center,
         )
-        self.queue.finish()
 
     def _cl_get_restraint_space(self):
         k = self._cl_kernels
@@ -765,13 +766,11 @@ class DisVis:
             self._cl_maxdis,
             self._cl_restspace,
         )
-        self.queue.finish()
 
     def _cl_get_reduced_interspace(self):
         self._cl_kernels.multiply_int32(
             self._cl_restspace, self._cl_interspace, self._cl_red_interspace
         )
-        self.queue.finish()
 
     def _cl_count_complexes(self, weight):
         # Count all sampled complexes
@@ -787,7 +786,6 @@ class DisVis:
         self._cl_kernels.multiply_add(
             self._cl_hist, weight, self._cl_consistent_complexes
         )
-        self.queue.finish()
 
     def _cl_count_violations(self, weight):
         self._cl_kernels.set_to_i32(np.int32(0), self._cl_viol_hist)
@@ -802,7 +800,6 @@ class DisVis:
         self._cl_kernels.multiply_add(
             self._cl_viol_hist, weight, self._cl_violations
         )
-        self.queue.finish()
 
     def _cl_get_access_interspace(self):
         cl_array.maximum(
@@ -810,7 +807,6 @@ class DisVis:
             self._cl_access_interspace,
             self._cl_access_interspace,
         )
-        self.queue.finish()
 
     def _cl_get_interaction_matrix(self, rotmat, weight):
         self._cl_kernels.rotate_points3d(
@@ -838,7 +834,6 @@ class DisVis:
                     nconsistent - self.interaction_restraints_cutoff
                 ],
             )
-        self.queue.finish()
 
     def _cl_get_occupancy_grids(self, weight):
         # Calculate an average occupancy grid to provide an average shape
@@ -857,7 +852,6 @@ class DisVis:
             self._cl_fft.irfftn(self._cl_ft_tmp, self._cl_tmp)
             k.round(self._cl_tmp, self._cl_tmp)
             k.multiply_add2(self._cl_tmp, weight, self._cl_occ_grid[i])
-        self.queue.finish()
 
     def _gpu_search(self):
 
@@ -893,6 +887,10 @@ class DisVis:
 
             if self._interaction_analysis:
                 self._cl_get_interaction_matrix(rotmat, weight)
+
+            # Wait for the GPU now and then, to bound the queue.
+            if n % self._cl_sync_interval == 0:
+                self.queue.finish()
 
             # Print progress
             if self.print_callback:
