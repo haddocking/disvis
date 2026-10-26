@@ -33,7 +33,9 @@ Changes compared with 2.3.0, the last Python 2 release.
 - `args.json` (the command-line options) is written to the output directory.
 - Clear error message when `-g` is used without the GPU packages.
 - GPU: OpenCL kernels are built once.
-- MRC files are closed after reading.
+- MRC files are closed after reading; `MRCFile` closes a file it opened by
+  name (`close()` or a `with` block), also when its header cannot be read.
+- `volume.erode` writes the erosion into the given `out` volume.
 - `scripts/analyze.py` and `scripts/analyze_interactions.py` were rewritten
   for the current code and output format.
 - New `scripts/interactions_to_bfactor.py` writes the average number of

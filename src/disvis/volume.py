@@ -98,14 +98,18 @@ def zeros_like(volume):
 
 
 def erode(volume, iterations, out=None):
-    """Return the binary erosion of volume, repeated iterations times."""
+    """Return the binary erosion of volume, repeated iterations times.
+
+    The result is written into out, a volume with the same shape, or into a
+    new volume when out is None; out may be volume itself.
+    """
     if out is None:
         out = zeros_like(volume)
-        tmp = volume.array.copy()
-        for _ in range(iterations):
-            binary_erosion(tmp, out.array)
-            tmp[:] = out.array[:]
-
+    out.array[...] = volume.array
+    tmp = np.empty_like(volume.array)
+    for _ in range(iterations):
+        tmp[...] = out.array
+        binary_erosion(tmp, out.array)
     return out
 
 
