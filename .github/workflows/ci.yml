@@ -4,9 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+
 # Cancel the runs of an older commit when a new one is pushed.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
