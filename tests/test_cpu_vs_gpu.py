@@ -259,5 +259,55 @@ class TestCPUvsGPU(TestCase):
         self.assertTrue(test)
 
 
+@skipIf(QUEUE is None, 'needs pyopencl, pyvkfft and an OpenCL GPU')
+class TestInteractionsCoarseGrid(TestCase):
+    """CPU and GPU interaction analysis with a voxel spacing other than 1."""
+
+    def test_interaction_matrix(self):
+        receptor = PDB.fromfile(join(DATA, 'O14250.pdb'))
+        ligand = PDB.fromfile(join(DATA, 'Q9UT97.pdb'))
+        restraints = parse_restraints(
+            join(DATA, 'restraints.dat'), receptor, ligand
+        )
+        rselect, lselect = parse_interaction_selection(
+            join(DATA, 'selection.res'), receptor, ligand
+        )
+        dvs = (DisVis(), DisVis())
+        for dv in dvs:
+            dv.receptor = receptor
+            dv.ligand = ligand
+            dv.distance_restraints = restraints
+            dv.rotations = np.eye(3, dtype=np.float64)[np.newaxis]
+            dv.voxelspacing = 2.0
+            dv.receptor_interaction_selection = rselect
+            dv.ligand_interaction_selection = lselect
+            dv._initialize()
+        cpu, gpu = dvs
+        gpu.queue = QUEUE
+        cpu._cpu_init()
+        gpu._gpu_init()
+
+        rotmat = cpu.rotations[0]
+        cpu._rotate_lcore(rotmat)
+        gpu._cl_rotate_lcore(gpu._cl_rotations[0])
+        cpu._get_interaction_space()
+        gpu._cl_get_interaction_space()
+        cpu._get_restraints_center(rotmat)
+        gpu._cl_get_restraints_center(gpu._cl_rotations[0])
+        cpu._get_restraint_space()
+        gpu._cl_get_restraint_space()
+        gpu._cl_get_reduced_interspace()
+        # Use the same reduced interaction space, so that roundoff
+        # differences in the restraint space do not matter.
+        cpu._red_interspace = gpu._cl_red_interspace.get()
+
+        cpu._get_interaction_matrix(rotmat, np.float64(1))
+        gpu._cl_get_interaction_matrix(gpu._cl_rotations[0], np.float32(1))
+        self.assertGreater(cpu._interaction_matrix.sum(), 0)
+        for i, c_im in enumerate(cpu._interaction_matrix):
+            g_im = gpu._cl_interaction_matrix[i].get()
+            self.assertTrue(np.allclose(c_im, g_im), msg=str(i))
+
+
 if __name__ == '__main__':
     main()

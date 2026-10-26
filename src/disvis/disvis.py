@@ -626,7 +626,10 @@ class DisVis:
 
         # kernels
         self._kernel_constants = {
-            'interaction_cutoff': 10,
+            # In grid units, as the coordinates, like the CPU version.
+            'interaction_cutoff': float(
+                self.interaction_distance / self.voxelspacing
+            ),
             'nrestraints': self._nrestraints,
             'shape_x': self._shape[2],
             'shape_y': self._shape[1],
