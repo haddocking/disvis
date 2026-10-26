@@ -1,9 +1,10 @@
 """Tests of the CPU search steps.
 
-Run from the disvis/tests directory.
+Run from the repository root with python -m unittest.
 """
 
 from argparse import ArgumentTypeError
+from os.path import dirname, join
 from unittest import TestCase, main
 
 import numpy as np
@@ -13,12 +14,14 @@ from disvis.disvis import DisVis
 from disvis.helpers import positive_float
 from disvis.volume import radix235
 
+DATA = join(dirname(__file__), 'data')
+
 
 class TestDisVis(TestCase):
     def setUp(self):
         self.dv = DisVis()
-        self.receptor = PDB.fromfile('data/single-atom.pdb')
-        self.ligand = PDB.fromfile('data/single-atom.pdb')
+        self.receptor = PDB.fromfile(join(DATA, 'single-atom.pdb'))
+        self.ligand = PDB.fromfile(join(DATA, 'single-atom.pdb'))
 
     def test_minimal_volume_parameters(self):
         coor1 = np.asarray([[1, 2, 3], [-2, -3, -4]], dtype=np.float64)

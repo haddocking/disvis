@@ -6,6 +6,7 @@ dist/
 disvis.egg-info/
 
 *.c
+*.so
 *.pyc
 *.html
 *.mrc

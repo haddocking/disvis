@@ -1,6 +1,58 @@
 [build-system]
-requires = ["setuptools>=61", "wheel", "numpy", "Cython>=3.0"]
+requires = ["setuptools>=77", "numpy", "Cython>=3.0"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "disvis"
+version = "3.0.0"
+description = """\
+Quantifying and visualizing the interaction space of distance-constrained \
+macromolecular complexes"""
+readme = "README.md"
+authors = [{ name = "Gydo C.P. van Zundert", email = "gvanzundert51@gmail.com" }]
+maintainers = [{ name = "BonvinLab", email = "bonvinlab.support@uu.nl" }]
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = [
+    "numpy",
+    "pyfftw",  # roughly halves the run time compared with the NumPy FFT
+]
+
+[project.optional-dependencies]
+# GPU acceleration also needs clFFT and gpyfft, which are not on PyPI; see
+# INSTALLATION.md.
+gpu = ["pyopencl", "mako"]
+dev = ["ruff", "cython-lint"]
+
+[project.urls]
+homepage = "https://github.com/haddocking/disvis"
+source = "https://github.com/haddocking/disvis"
+issues = "https://github.com/haddocking/disvis/issues"
+
+[project.scripts]
+disvis = "disvis.main:main"
+
+# The compiled extensions are defined in setup.py, as they need
+# numpy.get_include() and cythonize().
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+disvis = ["data/*.npy", "kernels.cl"]
+
+[tool.setuptools.exclude-package-data]
+# Sources of the compiled extensions: in the sdist, not in the wheel
+disvis = ["*.pyx", "*.c"]
 
 [tool.ruff]
 line-length = 79
@@ -25,9 +77,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"disvis/elements.py" = ["D", "UP", "PL", "B"]  # third-party code
-"disvis/tests/*" = ["D"]
+"src/disvis/elements.py" = ["D", "UP", "PL", "B"]  # third-party code
+"tests/*" = ["D"]
 
 [tool.ruff.format]
 quote-style = "preserve"
-exclude = ["disvis/elements.py"]  # third-party code, kept as is
+exclude = ["src/disvis/elements.py"]  # third-party code, kept as is

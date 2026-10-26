@@ -1,37 +1,51 @@
 """Compare the CPU and GPU implementations step by step.
 
-Run from the disvis/tests directory; needs a GPU and pyopencl.
+Run from the repository root with python -m unittest. Skipped without the
+GPU packages (pyopencl, gpyfft) or an OpenCL GPU.
 """
 
-from unittest import TestCase, main
-from os.path import join
+import warnings
+from unittest import TestCase, main, skipIf
+from os.path import dirname, join
 
 import numpy as np
 
 from disvis import PDB
-from disvis.disvis import DisVis
+from disvis.disvis import PYOPENCL, DisVis
 from disvis.helpers import (
     get_queue,
     parse_restraints,
     parse_interaction_selection,
 )
 
+if PYOPENCL:
+    import pyopencl
 
+    # Some OpenCL compilers (e.g. NVIDIA's) report notes on pyopencl's own
+    # kernels, which pyopencl turns into a CompilerWarning although the build
+    # succeeded. Ignore them, so that the tests can run with -W error.
+    warnings.filterwarnings('ignore', category=pyopencl.CompilerWarning)
+
+DATA = join(dirname(__file__), 'data')
+QUEUE = get_queue() if PYOPENCL else None
+
+
+@skipIf(QUEUE is None, 'needs pyopencl, gpyfft and an OpenCL GPU')
 class TestCPUvsGPU(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.dv = DisVis()
         cls.gdv = DisVis()
 
-        cls.gdv.queue = get_queue()
+        cls.gdv.queue = QUEUE
 
-        receptor = PDB.fromfile(join('data', 'O14250.pdb'))
-        ligand = PDB.fromfile(join('data', 'Q9UT97.pdb'))
+        receptor = PDB.fromfile(join(DATA, 'O14250.pdb'))
+        ligand = PDB.fromfile(join(DATA, 'Q9UT97.pdb'))
         restraints = parse_restraints(
-            join('data', 'restraints.dat'), receptor, ligand
+            join(DATA, 'restraints.dat'), receptor, ligand
         )
         rselect, lselect = parse_interaction_selection(
-            join('data', 'selection.res'), receptor, ligand
+            join(DATA, 'selection.res'), receptor, ligand
         )
 
         # Identity rotation and rotation around z-axis
