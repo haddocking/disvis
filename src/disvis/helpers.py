@@ -22,14 +22,17 @@ def get_queue(device_type='gpu'):
     except Exception:
         return None
     for platform in platforms:
-        # A platform without usable devices raises an error: try the next.
         try:
             devices = platform.get_devices(device_type=types[device_type])
-            if devices:
+        except cl.Error:
+            # No usable devices of this type on this platform.
+            devices = []
+        if devices:
+            try:
                 context = cl.Context(devices=devices[:1])
                 return cl.CommandQueue(context, device=devices[0])
-        except Exception:
-            continue
+            except cl.Error:
+                return None
     return None
 
 
