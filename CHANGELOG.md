@@ -34,6 +34,8 @@ Changes compared with 2.3.0, the last Python 2 release.
   with `-g`.
 - `args.json` (the command-line options) is written to the output directory.
 - Clear error message when `-g` is used without the GPU packages.
+- `-g` uses another OpenCL device (e.g. pocl on the CPU) when there is no
+  OpenCL GPU, and writes the device to `disvis.log`.
 - GPU: OpenCL kernels are built once.
 - GPU interaction analysis (`-g -is`): the interaction cutoff was 10 grid
   units instead of 10 Å, so with a voxel spacing other than 1 Å the counts
@@ -62,4 +64,7 @@ Changes compared with 2.3.0, the last Python 2 release.
   pyvkfft or an OpenCL GPU.
 - Code formatted and linted with ruff (configuration in `pyproject.toml`),
   with docstrings throughout.
+- GitHub workflow running the linters, the unit tests (Linux and macOS,
+  Python 3.11–3.14), the coarse test cases against the CPU references, and
+  the GPU code on the CPU with pocl.
 - Issue and pull-request templates, and `CONTRIBUTING.md` for developers.

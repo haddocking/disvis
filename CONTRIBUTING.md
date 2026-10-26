@@ -89,8 +89,9 @@ python -W error -m unittest tests/test_disvis.py                       # CPU onl
 python -W error -m unittest tests/test_kernels.py tests/test_cpu_vs_gpu.py  # GPU
 ```
 
-The GPU tests are skipped when the GPU packages (pyopencl, pyvkfft) or an
-OpenCL GPU are missing.
+The GPU tests run on a GPU if there is one, and otherwise on any other OpenCL
+device, such as pocl on the CPU (`pip install 'pyopencl[pocl]'`, Linux only).
+They are skipped when the GPU packages or an OpenCL device are missing.
 
 ### Reference results
 
