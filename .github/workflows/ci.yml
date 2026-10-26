@@ -80,3 +80,17 @@ jobs:
         run: python -c "import pyopencl as cl; print([(p.name, [d.name for d in p.get_devices()]) for p in cl.get_platforms()])"
       - name: unit tests, with the GPU tests on pocl
         run: python -W error -m unittest -v
+
+  ci-passed:
+    # One check for the branch ruleset, independent of the job matrix.
+    if: always()
+    needs: [lint, test, test-cases, opencl-pocl]
+    runs-on: ubuntu-latest
+    steps:
+      - name: all jobs passed
+        run: |
+          echo 'lint: ${{ needs.lint.result }}, test: ${{ needs.test.result }}, test-cases: ${{ needs.test-cases.result }}, opencl-pocl: ${{ needs.opencl-pocl.result }}'
+          test '${{ needs.lint.result }}' = success
+          test '${{ needs.test.result }}' = success
+          test '${{ needs.test-cases.result }}' = success
+          test '${{ needs.opencl-pocl.result }}' = success

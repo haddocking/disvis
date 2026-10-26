@@ -122,12 +122,17 @@ template. Before it can be merged, a pull request needs:
 - an approving review (and a review from CSBcore for the files listed in
   `.github/CODEOWNERS`),
 - all review conversations resolved,
-- the Codacy check passing, on a branch that is up to date with `main`.
+- the GitHub workflow passing (its `ci-passed` check), on a branch that is up
+  to date with `main`.
 
 The GitHub workflow (`.github/workflows/ci.yml`) runs on every pull request:
 ruff and cython-lint, the unit tests on Linux, macOS and Windows with Python
 3.11–3.14, the coarse test cases with `tests/check_test_cases.py`, and the GPU
 unit tests on the CPU with pocl. Run the same checks locally before pushing.
+
+If AI tools played a meaningful role, say so in the pull request (the template
+has a section for it), and update `aidecl.yaml`, the project's AI declaration,
+when a new tool or kind of use is added.
 
 Checklist:
 

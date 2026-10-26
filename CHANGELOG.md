@@ -28,7 +28,7 @@ Changes compared with 2.3.0, the last Python 2 release.
 
 - New `--version` option, and `disvis.__version__`.
 - A zero or negative voxel spacing (`-vs`) is rejected; DisVis used to hang.
-- `-p` works with the spawn start method (macOS).
+- `-p` works with the spawn start method (macOS and Windows).
 - With `-p`, one progress line for all processes, updated in place.
 - `disvis.log` is overwritten instead of appended to, and is also written
   with `-g`.
@@ -69,3 +69,4 @@ Changes compared with 2.3.0, the last Python 2 release.
   references (`tests/check_test_cases.py`), and the GPU unit tests on the CPU
   with pocl. Ruff also limits the complexity of functions (C901).
 - Issue and pull-request templates, and `CONTRIBUTING.md` for developers.
+- AI declaration (`aidecl.yaml`, see https://ai-declaration.org/).
