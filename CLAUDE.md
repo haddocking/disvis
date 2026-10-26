@@ -26,8 +26,9 @@ improve it, do not assume it is already optimal.
 
 ## Rules for agents
 
-- Reinstall (`pip install .`) after every code change before running or
-  testing; run the unit tests from the repository root with `python -m unittest`.
+- After changing the compiled extensions (`libdisvis.pyx`, `_extensions.c`), rebuild them
+  with `pip install -e .`; run the unit tests from the repository root
+  with `python -m unittest`.
 - The CPU output must stay byte-identical to the reference results. Compare the
   coarse runs of both test cases after any change to the search, and say so
   explicitly if a change alters the output on purpose.
