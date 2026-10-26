@@ -80,7 +80,7 @@ def parse_interaction_selection(fname, pdb1, pdb2):
 
     if (len(resi1) != pdb1_sel.natoms) or (len(resi2) != pdb2_sel.natoms):
         msg = (
-            "Some selected interaction residues where either missing in "
+            "Some selected interaction residues were either missing in "
             "the PDB file "
             "or had alternate conformers. Please check your input "
             "residues and remove alternate conformers."

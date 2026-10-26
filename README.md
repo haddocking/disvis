@@ -16,19 +16,11 @@ to the highest number of consistent restraints at every position in space.
 ## Requirements
 
 * Python 3.11+
-* NumPy
-* pyFFTW (FFTW3 bindings, for fast Fourier transforms)
 * A C compiler (to build the extension modules)
 
-NumPy and pyFFTW are installed automatically by *pip*; pyFFTW comes as a
-prebuilt package that includes FFTW3 for Linux, macOS and Windows.
-
-For GPU hardware acceleration the following packages are also required
-
-* OpenCL1.1+
-* [pyopencl](https://github.com/pyopencl/pyopencl) and Mako
-* [clFFT](https://github.com/clMathLibraries/clFFT)
-* [gpyfft](https://github.com/geggo/gpyfft)
+The Python packages DisVis needs are listed in `pyproject.toml` and installed
+automatically by *pip*. GPU acceleration also needs an OpenCL 1.2+ enabled GPU
+and the optional `gpu` packages (see INSTALLATION.md).
 
 
 ## Installation
@@ -43,9 +35,7 @@ source .venv/bin/activate
 pip install .
 ```
 
-The build dependencies (NumPy and Cython) and the run-time dependencies (NumPy
-and pyFFTW) are installed automatically by *pip*. After installation, the
-command line tool *disvis* should be at your disposal.
+After installation, the command line tool *disvis* should be at your disposal.
 
 For GPU acceleration, install the optional GPU requirements with
 
@@ -53,8 +43,7 @@ For GPU acceleration, install the optional GPU requirements with
 pip install '.[gpu]'
 ```
 
-and build clFFT and gpyfft, which are not available from PyPI, as described in
-INSTALLATION.md.
+See INSTALLATION.md for the requirements and for checking the GPU set-up.
 
 
 ### Linux

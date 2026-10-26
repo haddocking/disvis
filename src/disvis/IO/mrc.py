@@ -14,39 +14,53 @@ def parse_mrc(fid):
     Returns the density as a [z, y, x] array, the voxel spacing and the
     (x, y, z) origin.
     """
-    if isinstance(fid, str):
-        with open(fid, 'rb') as f:
-            return parse_mrc(f)
-
-    mrcfile = MRCFile(fid)
-
-    array = mrcfile.density
-    voxelspacing = mrcfile.voxelspacing
-    origin = mrcfile.origin
-
-    return array, voxelspacing, origin
+    with MRCFile(fid) as mrcfile:
+        return mrcfile.density, mrcfile.voxelspacing, mrcfile.origin
 
 
 class MRCFile:
     """An MRC or CCP4 file and its header.
 
-    fmt is 'mrc', 'ccp4' or 'map'; by default it is taken from the file
-    extension.
+    fid is a file name or an open binary file. fmt is 'mrc', 'ccp4' or
+    'map'; by default it is taken from the file extension. A file opened by
+    name is closed by close(), or at the end of a with block.
     """
 
     def __init__(self, fid, fmt=None):
 
         if hasattr(fid, 'read'):
-            pass
+            self._owns_fid = False
         elif isinstance(fid, str):
             fid = open(fid, 'rb')
+            self._owns_fid = True
         else:
             raise TypeError('Input should either be a file of filename')
+        self._fid = fid
+        try:
+            self._read_header(fmt)
+        except Exception:
+            self.close()
+            raise
+
+    def __enter__(self):
+        """Return the MRC file, for use in a with block."""
+        return self
+
+    def __exit__(self, *exc):
+        """Close the file at the end of a with block."""
+        self.close()
+
+    def close(self):
+        """Close the file if it was opened by name."""
+        if self._owns_fid:
+            self._fid.close()
+
+    def _read_header(self, fmt):
+        fid = self._fid
 
         if fmt is None:
             fmt = os.path.splitext(fid.name)[1].strip('.')
 
-        self._fid = fid
         self.fmt = fmt
         self._header = {}
 

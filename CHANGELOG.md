@@ -16,8 +16,10 @@ Changes compared with 2.3.0, the last Python 2 release.
 - src layout: the package is in `src/disvis/` (with the extension sources), the
   unit tests in `tests/`; run them from the repository root with
   `python -m unittest`. The sdist includes the tests.
-- New `gpu` extra (`pip install '.[gpu]'`) for pyopencl; clFFT and gpyfft
-  must still be installed by hand (see `INSTALLATION.md`).
+- GPU FFTs with VkFFT through pyvkfft, instead of clFFT and gpyfft, which had
+  to be built by hand. New `gpu` extra (`pip install '.[gpu]'`: pyopencl,
+  Mako and pyvkfft). The coarse test cases give byte-identical output with
+  VkFFT and clFFT.
 - Docker image based on Python 3.12.
 - The source distribution (sdist) includes the extension sources, so it can
   be built and installed.
@@ -33,7 +35,9 @@ Changes compared with 2.3.0, the last Python 2 release.
 - `args.json` (the command-line options) is written to the output directory.
 - Clear error message when `-g` is used without the GPU packages.
 - GPU: OpenCL kernels are built once.
-- MRC files are closed after reading.
+- MRC files are closed after reading; `MRCFile` closes a file it opened by
+  name (`close()` or a `with` block), also when its header cannot be read.
+- `volume.erode` writes the erosion into the given `out` volume.
 - `scripts/analyze.py` and `scripts/analyze_interactions.py` were rewritten
   for the current code and output format.
 - New `scripts/interactions_to_bfactor.py` writes the average number of
@@ -51,7 +55,7 @@ Changes compared with 2.3.0, the last Python 2 release.
 - New CPU and GPU reference results for the test cases, and
   `test-cases/README.md` with benchmarks.
 - Fixed the outdated GPU unit tests; they are skipped without pyopencl,
-  gpyfft or an OpenCL GPU.
+  pyvkfft or an OpenCL GPU.
 - Code formatted and linted with ruff (configuration in `pyproject.toml`),
   with docstrings throughout.
 - Issue and pull-request templates, and `CONTRIBUTING.md` for developers.
