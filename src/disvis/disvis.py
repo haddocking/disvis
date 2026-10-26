@@ -753,10 +753,11 @@ class DisVis:
 
     def _cl_count_complexes(self, weight):
         # Count all sampled complexes
-        self._cl_kernels.add_weighted(
-            self._cl_tot_complex,
-            cl_array.sum(self._cl_interspace, dtype=np.dtype(np.float32)),
-            weight,
+        # Two operations, not one fused kernel: some compilers (NVIDIA)
+        # would contract the multiply-add, which rounds differently.
+        self._cl_tot_complex += (
+            cl_array.sum(self._cl_interspace, dtype=np.dtype(np.float32))
+            * weight
         )
         self._cl_kernels.set_to_i32(np.int32(0), self._cl_hist)
 

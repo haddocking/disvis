@@ -92,13 +92,6 @@ class Kernels:
             "(round(intervol[i]) >= min_interaction)) ? 1 : 0;",
         )
 
-        # total += w * x, for one-element arrays, as two separate operations
-        self.add_weighted = ElementwiseKernel(
-            ctx,
-            "float *total, float *x, float w",
-            "float tmp = x[i] * w; total[i] = total[i] + tmp;",
-        )
-
         self.conj = ElementwiseKernel(
             ctx,
             "cfloat_t* in, cfloat_t *out",
