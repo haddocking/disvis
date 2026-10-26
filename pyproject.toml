@@ -28,9 +28,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# GPU acceleration also needs clFFT and gpyfft, which are not on PyPI; see
-# INSTALLATION.md.
-gpu = ["pyopencl", "mako"]
+# GPU acceleration; pyvkfft is built from source (see INSTALLATION.md).
+gpu = ["pyopencl", "mako", "pyvkfft"]
 dev = ["ruff", "cython-lint"]
 
 [project.urls]

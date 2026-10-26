@@ -18,7 +18,7 @@ except ImportError:
     PYFFTW = False
 try:
     import pyopencl.array as cl_array
-    from . import pyclfft
+    from .gpufft import RFFTn, ft_shape
     from .kernels import Kernels
 
     PYOPENCL = True
@@ -589,9 +589,7 @@ class DisVis:
             )
 
         # Complex64
-        self._ft_shape = tuple(
-            [self._shape[0] // 2 + 1] + list(self._shape)[1:]
-        )
+        self._ft_shape = ft_shape(self._shape)
         arr_names = 'lcore lcore_conj rcore rsurf tmp'.split()
         for arr_name in arr_names:
             setattr(
@@ -702,12 +700,11 @@ class DisVis:
             self._kernel_constants['nligand_coor'] = self._cl_lselect.shape[0]
 
         self._cl_kernels = Kernels(q.context, self._kernel_constants)
-        self._cl_rfftn = pyclfft.RFFTn(q.context, self._shape)
-        self._cl_irfftn = pyclfft.iRFFTn(q.context, self._shape)
+        self._cl_fft = RFFTn(q, self._shape)
 
         # Initial calculations
-        self._cl_rfftn(q, self._cl_rcore, self._cl_ft_rcore)
-        self._cl_rfftn(q, self._cl_rsurf, self._cl_ft_rsurf)
+        self._cl_fft.rfftn(self._cl_rcore, self._cl_ft_rcore)
+        self._cl_fft.rfftn(self._cl_rsurf, self._cl_ft_rsurf)
         self._cl_tot_complex = cl_array.sum(
             self._cl_interspace, dtype=np.dtype(np.float32)
         )
@@ -720,13 +717,13 @@ class DisVis:
 
     def _cl_get_interaction_space(self):
         k = self._cl_kernels
-        self._cl_rfftn(self.queue, self._cl_rot_lcore, self._cl_ft_lcore)
+        self._cl_fft.rfftn(self._cl_rot_lcore, self._cl_ft_lcore)
         k.conj(self._cl_ft_lcore, self._cl_ft_lcore_conj)
         k.cmultiply(self._cl_ft_lcore_conj, self._cl_ft_rcore, self._cl_ft_tmp)
-        self._cl_irfftn(self.queue, self._cl_ft_tmp, self._cl_clashvol)
+        self._cl_fft.irfftn(self._cl_ft_tmp, self._cl_clashvol)
         k.round(self._cl_clashvol, self._cl_clashvol)
         k.cmultiply(self._cl_ft_lcore_conj, self._cl_ft_rsurf, self._cl_ft_tmp)
-        self._cl_irfftn(self.queue, self._cl_ft_tmp, self._cl_intervol)
+        self._cl_fft.irfftn(self._cl_ft_tmp, self._cl_intervol)
         k.round(self._cl_intervol, self._cl_intervol)
 
         k.less_equal(
@@ -851,9 +848,9 @@ class DisVis:
             k.greater_equal_iif(
                 self._cl_red_interspace, np.int32(i), self._cl_tmp
             )
-            self._cl_rfftn(self.queue, self._cl_tmp, self._cl_ft_tmp)
+            self._cl_fft.rfftn(self._cl_tmp, self._cl_ft_tmp)
             k.cmultiply(self._cl_ft_tmp, self._cl_ft_lcore, self._cl_ft_tmp)
-            self._cl_irfftn(self.queue, self._cl_ft_tmp, self._cl_tmp)
+            self._cl_fft.irfftn(self._cl_ft_tmp, self._cl_tmp)
             k.round(self._cl_tmp, self._cl_tmp)
             k.multiply_add2(self._cl_tmp, weight, self._cl_occ_grid[i])
         self.queue.finish()

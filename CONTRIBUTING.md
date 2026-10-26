@@ -16,7 +16,7 @@ git clone https://github.com/haddocking/disvis.git
 cd disvis
 python -m venv .venv
 source .venv/bin/activate
-pip install -e '.[dev]'  # with ruff and cython-lint; add gpu for pyopencl and mako
+pip install -e '.[dev]'  # with ruff and cython-lint; '.[dev,gpu]' for the GPU
 ```
 
 The package metadata and dependencies are in `pyproject.toml`; `setup.py`
@@ -28,9 +28,9 @@ effect without reinstalling. After changing the compiled extensions
 The build leaves `build/`, `src/disvis.egg-info/` and the compiled `*.so`
 files in `src/disvis/`; git ignores them.
 
-GPU acceleration also needs clFFT and gpyfft, which are not on PyPI and must be
-built by hand (see `INSTALLATION.md`). On Linux, `LD_LIBRARY_PATH` must include
-the clFFT library directory.
+The `gpu` extra installs pyopencl, Mako and pyvkfft; pyvkfft is built from
+source and needs a C++ compiler and, on Linux, the OpenCL headers (see
+`INSTALLATION.md`).
 
 ## Code layout
 
@@ -48,7 +48,7 @@ The package is in `src/disvis/`:
 - `volume.py`: the `Volume` class (3D grid with spacing and origin).
 - `pdb.py`, `IO/`: PDB/mmCIF and MRC input and output.
 - `kernels.py`, `kernels.cl`: OpenCL kernels for the GPU.
-- `pyclfft.py`: GPU FFTs through gpyfft/clFFT.
+- `gpufft.py`: real 3D FFTs on the GPU with VkFFT, through pyvkfft.
 - `libdisvis.pyx` (Cython) and `_extensions.c` (C): the CPU grid operations
   (restraint spaces, violations, interactions, grid rotation).
 
@@ -89,7 +89,7 @@ python -W error -m unittest tests/test_disvis.py                       # CPU onl
 python -W error -m unittest tests/test_kernels.py tests/test_cpu_vs_gpu.py  # GPU
 ```
 
-The GPU tests are skipped when the GPU packages (pyopencl, gpyfft) or an
+The GPU tests are skipped when the GPU packages (pyopencl, pyvkfft) or an
 OpenCL GPU are missing.
 
 ### Reference results

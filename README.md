@@ -25,10 +25,10 @@ prebuilt package that includes FFTW3 for Linux, macOS and Windows.
 
 For GPU hardware acceleration the following packages are also required
 
-* OpenCL1.1+
-* [pyopencl](https://github.com/pyopencl/pyopencl) and Mako
-* [clFFT](https://github.com/clMathLibraries/clFFT)
-* [gpyfft](https://github.com/geggo/gpyfft)
+* OpenCL 1.2+
+* [pyopencl](https://github.com/inducer/pyopencl) and Mako
+* [pyvkfft](https://github.com/vincefn/pyvkfft) (Python bindings to the VkFFT
+  library), built from source by *pip*
 
 
 ## Installation
@@ -53,8 +53,7 @@ For GPU acceleration, install the optional GPU requirements with
 pip install '.[gpu]'
 ```
 
-and build clFFT and gpyfft, which are not available from PyPI, as described in
-INSTALLATION.md.
+See INSTALLATION.md for the requirements and for checking the GPU set-up.
 
 
 ### Linux

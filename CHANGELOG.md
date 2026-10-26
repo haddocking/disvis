@@ -16,8 +16,10 @@ Changes compared with 2.3.0, the last Python 2 release.
 - src layout: the package is in `src/disvis/` (with the extension sources), the
   unit tests in `tests/`; run them from the repository root with
   `python -m unittest`. The sdist includes the tests.
-- New `gpu` extra (`pip install '.[gpu]'`) for pyopencl; clFFT and gpyfft
-  must still be installed by hand (see `INSTALLATION.md`).
+- GPU FFTs with VkFFT through pyvkfft, instead of clFFT and gpyfft, which had
+  to be built by hand. New `gpu` extra (`pip install '.[gpu]'`: pyopencl,
+  Mako and pyvkfft). The coarse test cases give byte-identical output with
+  VkFFT and clFFT.
 - Docker image based on Python 3.12.
 - The source distribution (sdist) includes the extension sources, so it can
   be built and installed.
@@ -53,7 +55,7 @@ Changes compared with 2.3.0, the last Python 2 release.
 - New CPU and GPU reference results for the test cases, and
   `test-cases/README.md` with benchmarks.
 - Fixed the outdated GPU unit tests; they are skipped without pyopencl,
-  gpyfft or an OpenCL GPU.
+  pyvkfft or an OpenCL GPU.
 - Code formatted and linted with ruff (configuration in `pyproject.toml`),
   with docstrings throughout.
 - Issue and pull-request templates, and `CONTRIBUTING.md` for developers.

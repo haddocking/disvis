@@ -461,7 +461,7 @@ def main():
     joiner = Joiner(args.directory)
     dump_args(args, joiner('args.json'))
 
-    # force: gpyfft configures the root logger when it is imported.
+    # force: an imported library may already have configured the root logger.
     logging.basicConfig(
         filename=joiner('disvis.log'),
         filemode='w',
@@ -478,8 +478,8 @@ def main():
 
         if not PYOPENCL:
             exit(
-                'ERROR: GPU acceleration requires pyopencl, clFFT and '
-                'gpyfft. See INSTALLATION.md.'
+                'ERROR: GPU acceleration requires pyopencl and pyvkfft. '
+                'See INSTALLATION.md.'
             )
         from disvis.helpers import get_queue
 
