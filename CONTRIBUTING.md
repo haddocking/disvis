@@ -16,16 +16,17 @@ git clone https://github.com/haddocking/disvis.git
 cd disvis
 python -m venv .venv
 source .venv/bin/activate
-pip install -e '.[dev]'     # with ruff and cython-lint; add gpu for pyopencl and mako
+pip install -e '.[dev]'  # with ruff and cython-lint; add gpu for pyopencl and mako
 ```
 
 The package metadata and dependencies are in `pyproject.toml`; `setup.py`
 only defines the compiled extensions.
 
-After changing any code, reinstall with `pip install .` before running or
-testing it: the installed package, not the source tree, is what runs (the
-`src/` layout ensures that). Remove the `build/` and `src/disvis.egg-info/`
-directories left by the build.
+This is an editable install: changes to the Python code in `src/disvis/` take
+effect without reinstalling. After changing the compiled extensions
+(`libdisvis.pyx` or `_extensions.c`), rebuild them with `pip install -e .`.
+The build leaves `build/`, `src/disvis.egg-info/` and the compiled `*.so`
+files in `src/disvis/`; git ignores them.
 
 GPU acceleration also needs clFFT and gpyfft, which are not on PyPI and must be
 built by hand (see `INSTALLATION.md`). On Linux, `LD_LIBRARY_PATH` must include

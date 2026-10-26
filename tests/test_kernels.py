@@ -4,6 +4,7 @@ Run from the repository root with python -m unittest. Skipped without the
 GPU packages (pyopencl, gpyfft) or an OpenCL GPU.
 """
 
+import warnings
 from unittest import TestCase, main, skipIf
 
 import numpy as np
@@ -12,9 +13,15 @@ from disvis.disvis import PYOPENCL
 from disvis.helpers import get_queue
 
 if PYOPENCL:
+    import pyopencl
     import pyopencl.array as cl_array
 
     from disvis.kernels import Kernels
+
+    # Some OpenCL compilers (e.g. NVIDIA's) report notes on pyopencl's own
+    # kernels, which pyopencl turns into a CompilerWarning although the build
+    # succeeded. Ignore them, so that the tests can run with -W error.
+    warnings.filterwarnings('ignore', category=pyopencl.CompilerWarning)
 
 QUEUE = get_queue() if PYOPENCL else None
 

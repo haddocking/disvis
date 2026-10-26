@@ -4,6 +4,7 @@ Run from the repository root with python -m unittest. Skipped without the
 GPU packages (pyopencl, gpyfft) or an OpenCL GPU.
 """
 
+import warnings
 from unittest import TestCase, main, skipIf
 from os.path import dirname, join
 
@@ -16,6 +17,14 @@ from disvis.helpers import (
     parse_restraints,
     parse_interaction_selection,
 )
+
+if PYOPENCL:
+    import pyopencl
+
+    # Some OpenCL compilers (e.g. NVIDIA's) report notes on pyopencl's own
+    # kernels, which pyopencl turns into a CompilerWarning although the build
+    # succeeded. Ignore them, so that the tests can run with -W error.
+    warnings.filterwarnings('ignore', category=pyopencl.CompilerWarning)
 
 DATA = join(dirname(__file__), 'data')
 QUEUE = get_queue() if PYOPENCL else None
