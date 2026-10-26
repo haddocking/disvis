@@ -75,8 +75,10 @@ Notes:
   dominate. The RTX 6000 Ada is about 14× faster than 32 EPYC cores and 13–22×
   faster than 8 M2 Pro cores on the fine runs.
 * VkFFT is 2.3–3.4× faster than clFFT on the GTX 1080 Ti fine runs and
-  1.3–1.4× faster on the RTX 6000 Ada. On the M2 Pro it is as fast for
-  PRE5-PUP2 and slower for RNA-pol II fine (17m 53s against 13m 59s).
+  1.3–1.4× faster on the RTX 6000 Ada, and as fast on the M2 Pro. The M2 Pro
+  RNA-pol II fine times vary with the load of the machine: run one after the
+  other on a busy machine, VkFFT took 19m 2s and clFFT 19m 9s (the clFFT time
+  in the table was measured on an idle machine).
 * Scaling with `-p` is uneven, and short runs gain little from more
   processes. The EPYC 7451 cores are about 2.7× slower than the M2 Pro
   performance cores.
