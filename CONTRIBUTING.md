@@ -16,7 +16,7 @@ git clone https://github.com/haddocking/disvis.git
 cd disvis
 python -m venv .venv
 source .venv/bin/activate
-pip install '.[dev]'     # with ruff and cython-lint; add gpu for pyopencl and mako
+pip install -e '.[dev]'     # with ruff and cython-lint; add gpu for pyopencl and mako
 ```
 
 The package metadata and dependencies are in `pyproject.toml`; `setup.py`
