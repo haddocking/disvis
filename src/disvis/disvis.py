@@ -211,6 +211,10 @@ class DisVis:
         self._grid_min_interaction = (
             self.min_interaction / self.voxelspacing**3
         )
+        # Residues interact within interaction_distance (in Angstrom)
+        self._grid_interaction_distance = (
+            self.interaction_distance / self.voxelspacing
+        )
 
         # Setup the distance restraints
         self._nrestraints = len(self.distance_restraints)
@@ -463,7 +467,7 @@ class DisVis:
             self._red_interspace,
             self._rselect,
             self._rot_lselect,
-            np.float64(self.interaction_distance / self.voxelspacing),
+            np.float64(self._grid_interaction_distance),
             weight,
             np.int32(self.interaction_restraints_cutoff),
             self._interaction_matrix,
@@ -626,10 +630,7 @@ class DisVis:
 
         # kernels
         self._kernel_constants = {
-            # In grid units, as the coordinates, like the CPU version.
-            'interaction_cutoff': float(
-                self.interaction_distance / self.voxelspacing
-            ),
+            'interaction_cutoff': float(self._grid_interaction_distance),
             'nrestraints': self._nrestraints,
             'shape_x': self._shape[2],
             'shape_y': self._shape[1],
