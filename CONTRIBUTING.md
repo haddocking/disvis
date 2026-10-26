@@ -28,8 +28,8 @@ effect without reinstalling. After changing the compiled extensions
 The build leaves `build/`, `src/disvis.egg-info/` and the compiled `*.so`
 files in `src/disvis/`; git ignores them.
 
-The `gpu` extra installs pyopencl, Mako and pyvkfft; pyvkfft is built from
-source and needs a C++ compiler and, on Linux, the OpenCL headers (see
+The `gpu` extra installs the GPU requirements; pyvkfft is built from source
+and needs a C++ compiler and, on Linux, the OpenCL headers (see
 `INSTALLATION.md`).
 
 ## Code layout

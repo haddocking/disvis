@@ -3,10 +3,11 @@
 Run from the repository root with python -m unittest.
 """
 
+import gc
 import os
 import tempfile
+import warnings
 from unittest import TestCase, main
-from unittest.mock import patch
 
 import numpy as np
 
@@ -63,16 +64,17 @@ class TestMRC(TestCase):
         self.assertEqual(voxelspacing, 2.0)
         self.assertTrue(np.allclose(origin, (1, 2, 3)))
 
-    def opened_files(self):
-        """Patch open in the mrc module and record the files it opens."""
-        files = []
+    def unclosed_files(self, func):
+        """Call func and return the files that it left open.
 
-        def recording_open(*args, **kwargs):
-            f = open(*args, **kwargs)
-            files.append(f)
-            return f
-
-        return files, patch('disvis.IO.mrc.open', recording_open, create=True)
+        An open file object warns with a ResourceWarning when it is garbage
+        collected.
+        """
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter('always', ResourceWarning)
+            func()
+            gc.collect()
+        return [w for w in caught if issubclass(w.category, ResourceWarning)]
 
     def test_file_name_is_closed(self):
         with MRCFile(self.fname) as mrcfile:
@@ -84,11 +86,8 @@ class TestMRC(TestCase):
         self.assertTrue(mrcfile.fid.closed)
 
     def test_parse_mrc_closes_file(self):
-        files, patcher = self.opened_files()
-        with patcher:
-            parse_mrc(self.fname)
-        self.assertEqual(len(files), 1)
-        self.assertTrue(files[0].closed)
+        unclosed = self.unclosed_files(lambda: parse_mrc(self.fname))
+        self.assertEqual(unclosed, [])
 
     def test_open_file_stays_open(self):
         with open(self.fname, 'rb') as f:
@@ -100,11 +99,12 @@ class TestMRC(TestCase):
         bad = os.path.join(self.tmpdir.name, 'bad.mrc')
         with open(bad, 'wb') as f:
             f.write(bytes(1024))
-        files, patcher = self.opened_files()
-        with patcher, self.assertRaises(OSError):
-            MRCFile(bad)
-        self.assertEqual(len(files), 1)
-        self.assertTrue(files[0].closed)
+
+        def read_bad_file():
+            with self.assertRaises(OSError):
+                MRCFile(bad)
+
+        self.assertEqual(self.unclosed_files(read_bad_file), [])
 
 
 if __name__ == '__main__':

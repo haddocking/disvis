@@ -16,7 +16,7 @@ CPU version (`-p`).
 * A C++ compiler (on macOS, the Xcode command line tools), as pyvkfft is built
   from source.
 * On Linux, the OpenCL headers (`CL/cl.h`) and loader (`libOpenCL.so`), e.g.
-  the `opencl-headers` and `ocl-icd-libopencl1` (Debian/Ubuntu) or
+  the `opencl-headers` and `ocl-icd-opencl-dev` (Debian/Ubuntu) or
   `opencl-headers` and `ocl-icd-devel` (Rocky/RHEL) packages.
 * DisVis installed in a virtual environment, as described in README.md.
 
@@ -26,7 +26,7 @@ GPU nodes: install the GPU requirements there.
 ## Installation
 
 From the DisVis directory, with the virtual environment activated, install the
-optional GPU requirements of DisVis (pyopencl, Mako and pyvkfft)
+optional GPU requirements of DisVis (the `gpu` extra in `pyproject.toml`)
 
 ```bash
 pip install '.[gpu]'
