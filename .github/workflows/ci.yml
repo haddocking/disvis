@@ -65,6 +65,11 @@ jobs:
     # The GPU unit tests on the CPU, with the pocl OpenCL implementation.
     # pocl is slow, so the test cases are not run with it.
     runs-on: ubuntu-latest
+    env:
+      # pocl's LLVM may not know the CPU of the runner (e.g. AMD EPYC 9V45)
+      # and then fails with "unknown target CPU 'generic'": compile for a
+      # CPU level that all runners support.
+      POCL_LLVM_CPU_NAME: x86-64-v3
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
