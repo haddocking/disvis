@@ -36,6 +36,7 @@ Changes compared with 2.3.0, the last Python 2 release.
 - Clear error message when `-g` is used without the GPU packages.
 - `-g` uses another OpenCL device (e.g. pocl on the CPU) when there is no
   OpenCL GPU, and writes the device to `disvis.log`.
+- `-np`/`--no-progress` turns off the progress line.
 - GPU: OpenCL kernels are built once, the search no longer waits for the GPU
   after every step, and fused kernels launch fewer per rotation: together
   1.3–2.6× faster on the fine grid, with the same output.
