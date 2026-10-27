@@ -1,6 +1,8 @@
 # DisVis
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1037197.svg)](https://doi.org/10.5281/zenodo.1037197)
+[![ci](https://github.com/haddocking/disvis/actions/workflows/ci.yml/badge.svg)](https://github.com/haddocking/disvis/actions/workflows/ci.yml)
+[![AI Declaration](https://img.shields.io/badge/AI_Declaration-aidecl.yaml-blue)](aidecl.yaml)
 
 ## About DisVis
 
@@ -244,7 +246,7 @@ Gohlke.
 | --------------- | ---------- | --------- | --- |
 |Linux            | Yes        | Yes       | Yes |
 |MacOSX           | Yes        | Yes       | Yes |
-|Windows          | Yes        | Fail      | No  |
+|Windows          | Yes        | Yes       | No  |
 
 The GPU version has been tested on:
 NVIDIA GeForce GTX 1080 Ti and RTX 6000 Ada for Linux, and Apple M2 Pro for
@@ -259,3 +261,11 @@ Reference results and timings for the test cases, on CPUs and GPUs, are in
 
 See `CONTRIBUTING.md` for the development setup, code style, tests and pull
 requests.
+
+
+## AI Declaration
+
+Large language models (LLM) were used in this repository since
+[v3.0.0](CHANGELOG.md), for the port to Python 3 and the later changes. The
+changes were always reviewed by a human before being merged. See
+[aidecl.yaml](aidecl.yaml) for machine-readable details of the LLM usage.

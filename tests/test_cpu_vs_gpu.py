@@ -1,7 +1,7 @@
 """Compare the CPU and GPU implementations step by step.
 
 Run from the repository root with python -m unittest. Skipped without the
-GPU packages (pyopencl, pyvkfft) or an OpenCL GPU.
+GPU packages (pyopencl, pyvkfft) or an OpenCL device.
 """
 
 import warnings
@@ -27,10 +27,11 @@ if PYOPENCL:
     warnings.filterwarnings('ignore', category=pyopencl.CompilerWarning)
 
 DATA = join(dirname(__file__), 'data')
-QUEUE = get_queue() if PYOPENCL else None
+# A GPU if available, otherwise any OpenCL device (e.g. pocl on the CPU).
+QUEUE = (get_queue() or get_queue('all')) if PYOPENCL else None
 
 
-@skipIf(QUEUE is None, 'needs pyopencl, pyvkfft and an OpenCL GPU')
+@skipIf(QUEUE is None, 'needs pyopencl, pyvkfft and an OpenCL device')
 class TestCPUvsGPU(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -235,7 +236,7 @@ class TestCPUvsGPU(TestCase):
         self.assertTrue(test)
 
 
-@skipIf(QUEUE is None, 'needs pyopencl, pyvkfft and an OpenCL GPU')
+@skipIf(QUEUE is None, 'needs pyopencl, pyvkfft and an OpenCL device')
 class TestInteractionsCoarseGrid(TestCase):
     """CPU and GPU interaction analysis with a voxel spacing other than 1."""
 

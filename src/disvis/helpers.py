@@ -10,17 +10,30 @@ except ImportError:
     pass
 
 
-def get_queue():
-    """Return an OpenCL command queue on the first GPU, or None."""
-    try:
-        platform = cl.get_platforms()[0]
-        devices = platform.get_devices(device_type=cl.device_type.GPU)
-        context = cl.Context(devices=devices)
-        queue = cl.CommandQueue(context, device=devices[0])
-    except Exception:
-        queue = None
+def get_queue(device_type='gpu'):
+    """Return an OpenCL command queue on the first device, or None.
 
-    return queue
+    device_type is 'gpu' (the default) or 'all', which also accepts other
+    OpenCL devices, e.g. pocl on the CPU for testing.
+    """
+    try:
+        types = {'gpu': cl.device_type.GPU, 'all': cl.device_type.ALL}
+        platforms = cl.get_platforms()
+    except Exception:
+        return None
+    for platform in platforms:
+        try:
+            devices = platform.get_devices(device_type=types[device_type])
+        except cl.Error:
+            # No usable devices of this type on this platform.
+            devices = []
+        if devices:
+            try:
+                context = cl.Context(devices=devices[:1])
+                return cl.CommandQueue(context, device=devices[0])
+            except cl.Error:
+                return None
+    return None
 
 
 def positive_float(value):

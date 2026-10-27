@@ -256,7 +256,7 @@ class MRCFile:
         return density
 
 
-def to_mrc(fid, volume, labels=None):
+def to_mrc(fid, volume, labels=None):  # noqa: C901
     """Write volume to the MRC file named fid.
 
     int8 arrays are written as int8, int16 and int32 arrays as int16, and

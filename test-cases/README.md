@@ -25,6 +25,18 @@ disvis O14250.pdb Q9UT97.pdb restraints.dat -a 5.27 -vs 1 -p 8 -d fine
 Use `-g` instead of `-p 8` to run on the GPU (see `INSTALLATION.md`). For
 RNA polymerase II, use `1wcm_A.pdb 1wcm_E.pdb` as input.
 
+`check_test_cases.py` runs both test cases and compares the output files byte
+for byte with the reference results, e.g. from the repository root:
+
+```bash
+python test-cases/check_test_cases.py -p 8      # coarse, on the CPU
+python test-cases/check_test_cases.py --fine    # fine
+python test-cases/check_test_cases.py --gpu     # compared with the GPU references
+```
+
+The GitHub workflow runs it for the coarse test cases on Linux, macOS and
+Windows.
+
 ## Reference results
 
 `example-results/` contains, for each test case:

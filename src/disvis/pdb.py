@@ -122,7 +122,7 @@ class PDB:
         self.data['y'] += vector[1]
         self.data['z'] += vector[2]
 
-    def select(self, identifier, values, loperator='=='):
+    def select(self, identifier, values, loperator='=='):  # noqa: C901
         """Return the atoms whose identifier field matches values.
 
         identifier is a field of data, such as 'chain', 'resi' or 'name'.
