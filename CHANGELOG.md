@@ -28,12 +28,14 @@ Changes compared with 2.3.0, the last Python 2 release.
 
 - New `--version` option, and `disvis.__version__`.
 - A zero or negative voxel spacing (`-vs`) is rejected; DisVis used to hang.
-- `-p` works with the spawn start method (macOS).
+- `-p` works with the spawn start method (macOS and Windows).
 - With `-p`, one progress line for all processes, updated in place.
 - `disvis.log` is overwritten instead of appended to, and is also written
   with `-g`.
 - `args.json` (the command-line options) is written to the output directory.
 - Clear error message when `-g` is used without the GPU packages.
+- `-g` uses another OpenCL device (e.g. pocl on the CPU) when there is no
+  OpenCL GPU, and writes the device to `disvis.log`.
 - GPU: OpenCL kernels are built once, and the search no longer waits for the
   GPU after every step (1.05–1.8× faster on the fine test cases).
 - GPU interaction analysis (`-g -is`): the interaction cutoff was 10 grid
@@ -63,4 +65,9 @@ Changes compared with 2.3.0, the last Python 2 release.
   pyvkfft or an OpenCL GPU.
 - Code formatted and linted with ruff (configuration in `pyproject.toml`),
   with docstrings throughout.
+- GitHub workflow running the linters, the unit tests (Linux, macOS and
+  Windows, Python 3.11–3.14), the coarse test cases against the CPU
+  references (`test-cases/check_test_cases.py`), and the GPU unit tests on the CPU
+  with pocl. Ruff also limits the complexity of functions (C901).
 - Issue and pull-request templates, and `CONTRIBUTING.md` for developers.
+- AI declaration (`aidecl.yaml`, see https://ai-declaration.org/).

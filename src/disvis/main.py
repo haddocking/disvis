@@ -260,7 +260,7 @@ def run_disvis_instance(
     queue.put(dv.accessible_complexes)
 
 
-def mp_cpu_disvis(
+def mp_cpu_disvis(  # noqa: C901
     receptor,
     ligand,
     rotmat,
@@ -453,7 +453,7 @@ def write(line):
     logging.info(line)
 
 
-def main():
+def main():  # noqa: C901
     """Run disvis from the command line and write the results."""
     args = parse_args()
 
@@ -483,10 +483,13 @@ def main():
             )
         from disvis.helpers import get_queue
 
-        queue = get_queue()
+        # Without an OpenCL GPU, use any other OpenCL device, e.g. pocl.
+        queue = get_queue() or get_queue('all')
         if queue is None:
-            raise ValueError("No GPU queue was found.")
+            exit('ERROR: no OpenCL device was found.')
 
+    if queue is not None:
+        write('OpenCL device: {:s}'.format(queue.device.name))
     write('Reading fixed model from: {:s}'.format(args.receptor))
     receptor = PDB.fromfile(args.receptor)
     write('Reading scanning model from: {:s}'.format(args.ligand))

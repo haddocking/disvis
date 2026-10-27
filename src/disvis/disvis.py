@@ -22,7 +22,9 @@ try:
     from .kernels import Kernels
 
     PYOPENCL = True
-except ImportError:
+except (ImportError, OSError):
+    # OSError: a GPU package is installed, but a library it needs (e.g.
+    # libOpenCL) cannot be loaded.
     PYOPENCL = False
 
 from disvis import volume

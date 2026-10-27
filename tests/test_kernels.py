@@ -1,7 +1,7 @@
 """Tests of the OpenCL kernels.
 
 Run from the repository root with python -m unittest. Skipped without the
-GPU packages (pyopencl, pyvkfft) or an OpenCL GPU.
+GPU packages (pyopencl, pyvkfft) or an OpenCL device.
 """
 
 import warnings
@@ -23,10 +23,11 @@ if PYOPENCL:
     # succeeded. Ignore them, so that the tests can run with -W error.
     warnings.filterwarnings('ignore', category=pyopencl.CompilerWarning)
 
-QUEUE = get_queue() if PYOPENCL else None
+# A GPU if available, otherwise any OpenCL device (e.g. pocl on the CPU).
+QUEUE = (get_queue() or get_queue('all')) if PYOPENCL else None
 
 
-@skipIf(QUEUE is None, 'needs pyopencl, pyvkfft and an OpenCL GPU')
+@skipIf(QUEUE is None, 'needs pyopencl, pyvkfft and an OpenCL device')
 class TestKernels(TestCase):
     @classmethod
     def setUpClass(self):
