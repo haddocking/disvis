@@ -59,7 +59,7 @@ jobs:
       - name: install
         run: pip install .
       - name: coarse test cases
-        run: python tests/check_test_cases.py -p 4
+        run: python test-cases/check_test_cases.py -p 4
 
   opencl-pocl:
     # The GPU unit tests on the CPU, with the pocl OpenCL implementation.

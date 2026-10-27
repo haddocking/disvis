@@ -56,7 +56,6 @@ disvis = ["*.pyx", "*.c"]
 [tool.ruff]
 line-length = 79
 target-version = "py311"
-extend-exclude = ["test-cases"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "D", "B", "UP", "PL", "C90"]

@@ -100,12 +100,12 @@ They are skipped when the GPU packages or an OpenCL device are missing.
 `violations.out`, `z-score.out` and `accessible_interaction_space.mrc`) must
 stay **byte-identical** to the references. After any change to the search,
 run at least the coarse runs of both test cases, which
-`tests/check_test_cases.py` runs and compares with the references:
+`test-cases/check_test_cases.py` runs and compares with the references:
 
 ```bash
-python tests/check_test_cases.py -p 8      # coarse, on the CPU
-python tests/check_test_cases.py --fine    # fine: takes from minutes to hours
-python tests/check_test_cases.py --gpu     # compared with the GPU references
+python test-cases/check_test_cases.py -p 8      # coarse, on the CPU
+python test-cases/check_test_cases.py --fine    # fine: takes from minutes to hours
+python test-cases/check_test_cases.py --gpu     # compared with the GPU references
 ```
 
 GPU results agree with the CPU references to about 1e-5 (single precision),
@@ -127,7 +127,7 @@ template. Before it can be merged, a pull request needs:
 
 The GitHub workflow (`.github/workflows/ci.yml`) runs on every pull request:
 ruff and cython-lint, the unit tests on Linux, macOS and Windows with Python
-3.11–3.14, the coarse test cases with `tests/check_test_cases.py`, and the GPU
+3.11–3.14, the coarse test cases with `test-cases/check_test_cases.py`, and the GPU
 unit tests on the CPU with pocl. Run the same checks locally before pushing.
 
 If AI tools played a meaningful role, say so in the pull request (the template

@@ -4,9 +4,9 @@ The output files of each run must be byte-identical to the reference results
 in test-cases/*/example-results/cpu/<grid>, or gpu/<grid> with --gpu. Run
 from the repository root, e.g.
 
-    python tests/check_test_cases.py              # coarse, CPU, 4 processes
-    python tests/check_test_cases.py --fine -p 8  # fine runs take long
-    python tests/check_test_cases.py --gpu
+    python test-cases/check_test_cases.py              # coarse, CPU, 4 processes
+    python test-cases/check_test_cases.py --fine -p 8  # fine runs take long
+    python test-cases/check_test_cases.py --gpu
 
 The exit status is 1 if an output file differs from its reference.
 """
