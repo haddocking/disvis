@@ -11,7 +11,72 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Decide whether the code has to be tested. Pushes to main always are. On a
+  # pull request, the jobs are skipped when the PR changes no code (only *.md
+  # files), or when a push does not change the code of the PR (e.g. a
+  # CHANGELOG.md conflict resolution, or a merge of main) and ci-passed
+  # succeeded on the previous head.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: read
+    outputs:
+      code: ${{ steps.code.outputs.code }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: check whether the code changed
+        id: code
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          ACTION: ${{ github.event.action }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -o pipefail
+          code=true
+          if [ "$EVENT" = pull_request ]; then
+            # everything but the *.md files counts as code
+            paths=(. ':(exclude,glob)**/*.md')
+            # diff of the PR itself (against its merge base); patch-id ignores
+            # line numbers, so that merging main does not count as a change
+            patch_id() {
+              git diff "$(git merge-base "$BASE" "$1")" "$1" -- "${paths[@]}" \
+                | git patch-id --stable | cut -d' ' -f1
+            }
+            if ! git fetch -q --no-tags origin "$BASE" "$AFTER"; then
+              echo "Could not fetch the PR commits: testing everything."
+            elif ! after=$(patch_id "$AFTER"); then
+              echo "Could not compare the PR with its base: testing everything."
+            elif [ -z "$after" ]; then
+              code=false
+              echo "The PR changes no code."
+            elif [ "$ACTION" = synchronize ] \
+              && git fetch -q --no-tags origin "$BEFORE" \
+              && before=$(patch_id "$BEFORE") && [ "$before" = "$after" ]; then
+              # skipped jobs would let a failing PR pass: only skip when
+              # ci-passed succeeded on the previous head
+              passed=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${BEFORE}/check-runs" \
+                --jq '[.check_runs[] | select(.name == "ci-passed")]
+                      | (length > 0) and all(.conclusion == "success")' || echo false)
+              if [ "$passed" = true ]; then
+                code=false
+                echo "The code of the PR is unchanged and ci-passed succeeded on ${BEFORE}."
+              else
+                echo "The code of the PR is unchanged, but ci-passed did not succeed on ${BEFORE}."
+              fi
+            fi
+          fi
+          echo "code=${code}"
+          echo "code=${code}" >> "$GITHUB_OUTPUT"
+
   lint:
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -28,6 +93,8 @@ jobs:
         run: cython-lint --max-line-length 79 src/disvis/libdisvis.pyx
 
   test:
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -46,6 +113,8 @@ jobs:
 
   test-cases:
     # The coarse test cases, compared byte for byte with the CPU references.
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -64,6 +133,8 @@ jobs:
   opencl-pocl:
     # The GPU unit tests on the CPU, with the pocl OpenCL implementation.
     # pocl is slow, so the test cases are not run with it.
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     env:
       # pocl's LLVM may not know the CPU of the runner (e.g. AMD EPYC 9V45)
@@ -89,12 +160,17 @@ jobs:
   ci-passed:
     # One check for the branch ruleset, independent of the job matrix.
     if: always()
-    needs: [lint, test, test-cases, opencl-pocl]
+    needs: [changes, lint, test, test-cases, opencl-pocl]
     runs-on: ubuntu-latest
     steps:
       - name: all jobs passed
         run: |
           echo 'lint: ${{ needs.lint.result }}, test: ${{ needs.test.result }}, test-cases: ${{ needs.test-cases.result }}, opencl-pocl: ${{ needs.opencl-pocl.result }}'
+          test '${{ needs.changes.result }}' = success
+          if [ '${{ needs.changes.outputs.code }}' = false ]; then
+            echo 'No code to test (see the changes job).'
+            exit 0
+          fi
           test '${{ needs.lint.result }}' = success
           test '${{ needs.test.result }}' = success
           test '${{ needs.test-cases.result }}' = success
