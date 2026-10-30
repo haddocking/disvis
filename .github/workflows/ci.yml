@@ -95,22 +95,21 @@ jobs:
     needs: [changes]
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
-    env:
-      # pocl's LLVM may not know the CPU of the runner (e.g. AMD EPYC 9V45)
-      # and then fails with "unknown target CPU 'generic'": compile for a
-      # CPU level that all runners support.
-      POCL_LLVM_CPU_NAME: x86-64-v3
+    defaults:
+      run:
+        # a login shell activates the micromamba environment
+        shell: bash -el {0}
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      # pocl from conda-forge: the pocl 3.0 on PyPI has an LLVM that does not
+      # know the CPU of newer runners (e.g. AMD EPYC 9V45, "unknown target
+      # CPU 'generic'")
+      - uses: mamba-org/setup-micromamba@f457c30a868e4760d3a6fcea5f25dc655b8edf39 # v3.2.1
         with:
-          python-version: "3.14"
-      - name: install the OpenCL headers and loader (for pyvkfft)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y opencl-headers ocl-icd-opencl-dev
+          environment-name: pocl
+          create-args: python=3.14 pocl>=7 pyopencl pyvkfft mako
       - name: install
-        run: pip install -e '.[dev,gpu]' 'pyopencl[pocl]'
+        run: pip install -e '.[dev,gpu]'
       - name: OpenCL devices
         run: python -c "import pyopencl as cl; print([(p.name, [d.name for d in p.get_devices()]) for p in cl.get_platforms()])"
       - name: unit tests, with the GPU tests on pocl
