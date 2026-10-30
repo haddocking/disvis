@@ -129,10 +129,8 @@ The GitHub workflow (`.github/workflows/ci.yml`) runs on every pull request:
 ruff and cython-lint, the unit tests on Linux, macOS and Windows with Python
 3.11–3.14, the coarse test cases with `test-cases/check_test_cases.py`, and the GPU
 unit tests on the CPU with pocl. Run the same checks locally before pushing.
-These jobs are skipped when a pull request changes only `*.md` files, or when
-a push does not change the code of the pull request (e.g. resolving a
-`CHANGELOG.md` conflict or merging `main`) and `ci-passed` succeeded on the
-previous commit; `ci-passed` then still reports success.
+These jobs are skipped when a pull request changes only `*.md` files;
+`ci-passed` then still reports success.
 
 If AI tools played a meaningful role, say so in the pull request (the template
 has a section for it), and update `aidecl.yaml`, the project's AI declaration,

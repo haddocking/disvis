@@ -11,68 +11,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Decide whether the code has to be tested. Pushes to main always are. On a
-  # pull request, the jobs are skipped when the PR changes no code (only *.md
-  # files), or when a push does not change the code of the PR (e.g. a
-  # CHANGELOG.md conflict resolution, or a merge of main) and ci-passed
-  # succeeded on the previous head.
+  # Decide whether the code has to be tested: everything but the *.md files
+  # counts as code. A pull request that changes only *.md files skips the
+  # jobs; every other push to a pull request, and every push to main, is
+  # tested.
   changes:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      checks: read
+      pull-requests: read
     outputs:
-      code: ${{ steps.code.outputs.code }}
+      code: ${{ github.event_name != 'pull_request' || steps.filter.outputs.code == 'true' }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        if: github.event_name == 'pull_request'
         with:
-          fetch-depth: 0
-      - name: check whether the code changed
-        id: code
-        env:
-          GH_TOKEN: ${{ github.token }}
-          EVENT: ${{ github.event_name }}
-          ACTION: ${{ github.event.action }}
-          BASE: ${{ github.event.pull_request.base.sha }}
-          BEFORE: ${{ github.event.before }}
-          AFTER: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -o pipefail
-          code=true
-          if [ "$EVENT" = pull_request ]; then
-            # everything but the *.md files counts as code
-            paths=(. ':(exclude,glob)**/*.md')
-            # diff of the PR itself (against its merge base); patch-id ignores
-            # line numbers, so that merging main does not count as a change
-            patch_id() {
-              git diff "$(git merge-base "$BASE" "$1")" "$1" -- "${paths[@]}" \
-                | git patch-id --stable | cut -d' ' -f1
-            }
-            if ! git fetch -q --no-tags origin "$BASE" "$AFTER"; then
-              echo "Could not fetch the PR commits: testing everything."
-            elif ! after=$(patch_id "$AFTER"); then
-              echo "Could not compare the PR with its base: testing everything."
-            elif [ -z "$after" ]; then
-              code=false
-              echo "The PR changes no code."
-            elif [ "$ACTION" = synchronize ] \
-              && git fetch -q --no-tags origin "$BEFORE" \
-              && before=$(patch_id "$BEFORE") && [ "$before" = "$after" ]; then
-              # skipped jobs would let a failing PR pass: only skip when
-              # ci-passed succeeded on the previous head
-              passed=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${BEFORE}/check-runs" \
-                --jq '[.check_runs[] | select(.name == "ci-passed")]
-                      | (length > 0) and all(.conclusion == "success")' || echo false)
-              if [ "$passed" = true ]; then
-                code=false
-                echo "The code of the PR is unchanged and ci-passed succeeded on ${BEFORE}."
-              else
-                echo "The code of the PR is unchanged, but ci-passed did not succeed on ${BEFORE}."
-              fi
-            fi
-          fi
-          echo "code=${code}"
-          echo "code=${code}" >> "$GITHUB_OUTPUT"
+          # a file is code when it matches every pattern, i.e. is not a *.md
+          predicate-quantifier: every
+          filters: |
+            code:
+              - '**'
+              - '!**/*.md'
 
   lint:
     needs: [changes]
@@ -168,7 +127,7 @@ jobs:
           echo 'lint: ${{ needs.lint.result }}, test: ${{ needs.test.result }}, test-cases: ${{ needs.test-cases.result }}, opencl-pocl: ${{ needs.opencl-pocl.result }}'
           test '${{ needs.changes.result }}' = success
           if [ '${{ needs.changes.outputs.code }}' = false ]; then
-            echo 'No code to test (see the changes job).'
+            echo 'The pull request changes only *.md files.'
             exit 0
           fi
           test '${{ needs.lint.result }}' = success
