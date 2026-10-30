@@ -11,68 +11,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Decide whether the code has to be tested. Pushes to main always are. On a
-  # pull request, the jobs are skipped when the PR changes no code (only *.md
-  # files), or when a push does not change the code of the PR (e.g. a
-  # CHANGELOG.md conflict resolution, or a merge of main) and ci-passed
-  # succeeded on the previous head.
+  # Decide whether the code has to be tested: everything but the *.md files
+  # counts as code. A pull request that changes only *.md files skips the
+  # jobs; every other push to a pull request, and every push to main, is
+  # tested.
   changes:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      checks: read
+      pull-requests: read
     outputs:
-      code: ${{ steps.code.outputs.code }}
+      code: ${{ github.event_name != 'pull_request' || steps.filter.outputs.code == 'true' }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        if: github.event_name == 'pull_request'
         with:
-          fetch-depth: 0
-      - name: check whether the code changed
-        id: code
-        env:
-          GH_TOKEN: ${{ github.token }}
-          EVENT: ${{ github.event_name }}
-          ACTION: ${{ github.event.action }}
-          BASE: ${{ github.event.pull_request.base.sha }}
-          BEFORE: ${{ github.event.before }}
-          AFTER: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -o pipefail
-          code=true
-          if [ "$EVENT" = pull_request ]; then
-            # everything but the *.md files counts as code
-            paths=(. ':(exclude,glob)**/*.md')
-            # diff of the PR itself (against its merge base); patch-id ignores
-            # line numbers, so that merging main does not count as a change
-            patch_id() {
-              git diff "$(git merge-base "$BASE" "$1")" "$1" -- "${paths[@]}" \
-                | git patch-id --stable | cut -d' ' -f1
-            }
-            if ! git fetch -q --no-tags origin "$BASE" "$AFTER"; then
-              echo "Could not fetch the PR commits: testing everything."
-            elif ! after=$(patch_id "$AFTER"); then
-              echo "Could not compare the PR with its base: testing everything."
-            elif [ -z "$after" ]; then
-              code=false
-              echo "The PR changes no code."
-            elif [ "$ACTION" = synchronize ] \
-              && git fetch -q --no-tags origin "$BEFORE" \
-              && before=$(patch_id "$BEFORE") && [ "$before" = "$after" ]; then
-              # skipped jobs would let a failing PR pass: only skip when
-              # ci-passed succeeded on the previous head
-              passed=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${BEFORE}/check-runs" \
-                --jq '[.check_runs[] | select(.name == "ci-passed")]
-                      | (length > 0) and all(.conclusion == "success")' || echo false)
-              if [ "$passed" = true ]; then
-                code=false
-                echo "The code of the PR is unchanged and ci-passed succeeded on ${BEFORE}."
-              else
-                echo "The code of the PR is unchanged, but ci-passed did not succeed on ${BEFORE}."
-              fi
-            fi
-          fi
-          echo "code=${code}"
-          echo "code=${code}" >> "$GITHUB_OUTPUT"
+          # a file is code when it matches every pattern, i.e. is not a *.md
+          predicate-quantifier: every
+          filters: |
+            code:
+              - '**'
+              - '!**/*.md'
 
   lint:
     needs: [changes]
@@ -136,22 +95,21 @@ jobs:
     needs: [changes]
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
-    env:
-      # pocl's LLVM may not know the CPU of the runner (e.g. AMD EPYC 9V45)
-      # and then fails with "unknown target CPU 'generic'": compile for a
-      # CPU level that all runners support.
-      POCL_LLVM_CPU_NAME: x86-64-v3
+    defaults:
+      run:
+        # a login shell activates the micromamba environment
+        shell: bash -el {0}
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      # pocl from conda-forge: the pocl 3.0 on PyPI has an LLVM that does not
+      # know the CPU of newer runners (e.g. AMD EPYC 9V45, "unknown target
+      # CPU 'generic'")
+      - uses: mamba-org/setup-micromamba@f457c30a868e4760d3a6fcea5f25dc655b8edf39 # v3.2.1
         with:
-          python-version: "3.14"
-      - name: install the OpenCL headers and loader (for pyvkfft)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y opencl-headers ocl-icd-opencl-dev
+          environment-name: pocl
+          create-args: python=3.14 pocl>=7 pyopencl pyvkfft mako
       - name: install
-        run: pip install -e '.[dev,gpu]' 'pyopencl[pocl]'
+        run: pip install -e '.[dev,gpu]'
       - name: OpenCL devices
         run: python -c "import pyopencl as cl; print([(p.name, [d.name for d in p.get_devices()]) for p in cl.get_platforms()])"
       - name: unit tests, with the GPU tests on pocl
@@ -168,7 +126,7 @@ jobs:
           echo 'lint: ${{ needs.lint.result }}, test: ${{ needs.test.result }}, test-cases: ${{ needs.test-cases.result }}, opencl-pocl: ${{ needs.opencl-pocl.result }}'
           test '${{ needs.changes.result }}' = success
           if [ '${{ needs.changes.outputs.code }}' = false ]; then
-            echo 'No code to test (see the changes job).'
+            echo 'The pull request changes only *.md files.'
             exit 0
           fi
           test '${{ needs.lint.result }}' = success
