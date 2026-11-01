@@ -10,7 +10,7 @@ from unittest import TestCase, main, skipIf
 import numpy as np
 
 from disvis.disvis import PYOPENCL
-from tests import opencl_queue
+from disvis.helpers import get_queue
 
 if PYOPENCL:
     import pyopencl
@@ -23,10 +23,11 @@ if PYOPENCL:
     # succeeded. Ignore them, so that the tests can run with -W error.
     warnings.filterwarnings('ignore', category=pyopencl.CompilerWarning)
 
-QUEUE = opencl_queue()
+# A GPU if available, otherwise any OpenCL device (e.g. pocl on the CPU).
+QUEUE = (get_queue() or get_queue('all')) if PYOPENCL else None
 
 
-@skipIf(QUEUE is None, 'needs pyopencl, pyvkfft and a working OpenCL device')
+@skipIf(QUEUE is None, 'needs pyopencl, pyvkfft and an OpenCL device')
 class TestKernels(TestCase):
     @classmethod
     def setUpClass(self):

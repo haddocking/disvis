@@ -91,8 +91,7 @@ python -W error -m unittest tests/test_kernels.py tests/test_cpu_vs_gpu.py  # GP
 
 The GPU tests run on a GPU if there is one, and otherwise on any other OpenCL
 device, such as pocl on the CPU (`pip install 'pyopencl[pocl]'`, Linux only).
-They are skipped when the GPU packages or an OpenCL device are missing, or when
-the device cannot build a kernel (e.g. pocl on some recent CPUs).
+They are skipped when the GPU packages or an OpenCL device are missing.
 
 ### Reference results
 
