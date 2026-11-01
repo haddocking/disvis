@@ -13,10 +13,10 @@ import numpy as np
 from disvis import PDB
 from disvis.disvis import PYOPENCL, DisVis
 from disvis.helpers import (
-    get_queue,
     parse_restraints,
     parse_interaction_selection,
 )
+from tests import opencl_queue
 
 if PYOPENCL:
     import pyopencl
@@ -27,11 +27,10 @@ if PYOPENCL:
     warnings.filterwarnings('ignore', category=pyopencl.CompilerWarning)
 
 DATA = join(dirname(__file__), 'data')
-# A GPU if available, otherwise any OpenCL device (e.g. pocl on the CPU).
-QUEUE = (get_queue() or get_queue('all')) if PYOPENCL else None
+QUEUE = opencl_queue()
 
 
-@skipIf(QUEUE is None, 'needs pyopencl, pyvkfft and an OpenCL device')
+@skipIf(QUEUE is None, 'needs pyopencl, pyvkfft and a working OpenCL device')
 class TestCPUvsGPU(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -260,7 +259,7 @@ class TestCPUvsGPU(TestCase):
         self.assertTrue(test)
 
 
-@skipIf(QUEUE is None, 'needs pyopencl, pyvkfft and an OpenCL device')
+@skipIf(QUEUE is None, 'needs pyopencl, pyvkfft and a working OpenCL device')
 class TestInteractionsCoarseGrid(TestCase):
     """CPU and GPU interaction analysis with a voxel spacing other than 1."""
 
