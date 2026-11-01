@@ -12,6 +12,8 @@ name: debug pocl
 
 on:
   workflow_dispatch:
+  push:
+    branches: [pocl-skip-41]
 
 jobs:
   opencl-pocl:
