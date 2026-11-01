@@ -1,11 +1,16 @@
-name: debug pocl (issue #41)
+name: debug pocl
 
-# Temporary: runs the opencl-pocl job of ci.yml on 50 runners, to check that
-# the GPU tests pass or are skipped on every runner CPU. Remove before merging.
+# Debugging aid for pocl bugs that only show up on some runner CPUs, such as
+# "unknown target CPU 'generic'" on the AMD EPYC 9V45 (issue #41). A single CI
+# run lands on one random runner, so it can pass by luck. This runs the
+# opencl-pocl job of ci.yml on 50 runners and writes each runner's CPU, and
+# whether the GPU tests ran or were skipped, to the run summary.
+#
+# Run it by hand on a branch:
+#   gh workflow run debug-pocl.yml --ref <branch>
+# Keep the steps in sync with the opencl-pocl job of ci.yml.
 
 on:
-  push:
-    branches: [pocl-skip-41]
   workflow_dispatch:
 
 jobs:
