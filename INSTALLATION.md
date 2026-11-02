@@ -25,12 +25,14 @@ GPU nodes: install the GPU requirements there.
 
 ## Installation
 
-From the DisVis directory, with the virtual environment activated, install the
-optional GPU requirements of DisVis (the `gpu` extra in `pyproject.toml`)
+With the virtual environment activated, install the optional GPU requirements
+of DisVis (the `gpu` extra in `pyproject.toml`)
 
 ```bash
-pip install '.[gpu]'
+pip install 'disvis[gpu]'
 ```
+
+(or `pip install '.[gpu]'` from the DisVis directory, for a source install)
 
 and check that your GPU is found
 

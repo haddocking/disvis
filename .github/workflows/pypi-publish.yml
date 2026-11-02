@@ -1,0 +1,61 @@
+name: build and publish to PyPI
+
+# Builds the wheels and the sdist, and publishes them to PyPI when a GitHub
+# release is published (PyPI trusted publishing, environment "pypi").
+# Pull requests that change the packaging only build and test them.
+
+on:
+  release:
+    types: [published]
+  pull_request:
+    paths:
+      - setup.py
+      - pyproject.toml
+      - MANIFEST.in
+      - .github/workflows/pypi-publish.yml
+  workflow_dispatch:
+
+jobs:
+  wheels:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # macos-latest is arm64; on Intel Macs pip builds from the sdist
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pypa/cibuildwheel@v4.3.5
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-wheels-${{ matrix.os }}
+          path: wheelhouse/*.whl
+
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - run: pip install build && python -m build --sdist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-sdist
+          path: dist/*.tar.gz
+
+  publish:
+    needs: [wheels, sdist]
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/disvis
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+      - uses: pypa/gh-action-pypi-publish@release/v1

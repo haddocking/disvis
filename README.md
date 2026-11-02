@@ -30,19 +30,19 @@ and the optional `gpu` packages (see INSTALLATION.md).
 **DisVis** is best installed in a virtual environment. Open a terminal and type
 
 ```bash
-git clone https://github.com/haddocking/disvis.git
-cd disvis
 python3 -m venv .venv
 source .venv/bin/activate
-pip install .
+pip install disvis
 ```
 
 After installation, the command line tool *disvis* should be at your disposal.
+To install from the source instead, clone the repository and run `pip install .`
+in it.
 
 For GPU acceleration, install the optional GPU requirements with
 
 ```bash
-pip install '.[gpu]'
+pip install 'disvis[gpu]'
 ```
 
 See INSTALLATION.md for the requirements and for checking the GPU set-up.

@@ -53,6 +53,13 @@ disvis = ["data/*.npy", "kernels.cl"]
 # Sources of the compiled extensions: in the sdist, not in the wheel
 disvis = ["*.pyx", "*.c"]
 
+[tool.cibuildwheel]
+# 64-bit only; pyfftw has no wheels for musllinux or free-threaded Python
+archs = ["auto64"]
+skip = ["*-musllinux_*", "cp3??t-*"]
+test-sources = ["tests"]
+test-command = "python -W error -m unittest -v"
+
 [tool.ruff]
 line-length = 79
 target-version = "py311"

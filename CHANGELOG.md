@@ -23,6 +23,8 @@ Changes compared with 2.3.0, the last Python 2 release.
 - Docker image based on Python 3.12.
 - The source distribution (sdist) includes the extension sources, so it can
   be built and installed.
+- Published on PyPI (`pip install disvis`), with wheels for Linux (x86_64,
+  aarch64), macOS (arm64) and Windows (x86_64), Python 3.11 to 3.14.
 
 ### Fixes and changes
 
