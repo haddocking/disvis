@@ -54,9 +54,11 @@ disvis = ["data/*.npy", "kernels.cl"]
 disvis = ["*.pyx", "*.c"]
 
 [tool.cibuildwheel]
-# 64-bit only; pyfftw has no wheels for musllinux or free-threaded Python
+# 64-bit only, and only where pyfftw has wheels (not musllinux, free-threaded
+# Python or Python 3.15)
+build = ["cp311-*", "cp312-*", "cp313-*", "cp314-*"]
 archs = ["auto64"]
-skip = ["*-musllinux_*", "cp3??t-*"]
+skip = ["*-musllinux_*"]
 test-sources = ["tests"]
 test-command = "python -W error -m unittest -v"
 
