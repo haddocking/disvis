@@ -24,7 +24,8 @@ Changes compared with 2.3.0, the last Python 2 release.
 - The source distribution (sdist) includes the extension sources, so it can
   be built and installed.
 - Published on PyPI (`pip install disvis`), with wheels for Linux (x86_64,
-  aarch64), macOS (arm64) and Windows (x86_64), Python 3.11 to 3.14.
+  aarch64), macOS (arm64) and Windows (x86_64), Python 3.11 to 3.14, and a
+  WebAssembly wheel for Pyodide (Python 3.14, NumPy FFT instead of pyfftw).
 
 ### Fixes and changes
 

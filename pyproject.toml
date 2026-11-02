@@ -24,7 +24,9 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
-    "pyfftw",  # roughly halves the run time compared with the NumPy FFT
+    # roughly halves the run time compared with the NumPy FFT; not available
+    # in Pyodide (WebAssembly)
+    "pyfftw; platform_machine != 'wasm32'",
 ]
 
 [project.optional-dependencies]
@@ -61,6 +63,10 @@ archs = ["auto64"]
 skip = ["*-musllinux_*"]
 test-sources = ["tests"]
 test-command = "python -W error -m unittest -v"
+
+[tool.cibuildwheel.pyodide]
+# no -W error: Pyodide itself raises a DeprecationWarning at start-up
+test-command = "python -m unittest -v"
 
 [tool.ruff]
 line-length = 79

@@ -30,6 +30,22 @@ jobs:
           name: dist-wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
 
+  # WebAssembly wheel for Pyodide (the browser), as in powerfit; pyfftw is not
+  # available there, so DisVis uses the NumPy FFT
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pypa/cibuildwheel@v4.3.5
+        env:
+          CIBW_PLATFORM: pyodide
+          CIBW_ARCHS: wasm32
+          CIBW_BUILD: cp314-pyodide_wasm32
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-wheels-pyodide
+          path: wheelhouse/*.whl
+
   sdist:
     runs-on: ubuntu-latest
     steps:
@@ -44,7 +60,7 @@ jobs:
           path: dist/*.tar.gz
 
   publish:
-    needs: [wheels, sdist]
+    needs: [wheels, wasm, sdist]
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
     environment:
