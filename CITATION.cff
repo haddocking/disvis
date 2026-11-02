@@ -4,7 +4,6 @@ title: DisVis
 abstract: >-
   Quantifying and visualizing the accessible interaction space of
   distance-restrained biomolecular complexes.
-version: 3.0.0
 license: Apache-2.0
 repository-code: "https://github.com/haddocking/disvis"
 identifiers:
