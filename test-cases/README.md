@@ -61,8 +61,9 @@ time and the absolute paths of the machine that produced the results.
 
 Run times (as reported at the end of `disvis.log`) with DisVis 3.0.0 and
 Python 3.14. CPU runs use pyFFTW unless marked NumPy FFT. GPU runs use VkFFT
-(pyvkfft 2025.1.1) and the fused GPU kernels; the times before the GPU
-speed-ups (with VkFFT) are in brackets. Each run was timed once.
+(pyvkfft 2025.1.1), the fused GPU kernels and without the progress bad; 
+the times before the GPU speed-ups (with VkFFT) are in brackets. 
+Each run was timed once.
 
 | Hardware                                   | Mode              | PRE5-PUP2 coarse | RNA-pol II coarse | PRE5-PUP2 fine | RNA-pol II fine |
 | ------------------------------------------ | ----------------- | ---------------: | ----------------: | -------------: | --------------: |
