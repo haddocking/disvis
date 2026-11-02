@@ -36,8 +36,10 @@ Changes compared with 2.3.0, the last Python 2 release.
 - Clear error message when `-g` is used without the GPU packages.
 - `-g` uses another OpenCL device (e.g. pocl on the CPU) when there is no
   OpenCL GPU, and writes the device to `disvis.log`.
-- GPU: OpenCL kernels are built once, and the search no longer waits for the
-  GPU after every step (1.05–1.8× faster on the fine test cases).
+- `-np`/`--no-progress` turns off the progress line.
+- GPU: OpenCL kernels are built once, the search no longer waits for the GPU
+  after every step, and fused kernels launch fewer per rotation: together
+  1.3–2.6× faster on the fine grid, with the same output.
 - GPU interaction analysis (`-g -is`): the interaction cutoff was 10 grid
   units instead of 10 Å, so with a voxel spacing other than 1 Å the counts
   were wrong (at 2 Å, 6–87× too high, median 13×, for PRE5-PUP2). It now

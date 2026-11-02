@@ -130,6 +130,14 @@ def parse_args():
         'of processors.',
     )
 
+    p.add_argument(
+        '-np',
+        '--no-progress',
+        dest='progress',
+        action='store_false',
+        help='Do not print the progress of the search.',
+    )
+
     help_msg = (
         "File containing residue number for which interactions "
         "will be counted. "
@@ -219,7 +227,7 @@ def run_disvis_instance(
         with counter.get_lock():
             counter.value += 1
 
-    dv = DisVis(print_callback=count_rotation)
+    dv = DisVis(print_callback=args.progress and count_rotation)
 
     dv.receptor = receptor
     dv.ligand = ligand
@@ -324,7 +332,7 @@ def mp_cpu_disvis(  # noqa: C901
     write('Waiting for jobs to finish')
 
     # Print the combined progress of all jobs every second until they finish.
-    progress = stdout.isatty()
+    progress = args.progress and stdout.isatty()
     while True:
         alive = [p for p in processes if p.is_alive()]
         done = counter.value
@@ -423,7 +431,7 @@ def run_disvis(
     args,
 ):
     """Run DisVis in this process, on the GPU if queue is not None."""
-    dv = DisVis()
+    dv = DisVis(print_callback=args.progress)
 
     dv.receptor = receptor
     dv.ligand = ligand

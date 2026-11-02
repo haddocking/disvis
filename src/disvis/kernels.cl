@@ -109,54 +109,47 @@ void rotate_grid3d(
 
 
 kernel
-void dilate_point_add(
+void reduced_interspace(
         global float4 *gcenter, global float *gmindis, global float *gmaxdis,
-        global int *restspace
+        global int *interspace, global int *red_interspace,
+        global int *access_interspace
         )
 {
-    // Determine the restraint-consistent space.
+    // For every translation in the interaction space, count the distance
+    // restraints it is consistent with, and update the accessible
+    // interaction space, the highest count at every translation.
 
-    int zid = get_global_id(0);
-    int yid = get_global_id(1);
-    int xid = get_global_id(2);
+    size_t gid = get_global_id(0);
+    size_t gstride = get_global_size(0);
 
-    int zstride = get_global_size(0);
-    int ystride = get_global_size(1);
-    int xstride = get_global_size(2);
-
-    int n, x, y, z, ind_z, ind_zy;
-    int xmin, xmax, ymin, ymax, zmin, zmax;
+    int i, n, x, y, z, count;
     float dis2_z, dis2_zy, dis2_zyx, mindis, maxdis, mindis2, maxdis2;
     float4 center;
 
-    for (n = 0; n < NRESTRAINTS; n++) {
-
-        center = gcenter[n];
-        maxdis = gmaxdis[n];
-        mindis = gmindis[n];
-
-        xmin = max((int) floor(center.s0 - maxdis), 0);
-        xmax = min((int) ceil(center.s0 + maxdis), SHAPE_X - 1);
-        ymin = max((int) floor(center.s1 - maxdis), 0);
-        ymax = min((int) ceil(center.s1 + maxdis), SHAPE_Y - 1);
-        zmin = max((int) floor(center.s2 - maxdis), 0);
-        zmax = min((int) ceil(center.s2 + maxdis), SHAPE_Z - 1);
-        mindis2 = SQUARE(mindis);
-        maxdis2 = SQUARE(maxdis);
-
-        for (z = zmin + zid; z <= zmax; z += zstride) {
-            ind_z = z * SLICE;
-            dis2_z = SQUARE(z - center.s2);
-            for (y = ymin + yid; y <= ymax; y += ystride) {
-                ind_zy = y * SHAPE_X + ind_z;
-                dis2_zy = SQUARE(y - center.s1) + dis2_z;
-                for (x = xmin + xid; x <= xmax; x += xstride) {
-                    dis2_zyx = dis2_zy + SQUARE(x - center.s0);
-                    if ((dis2_zyx <= maxdis2) && (dis2_zyx >= mindis2))
-                        atomic_inc(restspace + ind_zy + x);
-                }
-            }
+    for (i = gid; i < SIZE; i += gstride) {
+        if (interspace[i] == 0) {
+            red_interspace[i] = 0;
+            continue;
         }
+        z = i / SLICE;
+        y = (i - z * SLICE) / SHAPE_X;
+        x = i - z * SLICE - y * SHAPE_X;
+        count = 0;
+        for (n = 0; n < NRESTRAINTS; n++) {
+            center = gcenter[n];
+            maxdis = gmaxdis[n];
+            mindis = gmindis[n];
+            mindis2 = SQUARE(mindis);
+            maxdis2 = SQUARE(maxdis);
+            dis2_z = SQUARE(z - center.s2);
+            dis2_zy = SQUARE(y - center.s1) + dis2_z;
+            dis2_zyx = dis2_zy + SQUARE(x - center.s0);
+            if ((dis2_zyx <= maxdis2) && (dis2_zyx >= mindis2))
+                count++;
+        }
+        red_interspace[i] = count;
+        if (count > access_interspace[i])
+            access_interspace[i] = count;
     }
 }
 
