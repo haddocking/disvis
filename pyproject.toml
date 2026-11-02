@@ -24,7 +24,9 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
-    "pyfftw",  # roughly halves the run time compared with the NumPy FFT
+    # roughly halves the run time compared with the NumPy FFT; not available
+    # in Pyodide (WebAssembly)
+    "pyfftw; platform_machine != 'wasm32'",
 ]
 
 [project.optional-dependencies]
@@ -52,6 +54,19 @@ disvis = ["data/*.npy", "kernels.cl"]
 [tool.setuptools.exclude-package-data]
 # Sources of the compiled extensions: in the sdist, not in the wheel
 disvis = ["*.pyx", "*.c"]
+
+[tool.cibuildwheel]
+# 64-bit only, and only where pyfftw has wheels (not musllinux, free-threaded
+# Python or Python 3.15)
+build = ["cp311-*", "cp312-*", "cp313-*", "cp314-*"]
+archs = ["auto64"]
+skip = ["*-musllinux_*"]
+test-sources = ["tests"]
+test-command = "python -W error -m unittest -v"
+
+[tool.cibuildwheel.pyodide]
+# no -W error: Pyodide itself raises a DeprecationWarning at start-up
+test-command = "python -m unittest -v"
 
 [tool.ruff]
 line-length = 79

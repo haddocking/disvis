@@ -155,4 +155,6 @@ The version is set in `pyproject.toml` only; `disvis.__version__` reads it
 from the installed package metadata. To release, update the version and
 `CHANGELOG.md`, merge, then tag `main` as `vX.Y.Z` and create a GitHub release.
 Pushing a `v*` tag runs `.github/workflows/docker-publish.yml`, which publishes
-the Docker image to ghcr.io. Only CSBcore can create `v*` tags.
+the Docker image to ghcr.io. Publishing the GitHub release runs
+`.github/workflows/pypi-publish.yml`, which builds the wheels and the sdist
+and publishes them to PyPI. Only CSBcore can create `v*` tags.
