@@ -479,10 +479,19 @@ def main():  # noqa: C901
     joiner = Joiner(args.directory)
     dump_args(args, joiner('args.json'))
 
+    with open(joiner('disvis.log'), 'w', encoding='utf-8') as f:
+        f.write(
+            '{0:s}\nDisVis {1:s}\n'
+            'Visualizing and quantifying the accessible interaction space of\n'
+            'distance-restrained biomolecular complexes\n'
+            'https://github.com/haddocking/disvis\n{0:s}\n'.format(
+                '=' * 70, __version__
+            )
+        )
     # force: an imported library may already have configured the root logger.
     logging.basicConfig(
         filename=joiner('disvis.log'),
-        filemode='w',
+        filemode='a',
         level=logging.INFO,
         format='%(asctime)s %(message)s',
         force=True,

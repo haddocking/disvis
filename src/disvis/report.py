@@ -17,7 +17,13 @@ with warnings.catch_warnings():
     warnings.filterwarnings(
         'ignore', 'Using extra keyword arguments on `Field`'
     )
-    from molviewspec import MVSJ, GlobalMetadata, States, create_builder
+    from molviewspec import (
+        MVSJ,
+        ComponentExpression,
+        GlobalMetadata,
+        States,
+        create_builder,
+    )
 
 MOLSTAR_VERSION = '4.18.0'
 
@@ -103,16 +109,46 @@ def _table(title, header, rows, highlight=()):
     return ''.join(html)
 
 
-def _snapshot(n, nrestraints, complexes, percentage, receptor, occupancy):
+def _receptor_colors(fname):
+    """Return the colors of the receptor residues for each N, and the maximum.
+
+    Each residue in the interaction file is colored from white (no
+    interactions) to red (the most interactions per complex in the file).
+    """
+    with open(fname, encoding='utf-8') as f:
+        ns = [int(n) for n in f.readline().split()[1:]]
+        rows = [line.split() for line in f]
+    vmax = max(float(x) for row in rows for x in row[1:]) or 1
+    colors = {}
+    for i, n in enumerate(ns):
+        colors[n] = []
+        for row in rows:
+            t = float(row[i + 1]) / vmax
+            rgb = [round(255 + t * (c - 255)) for c in (178, 24, 43)]
+            colors[n].append((int(row[0]), '#{:02x}{:02x}{:02x}'.format(*rgb)))
+    return colors, vmax
+
+
+def _snapshot(
+    n, nrestraints, complexes, percentage, receptor, occupancy, colors, vmax
+):
     """Return the Mol* snapshot of the space consistent with n restraints."""
     builder = create_builder()
-    (
+    representation = (
         builder.download(url=receptor)
         .parse(format='pdb')
         .model_structure()
         .component()
+        # Mol* would fit the whole map grid, far larger than the complex.
+        .focus(radius_factor=2)
         .representation()
     )
+    if colors:
+        representation.color(color='white')
+        for resi, color in colors:
+            representation.color(
+                color=color, selector=ComponentExpression(auth_seq_id=resi)
+            )
     (
         builder.download(url='accessible_interaction_space.mrc')
         .parse(format='map')
@@ -132,13 +168,19 @@ def _snapshot(n, nrestraints, complexes, percentage, receptor, occupancy):
             .parse(format='map')
             .volume()
             .representation(type='isosurface', relative_isovalue=2)
-            .color(color='firebrick')
+            .color(color='forestgreen')
             .opacity(opacity=0.3)
         )
         description += (
-            '\n\nOccupancy (red, 2 sigma): where the scanning chain is most '
+            '\n\nOccupancy (green, 2 sigma): where the scanning chain is most '
             'often found in these complexes.'
         )
+    if colors:
+        description += (
+            '\n\nFixed chain: the selected residues colored by their average '
+            'number of interactions per complex, from white (0) to red '
+            '({:.3g}).'
+        ).format(vmax)
     return builder.get_snapshot(
         key='n{:d}'.format(n),
         title='At least {:d} restraints'.format(n),
@@ -175,6 +217,10 @@ def generate_report(directory, receptor, restraints, options):
         if cumulative == 0:
             break
 
+    colors, vmax = {}, None
+    if exists(joiner('receptor_interactions.txt')):
+        colors, vmax = _receptor_colors(joiner('receptor_interactions.txt'))
+
     snapshots = []
     for n, cumulative, percentage in reversed(complexes):
         if n == 0 or cumulative == 0:
@@ -190,6 +236,8 @@ def generate_report(directory, receptor, restraints, options):
                 percentage,
                 receptor_name,
                 occupancy,
+                colors.get(n),
+                vmax,
             )
         )
     state = MVSJ(

@@ -50,6 +50,9 @@ Windows.
   6000 Ada, Python 3.14), made with the clFFT library. The GPU FFTs now use
   VkFFT (pyvkfft), which gives byte-identical output for all four runs on the
   RTX 6000 Ada, the GTX 1080 Ti and the Apple M2 Pro GPU.
+* PRE5-PUP2 only, `cpu/coarse-is-oa`: the coarse CPU run with
+  `-is selection.res -oa --report` (occupancy grids and interaction analysis);
+  its other output files are identical to `cpu/coarse`.
 
 The CPU output files (`accessible_complexes.out`, `violations.out`,
 `z-score.out` and `accessible_interaction_space.mrc`) are byte-identical across

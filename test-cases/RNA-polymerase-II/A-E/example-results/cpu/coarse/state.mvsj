@@ -2,7 +2,7 @@
   "kind": "multiple",
   "metadata": {
     "description": "DisVis results",
-    "timestamp": "2026-11-02T14:54:15.122482+00:00",
+    "timestamp": "2026-11-02T21:51:33.343848+00:00",
     "version": "1.8"
   },
   "snapshots": [
@@ -34,6 +34,12 @@
                           "selector": "all"
                         },
                         "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
                           {
                             "kind": "representation",
                             "params": {
@@ -130,6 +136,12 @@
                         },
                         "children": [
                           {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
                             "kind": "representation",
                             "params": {
                               "type": "cartoon"
@@ -224,6 +236,12 @@
                           "selector": "all"
                         },
                         "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
                           {
                             "kind": "representation",
                             "params": {
@@ -320,6 +338,12 @@
                         },
                         "children": [
                           {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
                             "kind": "representation",
                             "params": {
                               "type": "cartoon"
@@ -414,6 +438,12 @@
                           "selector": "all"
                         },
                         "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
                           {
                             "kind": "representation",
                             "params": {
@@ -510,6 +540,12 @@
                         },
                         "children": [
                           {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
                             "kind": "representation",
                             "params": {
                               "type": "cartoon"
@@ -604,6 +640,12 @@
                           "selector": "all"
                         },
                         "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
                           {
                             "kind": "representation",
                             "params": {
