@@ -1,7 +1,10 @@
 # DisVis
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1037197.svg)](https://doi.org/10.5281/zenodo.1037197)
+[![PyPI - Version](https://img.shields.io/pypi/v/disvis)](https://pypi.org/project/disvis/)
+[![DOI](https://zenodo.org/badge/30263463.svg)](https://doi.org/10.5281/zenodo.7775093)
 [![ci](https://github.com/haddocking/disvis/actions/workflows/ci.yml/badge.svg)](https://github.com/haddocking/disvis/actions/workflows/ci.yml)
+[![SBGrid Badge](https://img.shields.io/badge/DisVis-blue?label=SBGrid&labelColor=%3D)](https://sbgrid.org/software/titles/disvis)
+[![bio.tools](https://img.shields.io/badge/bio.tools-disvis-orange)](https://bio.tools/disvis)
 [![AI Declaration](https://img.shields.io/badge/AI_Declaration-aidecl.yaml-blue)](aidecl.yaml)
 
 ## About DisVis
@@ -233,6 +236,11 @@ If this software was useful to your research please cite us
 **Van Zundert, G.C.P. and Bonvin, A.M.J.J.** (2015) DisVis: Visualizing and
 quantifying accessible interaction space of distance restrained biomolecular complexes.
 *Bioinformatics 31*, 3222-3224.
+
+The software itself can be cited with its Zenodo DOI,
+[10.5281/zenodo.7775093](https://doi.org/10.5281/zenodo.7775093), and
+[`CITATION.cff`](https://github.com/haddocking/disvis/blob/main/CITATION.cff)
+gives both references.
 
 Apache License Version 2.0
 

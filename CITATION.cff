@@ -1,0 +1,55 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the article below."
+title: DisVis
+abstract: >-
+  Quantifying and visualizing the accessible interaction space of
+  distance-restrained biomolecular complexes.
+license: Apache-2.0
+repository-code: "https://github.com/haddocking/disvis"
+identifiers:
+  - description: All versions of the software (Zenodo concept DOI)
+    type: doi
+    value: 10.5281/zenodo.7775093
+authors:
+  - given-names: Gydo
+    family-names: Zundert
+    name-particle: van
+    affiliation: Utrecht University
+    orcid: "https://orcid.org/0000-0001-9924-3317"
+  - given-names: Joerg
+    family-names: Schaarschmidt
+  - given-names: Alexandre
+    family-names: Bonvin
+    affiliation: Utrecht University
+    orcid: "https://orcid.org/0000-0001-7369-1322"
+  - given-names: Rodrigo
+    family-names: Honorato
+    name-particle: Vargas
+    affiliation: Utrecht University
+    orcid: "https://orcid.org/0000-0001-5267-3002"
+  - given-names: Mikael
+    family-names: Trellet
+  - given-names: Rishi
+    family-names: Bedi
+  - affiliation: "Netherlands eScience Center"
+    family-names: Verhoeven
+    given-names: Stefan
+    orcid: "https://orcid.org/0000-0002-5821-2060"    
+preferred-citation:
+  type: article
+  title: >-
+    DisVis: quantifying and visualizing accessible interaction space of
+    distance-restrained biomolecular complexes
+  authors:
+    - given-names: Gydo C. P.
+      family-names: Zundert
+      name-particle: van
+    - given-names: Alexandre M. J. J.
+      family-names: Bonvin
+  journal: Bioinformatics
+  volume: 31
+  issue: 19
+  start: 3222
+  end: 3224
+  year: 2015
+  doi: 10.1093/bioinformatics/btv333
