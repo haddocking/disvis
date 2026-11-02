@@ -32,6 +32,10 @@ authors:
     family-names: Trellet
   - given-names: Rishi
     family-names: Bedi
+  - affiliation: "Netherlands eScience Center"
+    family-names: Verhoeven
+    given-names: Stefan
+    orcid: "https://orcid.org/0000-0002-5821-2060"    
 preferred-citation:
   type: article
   title: >-
