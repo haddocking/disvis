@@ -61,6 +61,8 @@ Changes compared with 2.3.0, the last Python 2 release.
 ### Documentation and tests
 
 - Updated `README.md` and `INSTALLATION.md` (GPU set-up on macOS and Linux).
+- `CITATION.cff`, and the Zenodo DOI of all versions (10.5281/zenodo.7775093)
+  in `README.md`.
 - New CPU and GPU reference results for the test cases, and
   `test-cases/README.md` with benchmarks.
 - Fixed the outdated GPU unit tests; they are skipped without pyopencl,
