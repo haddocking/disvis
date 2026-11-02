@@ -182,6 +182,16 @@ def parse_args():
         ),
     )
 
+    p.add_argument(
+        '--report',
+        dest='report',
+        action='store_true',
+        help=(
+            "Write report.html and state.mvsj in the output directory: the "
+            "results with a Mol* view of the accessible interaction space."
+        ),
+    )
+
     return p.parse_args()
 
 
@@ -795,6 +805,14 @@ def main():  # noqa: C901
                         relative_interactions = 0
                     f.write(' {:6.3f}'.format(relative_interactions))
                 f.write('\n')
+
+    if args.report:
+        from disvis.report import generate_report
+
+        fname = generate_report(
+            args.directory, args.receptor, args.restraints, vars(args)
+        )
+        write('Writing report to: {:s}'.format(fname))
 
     # time indication
     seconds = int(round(time() - time0))

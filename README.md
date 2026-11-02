@@ -183,6 +183,17 @@ ones. A simple example for the selection-file
 This will select residue numbers 1, 2, 3, and 4 for the receptor, and 101, 302,
 and 888 for the ligand.
 
+To write an HTML report of the results, with a Mol* view of the accessible
+interaction space (and of the occupancy grids with `-oa`), add `--report`
+
+```bash
+disvis O14250.pdb Q9UT97.pdb restraints.dat -vs 2 -oa --report -d results
+```
+
+The report loads the files of the output directory, so open it through a web
+server, e.g. `python -m http.server -d results`, then
+http://localhost:8000/report.html.
+
 
 ### Output
 
@@ -215,6 +226,10 @@ outputs the following files:
   number of interactions per complex each selected residue made, for both the
   receptor and ligand molecule. Each column denotes the minimal number of
   consistent restraints of each complex for which interactions were counted.
+
+With `--report`, *disvis* also writes *report.html* and *state.mvsj* (the
+MolViewSpec state of the Mol* view), and copies the fixed chain into the output
+directory.
 
 To visualize the most contacted residues, write the average number of
 interactions into the B-factor column of the receptor or ligand PDB file

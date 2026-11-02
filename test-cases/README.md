@@ -13,20 +13,23 @@ From the test-case directory, a coarse run (9.72° rotational sampling, 7416
 rotations, 2 Å grid)
 
 ```bash
-disvis O14250.pdb Q9UT97.pdb restraints.dat -a 9.72 -vs 2 -p 8 -d coarse
+disvis O14250.pdb Q9UT97.pdb restraints.dat -a 9.72 -vs 2 -p 8 --report -d coarse
 ```
 
 and a fine run (5.27°, 53256 rotations, 1 Å grid)
 
 ```bash
-disvis O14250.pdb Q9UT97.pdb restraints.dat -a 5.27 -vs 1 -p 8 -d fine
+disvis O14250.pdb Q9UT97.pdb restraints.dat -a 5.27 -vs 1 -p 8 --report -d fine
 ```
 
 Use `-g` instead of `-p 8` to run on the GPU (see `INSTALLATION.md`). For
-RNA polymerase II, use `1wcm_A.pdb 1wcm_E.pdb` as input.
+RNA polymerase II, use `1wcm_A.pdb 1wcm_E.pdb` as input. `--report` writes
+`report.html`; view it with `python -m http.server -d coarse` and
+http://localhost:8000/report.html.
 
-`check_test_cases.py` runs both test cases and compares the output files byte
-for byte with the reference results, e.g. from the repository root:
+`check_test_cases.py` runs both test cases (with `--report`) and compares the
+output files byte for byte with the reference results (the report is not
+compared), e.g. from the repository root:
 
 ```bash
 python test-cases/check_test_cases.py -p 8      # coarse, on the CPU
@@ -56,6 +59,11 @@ accessible complexes agree with the CPU results to about 1e-5 (relative), and
 the z-scores and flagged restraints are the same (restraints 1 and 2 for
 PRE5-PUP2; 7 and 8 for RNA polymerase II). `disvis.log` records the run
 time and the absolute paths of the machine that produced the results.
+
+Each directory also has the report of its results (`report.html`, with
+`state.mvsj` and a copy of the fixed chain), made from these files with
+`disvis.report.generate_report`; view it with `python -m http.server -d <dir>`
+and http://localhost:8000/report.html.
 
 ## Benchmarks
 

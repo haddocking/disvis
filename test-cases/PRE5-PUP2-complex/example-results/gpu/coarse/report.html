@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DisVis Report</title>
+<script src="https://cdn.jsdelivr.net/npm/molstar@4.18.0/build/mvs-stories/mvs-stories.js"></script>
+<link rel="stylesheet" type="text/css"
+  href="https://cdn.jsdelivr.net/npm/molstar@4.18.0/build/mvs-stories/mvs-stories.css">
+<style>
+  body { margin: 0; font-family: sans-serif; }
+  header, section { padding: 0 1rem; }
+  .container { display: flex; height: 600px; }
+  #viewer { flex: 2 1 0; min-width: 0; position: relative; }
+  #controls { flex: 1 1 0; min-width: 300px; padding: 1rem;
+              border-left: 1px solid #ccc; background: #f6f5f3; }
+  table { border-collapse: collapse; margin: 0.5rem 0 1rem; }
+  th, td { border: 1px solid #a0a0a0; padding: 4px 8px; text-align: right; }
+  tr.high { font-weight: bold; background: #f8d7da; }
+  #file-hint { background: #fff3cd; padding: 0.5rem; }
+  @media (max-width: 900px) {
+    .container { flex-direction: column; height: auto; }
+    #viewer { height: 50vh; }
+    #controls { border-left: none; border-top: 1px solid #ccc; }
+  }
+</style>
+</head>
+<body>
+<header>
+<h2>DisVis Report</h2>
+<details><summary>Options</summary><ul><li>angle: 9.72</li><li>directory: /trinity/login/abonvin/haddock_git/disvis/linux-tests/gpu-ref-gpu002/pre5_coarse</li><li>gpu: True</li><li>interaction_radius: 3.0</li><li>interaction_restraints_cutoff: None</li><li>interaction_selection: None</li><li>ligand: Q9UT97.pdb</li><li>max_clash: 200</li><li>min_interaction: 300</li><li>nproc: 1</li><li>occupancy_analysis: False</li><li>receptor: O14250.pdb</li><li>restraints: restraints.dat</li><li>voxelspacing: 2.0</li></ul></details>
+<p>Download: <a href="accessible_complexes.out">accessible_complexes.out</a> <a href="violations.out">violations.out</a> <a href="z-score.out">z-score.out</a> <a href="accessible_interaction_space.mrc">accessible_interaction_space.mrc</a> <a href="O14250.pdb">O14250.pdb</a></p>
+<p id="file-hint" hidden>The browser does not let a page opened from disk load
+the files of the viewer. Serve this directory with
+<code>python -m http.server -d &lt;directory&gt;</code> and open
+<a href="http://localhost:8000/report.html">http://localhost:8000/report.html</a>.</p>
+</header>
+<div class="container">
+  <div id="viewer"><mvs-stories-viewer /></div>
+  <div id="controls"><mvs-stories-snapshot-markdown /></div>
+</div>
+<section><h3>Accessible complexes</h3><table><tr><th>Consistent restraints (N)</th><th>Complexes with at least N</th><th>Fraction</th></tr><tr><td>0</td><td>124915600</td><td>100 %</td></tr><tr><td>1</td><td>27771867</td><td>22.2 %</td></tr><tr><td>2</td><td>17405940</td><td>13.9 %</td></tr><tr><td>3</td><td>13245756</td><td>10.6 %</td></tr><tr><td>4</td><td>1643870</td><td>1.32 %</td></tr><tr><td>5</td><td>221202</td><td>0.177 %</td></tr><tr><td>6</td><td>128881</td><td>0.103 %</td></tr><tr><td>7</td><td>48283</td><td>0.0387 %</td></tr></table><h3>Fraction of complexes violating each restraint</h3><table><tr><th>N</th><th>A27(CA)-A18(CA)</th><th>A122(CA)-A125(CA)</th><th>A122(CA)-A128(CA)</th><th>A122(CA)-A127(CA)</th><th>A55(CA)-A169(CA)</th><th>A55(CA)-A179(CA)</th><th>A54(CA)-A179(CA)</th></tr><tr><td>1</td><td>0.7152</td><td>0.7387</td><td>0.7279</td><td>0.7298</td><td>0.6129</td><td>0.6453</td><td>0.6529</td></tr><tr><td>2</td><td>0.8589</td><td>0.6419</td><td>0.5995</td><td>0.5801</td><td>0.4998</td><td>0.4616</td><td>0.4798</td></tr><tr><td>3</td><td>0.8511</td><td>0.5889</td><td>0.5723</td><td>0.5752</td><td>0.4271</td><td>0.4170</td><td>0.4143</td></tr><tr><td>4</td><td>0.0793</td><td>0.4718</td><td>0.4339</td><td>0.4471</td><td>0.4564</td><td>0.4449</td><td>0.4243</td></tr><tr><td>5</td><td>0.3298</td><td>0.3366</td><td>0.0579</td><td>0.1343</td><td>0.2078</td><td>0.1094</td><td>0.0232</td></tr><tr><td>6</td><td>0.2413</td><td>0.2247</td><td>0.0041</td><td>0.0046</td><td>0.1196</td><td>0.0308</td><td>0.0001</td></tr></table><h3>Z-scores (above 1: possible false positive)</h3><table><tr><th>#</th><th>Restraint</th><th>Average violated fraction</th><th>Standard deviation</th><th>Z-score</th></tr><tr class="high"><td>1</td><td>A27(CA)-A18(CA)</td><td>0.439</td><td>0.337</td><td>1.546</td></tr><tr class="high"><td>2</td><td>A122(CA)-A125(CA)</td><td>0.429</td><td>0.240</td><td>1.356</td></tr><tr><td>3</td><td>A122(CA)-A128(CA)</td><td>0.342</td><td>0.290</td><td>-0.224</td></tr><tr><td>4</td><td>A122(CA)-A127(CA)</td><td>0.353</td><td>0.279</td><td>-0.028</td></tr><tr><td>5</td><td>A55(CA)-A169(CA)</td><td>0.332</td><td>0.208</td><td>-0.412</td></tr><tr><td>6</td><td>A55(CA)-A179(CA)</td><td>0.301</td><td>0.233</td><td>-0.970</td></tr><tr><td>7</td><td>A54(CA)-A179(CA)</td><td>0.285</td><td>0.251</td><td>-1.268</td></tr></table></section>
+<script>
+if (location.protocol === 'file:') {
+  document.getElementById('file-hint').hidden = false;
+} else {
+  mvsStories.loadFromURL('state.mvsj', { format: 'mvsj' });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DisVis Report</title>
+<script src="https://cdn.jsdelivr.net/npm/molstar@4.18.0/build/mvs-stories/mvs-stories.js"></script>
+<link rel="stylesheet" type="text/css"
+  href="https://cdn.jsdelivr.net/npm/molstar@4.18.0/build/mvs-stories/mvs-stories.css">
+<style>
+  body { margin: 0; font-family: sans-serif; }
+  header, section { padding: 0 1rem; }
+  .container { display: flex; height: 600px; }
+  #viewer { flex: 2 1 0; min-width: 0; position: relative; }
+  #controls { flex: 1 1 0; min-width: 300px; padding: 1rem;
+              border-left: 1px solid #ccc; background: #f6f5f3; }
+  table { border-collapse: collapse; margin: 0.5rem 0 1rem; }
+  th, td { border: 1px solid #a0a0a0; padding: 4px 8px; text-align: right; }
+  tr.high { font-weight: bold; background: #f8d7da; }
+  #file-hint { background: #fff3cd; padding: 0.5rem; }
+  @media (max-width: 900px) {
+    .container { flex-direction: column; height: auto; }
+    #viewer { height: 50vh; }
+    #controls { border-left: none; border-top: 1px solid #ccc; }
+  }
+</style>
+</head>
+<body>
+<header>
+<h2>DisVis Report</h2>
+<details><summary>Options</summary><ul></ul></details>
+<p>Download: <a href="accessible_complexes.out">accessible_complexes.out</a> <a href="violations.out">violations.out</a> <a href="z-score.out">z-score.out</a> <a href="accessible_interaction_space.mrc">accessible_interaction_space.mrc</a> <a href="1wcm_A.pdb">1wcm_A.pdb</a></p>
+<p id="file-hint" hidden>The browser does not let a page opened from disk load
+the files of the viewer. Serve this directory with
+<code>python -m http.server -d &lt;directory&gt;</code> and open
+<a href="http://localhost:8000/report.html">http://localhost:8000/report.html</a>.</p>
+</header>
+<div class="container">
+  <div id="viewer"><mvs-stories-viewer /></div>
+  <div id="controls"><mvs-stories-snapshot-markdown /></div>
+</div>
+<section><h3>Accessible complexes</h3><table><tr><th>Consistent restraints (N)</th><th>Complexes with at least N</th><th>Fraction</th></tr><tr><td>0</td><td>348204674</td><td>100 %</td></tr><tr><td>1</td><td>45210671</td><td>13 %</td></tr><tr><td>2</td><td>18757712</td><td>5.39 %</td></tr><tr><td>3</td><td>5748620</td><td>1.65 %</td></tr><tr><td>4</td><td>1787439</td><td>0.513 %</td></tr><tr><td>5</td><td>361965</td><td>0.104 %</td></tr><tr><td>6</td><td>110126</td><td>0.0316 %</td></tr><tr><td>7</td><td>257</td><td>7.38e-05 %</td></tr><tr><td>8</td><td>0</td><td>0 %</td></tr></table><h3>Fraction of complexes violating each restraint</h3><table><tr><th>N</th><th>A1003(CB)-E166(CB)</th><th>A129(CB)-E161(CB)</th><th>A129(CB)-E171(CB)</th><th>A15(CB)-E171(CB)</th><th>A934(CB)-E201(CB)</th><th>A938(CB)-E201(CB)</th><th>A180(CB)-E122(CB)</th><th>A1092(CB)-E152(CB)</th></tr><tr><td>1</td><td>0.7365</td><td>0.8113</td><td>0.7793</td><td>0.8119</td><td>0.7412</td><td>0.7771</td><td>0.7721</td><td>0.9785</td></tr><tr><td>2</td><td>0.6791</td><td>0.6164</td><td>0.5860</td><td>0.7278</td><td>0.5026</td><td>0.4941</td><td>0.9719</td><td>0.9953</td></tr><tr><td>3</td><td>0.3121</td><td>0.3459</td><td>0.2889</td><td>0.4355</td><td>0.6476</td><td>0.6147</td><td>0.9677</td><td>0.9946</td></tr><tr><td>4</td><td>0.0814</td><td>0.1572</td><td>0.0601</td><td>0.2402</td><td>0.6396</td><td>0.5913</td><td>0.9662</td><td>0.9997</td></tr><tr><td>5</td><td>0.0163</td><td>0.1491</td><td>0.0015</td><td>0.3518</td><td>0.1764</td><td>0.0587</td><td>0.9416</td><td>0.9997</td></tr><tr><td>6</td><td>0.0005</td><td>0.0000</td><td>0.0000</td><td>0.0002</td><td>0.0013</td><td>0.0000</td><td>0.9957</td><td>1.0000</td></tr><tr><td>7</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>1.0000</td></tr></table><h3>Z-scores (above 1: possible false positive)</h3><table><tr><th>#</th><th>Restraint</th><th>Average violated fraction</th><th>Standard deviation</th><th>Z-score</th></tr><tr><td>1</td><td>A1003(CB)-E166(CB)</td><td>0.261</td><td>0.300</td><td>-0.785</td></tr><tr><td>2</td><td>A129(CB)-E161(CB)</td><td>0.297</td><td>0.290</td><td>-0.645</td></tr><tr><td>3</td><td>A129(CB)-E171(CB)</td><td>0.245</td><td>0.297</td><td>-0.845</td></tr><tr><td>4</td><td>A15(CB)-E171(CB)</td><td>0.367</td><td>0.297</td><td>-0.377</td></tr><tr><td>5</td><td>A934(CB)-E201(CB)</td><td>0.387</td><td>0.296</td><td>-0.299</td></tr><tr><td>6</td><td>A938(CB)-E201(CB)</td><td>0.362</td><td>0.307</td><td>-0.394</td></tr><tr class="high"><td>7</td><td>A180(CB)-E122(CB)</td><td>0.802</td><td>0.335</td><td>1.300</td></tr><tr class="high"><td>8</td><td>A1092(CB)-E152(CB)</td><td>0.995</td><td>0.007</td><td>2.044</td></tr></table></section>
+<script>
+if (location.protocol === 'file:') {
+  document.getElementById('file-hint').hidden = false;
+} else {
+  mvsStories.loadFromURL('state.mvsj', { format: 'mvsj' });
+}
+</script>
+</body>
+</html>
