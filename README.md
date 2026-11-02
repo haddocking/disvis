@@ -130,9 +130,7 @@ in the directory *results/*
 disvis 1wcm_A.pdb 1wcm_E.pdb restraints.dat -a 5.27 -d results
 ```
 
-Note that the directory is created if it doesn't exist. The progress of the
-search is printed when the output goes to a terminal; `-np` (`--no-progress`)
-turns it off.
+Note that the directory is created if it doesn't exist.
 
 To perform a 9.72 degree rotational search with 16 processors and a voxel spacing of 2A
 
