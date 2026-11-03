@@ -2,7 +2,10 @@
 
 ## Latest changes
 
-- Added report.html generation to visualise results - Issue #46
+- Added report.html generation to visualise results (Mol* view of the
+  accessible interaction space and occupancy grids; with `-is`, the most
+  contacted residues); turned off with `--no-report`. New dependency:
+  molviewspec - Issue #46
 
 ## 3.0.0
 
@@ -34,9 +37,6 @@ Changes compared with 2.3.0, the last Python 2 release.
 ### Fixes and changes
 
 - New `--version` option, and `disvis.__version__`.
-- `report.html` with the results and a Mol* view of the accessible
-  interaction space and occupancy grids (MolViewSpec, as in PowerFit), and
-  with `-is` the most contacted residues; turned off with `--no-report`. New dependency: molviewspec.
 - A zero or negative voxel spacing (`-vs`) is rejected; DisVis used to hang.
 - `-p` works with the spawn start method (macOS and Windows).
 - With `-p`, one progress line for all processes, updated in place.
