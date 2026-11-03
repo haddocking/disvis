@@ -4,9 +4,9 @@ Run from the repository root with python -m unittest.
 """
 
 import json
-import logging
 import os
 import tempfile
+import warnings
 from os.path import dirname, join
 from unittest import TestCase, main
 from unittest.mock import patch
@@ -25,10 +25,16 @@ class TestReport(TestCase):
             ]
             argv += ['-a', '40', '-vs', '3', '-np', '-oa']
             argv += ['-is', join(DATA, 'selection.res'), '-d', directory]
-            with patch('sys.argv', argv), patch('builtins.print'):
+            with (
+                patch('sys.argv', argv),
+                patch('builtins.print'),
+                warnings.catch_warnings(),
+            ):
+                # molviewspec 1.8 passes a deprecated keyword to pydantic.
+                warnings.filterwarnings(
+                    'ignore', 'Using extra keyword arguments on `Field`'
+                )
                 disvis_main.main()
-            # Close disvis.log: Windows cannot remove an open file.
-            logging.shutdown()
 
             with open(join(directory, 'accessible_complexes.out')) as f:
                 rows = [line.split() for line in f if line[0] != '#']

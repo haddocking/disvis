@@ -6,24 +6,20 @@ e.g. with `python -m http.server -d <directory>`.
 """
 
 import shutil
-import warnings
 from functools import partial
 from html import escape
 from os.path import basename, exists, join, samefile
 from string import Template
 
-with warnings.catch_warnings():
-    # molviewspec 1.8 passes a deprecated keyword to pydantic's Field.
-    warnings.filterwarnings(
-        'ignore', 'Using extra keyword arguments on `Field`'
-    )
-    from molviewspec import (
-        MVSJ,
-        ComponentExpression,
-        GlobalMetadata,
-        States,
-        create_builder,
-    )
+from molviewspec import (
+    MVSJ,
+    ComponentExpression,
+    GlobalMetadata,
+    States,
+    create_builder,
+)
+
+from disvis.helpers import parse_interactions
 
 MOLSTAR_VERSION = '4.18.0'
 # Number of residues in the lists of the most contacted residues.
@@ -116,11 +112,20 @@ def _read_rows(fname):
 
 def _restraint_labels(restraints):
     """Return labels such as A27(CA)-B18(CA) for the restraints file."""
-    labels = []
-    for row in _read_rows(restraints):
-        if row:
-            labels.append('{}{}({})-{}{}({})'.format(*row[:6]))
-    return labels
+    # Comments and empty lines as in helpers.parse_restraints.
+    with open(restraints, encoding='utf-8') as f:
+        rows = [line.split() for line in f]
+    return [
+        '{}{}({})-{}{}({})'.format(*row[:6])
+        for row in rows
+        if row and not row[0].startswith('#')
+    ]
+
+
+def _vmax(interactions):
+    """Return the maximum of parse_interactions data, or 1 if it is 0."""
+    ns = [n for n in interactions if n != 'residues']
+    return max(max(interactions[n]) for n in ns) or 1
 
 
 def _shade(t, rgb):
@@ -134,11 +139,9 @@ def _table(title, header, rows, highlight=(), sortable=True, shade=None):
     """Return an HTML table; rows whose index is in highlight are bold.
 
     A sortable table is sorted by a column when its header is clicked. With
-    shade (an RGB color), the cells after the first column are colored from
-    white (0) to shade (the maximum of the table).
+    shade, an RGB color and a maximum, the cells after the first column are
+    colored from white (0) to that color (the maximum).
     """
-    if shade:
-        vmax = max(float(c) for row in rows for c in row[1:]) or 1
     html = [
         '<h3>{}</h3>'.format(escape(title)),
         '<table class="sortable"><tr>' if sortable else '<table><tr>',
@@ -147,51 +150,61 @@ def _table(title, header, rows, highlight=(), sortable=True, shade=None):
     html.append('</tr>')
     for i, row in enumerate(rows):
         html.append('<tr class="high">' if i in highlight else '<tr>')
-        html.append('<td>{}</td>'.format(escape(str(row[0]))))
-        for c in row[1:]:
-            if shade:
-                color = _shade(float(c) / vmax, shade)
-                html.append('<td style="background: {}">'.format(color))
-            else:
-                html.append('<td>')
-            html.append('{}</td>'.format(escape(str(c))))
+        for j, c in enumerate(row):
+            style = ''
+            if shade and j:
+                rgb, vmax = shade
+                style = ' style="background: {}"'.format(
+                    _shade(float(c) / vmax, rgb)
+                )
+            html.append('<td{}>{}</td>'.format(style, escape(str(c))))
         html.append('</tr>')
     html.append('</table>')
     return ''.join(html)
 
 
-def _receptor_colors(fname):
+def _receptor_colors(interactions):
     """Return the colors of the receptor residues for each N, and the maximum.
 
-    Each residue in the interaction file is colored from white (no
-    interactions) to red (the most interactions per complex in the file).
+    interactions is parse_interactions data, or None (no colors). Residues
+    are colored from white (no interactions) to red (the most
+    interactions per complex); residues without interactions are left out,
+    as white is the base color.
     """
-    with open(fname, encoding='utf-8') as f:
-        ns = [int(n) for n in f.readline().split()[1:]]
-        rows = [line.split() for line in f]
-    vmax = max(float(x) for row in rows for x in row[1:]) or 1
+    if interactions is None:
+        return {}, None
+    vmax = _vmax(interactions)
+    residues = interactions['residues']
     colors = {}
-    for i, n in enumerate(ns):
-        colors[n] = []
-        for row in rows:
-            color = _shade(float(row[i + 1]) / vmax, (178, 24, 43))
-            colors[n].append((int(row[0]), color))
+    for n, values in interactions.items():
+        if n != 'residues':
+            colors[n] = [
+                (resi, _shade(x / vmax, (178, 24, 43)))
+                for resi, x in zip(residues, values, strict=True)
+                if x > 0
+            ]
     return colors, vmax
 
 
-def _interaction_tables(chain, fname):
+def _interaction_tables(chain, interactions):
     """Return the tables of the residue interactions of a chain.
 
     The first lists, for each N, the most contacted residues, most first;
-    the second gives the average interactions per complex of all residues.
+    the second gives the average interactions per complex of all residues,
+    colored from white to green (most contacted).
     """
-    rows = _read_rows(fname)
-    with open(fname, encoding='utf-8') as f:
-        header = f.readline().split()[1:]
+    residues = interactions['residues']
+    ns = [n for n in interactions if n != 'residues']
     top = []
-    for i, h in enumerate(header, 1):
-        ranked = sorted(rows, key=lambda r: -float(r[i]))[:TOP]
-        top.append([h, ', '.join(r[0] for r in ranked if float(r[i]) > 0)])
+    for n in ns:
+        ranked = sorted(
+            zip(interactions[n], residues, strict=True), key=lambda p: -p[0]
+        )[:TOP]
+        top.append([n, ', '.join(str(r) for x, r in ranked if x > 0)])
+    rows = [
+        [resi] + ['{:.3f}'.format(interactions[n][i]) for n in ns]
+        for i, resi in enumerate(residues)
+    ]
     return [
         _table(
             'Most contacted {} residues (top {:d}, most first)'.format(
@@ -203,18 +216,20 @@ def _interaction_tables(chain, fname):
         ),
         _table(
             'Average interactions per complex, {} residues'.format(chain),
-            ['Residue'] + ['N ≥ {}'.format(h) for h in header],
+            ['Residue'] + ['N ≥ {}'.format(n) for n in ns],
             rows,
-            # From white to green: most contacted.
-            shade=(35, 139, 69),
+            shade=((35, 139, 69), _vmax(interactions)),
         ),
     ]
 
 
 def _snapshot(
-    n, nrestraints, complexes, percentage, receptor, occupancy, colors, vmax
+    n, nrestraints, complexes, percentage, receptor, occupancy, colors
 ):
-    """Return the Mol* snapshot of the space consistent with n restraints."""
+    """Return the Mol* snapshot of the space consistent with n restraints.
+
+    colors is None, or the residue colors of the receptor and their maximum.
+    """
     builder = create_builder()
     representation = (
         builder.download(url=receptor)
@@ -227,7 +242,7 @@ def _snapshot(
     )
     if colors:
         representation.color(color='white')
-        for resi, color in colors:
+        for resi, color in colors[0]:
             representation.color(
                 color=color, selector=ComponentExpression(auth_seq_id=resi)
             )
@@ -262,7 +277,7 @@ def _snapshot(
             '\n\nFixed chain: the selected residues colored by their average '
             'number of interactions per complex, from white (0) to red '
             '({:.3g}).'
-        ).format(vmax)
+        ).format(colors[1])
     return builder.get_snapshot(
         key='n{:d}'.format(n),
         title='At least {:d} restraints'.format(n),
@@ -290,7 +305,7 @@ def generate_report(directory, receptor, restraints, options):
     # Accessible complexes, up to the first N without any; the percentages
     # from the counts, as the fractions in the file have only 6 decimals.
     rows = _read_rows(joiner('accessible_complexes.out'))
-    total = max(int(rows[0][3]), 1)
+    total = int(rows[0][3])
     complexes = []
     for row in rows:
         n, cumulative = int(row[0]), int(row[3])
@@ -299,9 +314,12 @@ def generate_report(directory, receptor, restraints, options):
         if cumulative == 0:
             break
 
-    colors, vmax = {}, None
-    if exists(joiner('receptor_interactions.txt')):
-        colors, vmax = _receptor_colors(joiner('receptor_interactions.txt'))
+    interactions = {}
+    for chain in ('receptor', 'ligand'):
+        fname = joiner('{}_interactions.txt'.format(chain))
+        if exists(fname):
+            interactions[chain] = parse_interactions(fname)
+    colors, vmax = _receptor_colors(interactions.get('receptor'))
 
     snapshots = []
     for n, cumulative, percentage in reversed(complexes):
@@ -318,8 +336,7 @@ def generate_report(directory, receptor, restraints, options):
                 percentage,
                 receptor_name,
                 occupancy,
-                colors.get(n),
-                vmax,
+                (colors[n], vmax) if n in colors else None,
             )
         )
     state = MVSJ(
@@ -381,11 +398,9 @@ def generate_report(directory, receptor, restraints, options):
         'accessible_interaction_space.mrc',
         receptor_name,
     ]
-    for chain in ('receptor', 'ligand'):
-        fname = '{}_interactions.txt'.format(chain)
-        if exists(joiner(fname)):
-            tables += _interaction_tables(chain, joiner(fname))
-            downloads.append(fname)
+    for chain, data in interactions.items():
+        tables += _interaction_tables(chain, data)
+        downloads.append('{}_interactions.txt'.format(chain))
 
     html = TEMPLATE.substitute(
         molstar=MOLSTAR_VERSION,

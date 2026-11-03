@@ -828,6 +828,11 @@ def main():  # noqa: C901
     seconds = int(round(time() - time0))
     m, s = divmod(seconds, 60)
     write('Total time passed: {:d}m {:2d}s'.format(m, s))
+    # Close disvis.log, so the footer below is its only writer (and Windows
+    # can remove the file, e.g. in the tests).
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+        handler.close()
 
     if args.report:
         # Browsers do not let a report opened from disk load its files.
