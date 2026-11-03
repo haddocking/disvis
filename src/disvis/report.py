@@ -123,11 +123,22 @@ def _restraint_labels(restraints):
     return labels
 
 
-def _table(title, header, rows, highlight=(), sortable=True):
+def _shade(t, rgb):
+    """Return the hex color at fraction t from white to rgb."""
+    return '#{:02x}{:02x}{:02x}'.format(
+        *[round(255 + t * (c - 255)) for c in rgb]
+    )
+
+
+def _table(title, header, rows, highlight=(), sortable=True, shade=None):
     """Return an HTML table; rows whose index is in highlight are bold.
 
-    A sortable table is sorted by a column when its header is clicked.
+    A sortable table is sorted by a column when its header is clicked. With
+    shade (an RGB color), the cells after the first column are colored from
+    white (0) to shade (the maximum of the table).
     """
+    if shade:
+        vmax = max(float(c) for row in rows for c in row[1:]) or 1
     html = [
         '<h3>{}</h3>'.format(escape(title)),
         '<table class="sortable"><tr>' if sortable else '<table><tr>',
@@ -136,7 +147,14 @@ def _table(title, header, rows, highlight=(), sortable=True):
     html.append('</tr>')
     for i, row in enumerate(rows):
         html.append('<tr class="high">' if i in highlight else '<tr>')
-        html += ['<td>{}</td>'.format(escape(str(c))) for c in row]
+        html.append('<td>{}</td>'.format(escape(str(row[0]))))
+        for c in row[1:]:
+            if shade:
+                color = _shade(float(c) / vmax, shade)
+                html.append('<td style="background: {}">'.format(color))
+            else:
+                html.append('<td>')
+            html.append('{}</td>'.format(escape(str(c))))
         html.append('</tr>')
     html.append('</table>')
     return ''.join(html)
@@ -156,9 +174,8 @@ def _receptor_colors(fname):
     for i, n in enumerate(ns):
         colors[n] = []
         for row in rows:
-            t = float(row[i + 1]) / vmax
-            rgb = [round(255 + t * (c - 255)) for c in (178, 24, 43)]
-            colors[n].append((int(row[0]), '#{:02x}{:02x}{:02x}'.format(*rgb)))
+            color = _shade(float(row[i + 1]) / vmax, (178, 24, 43))
+            colors[n].append((int(row[0]), color))
     return colors, vmax
 
 
@@ -188,6 +205,8 @@ def _interaction_tables(chain, fname):
             'Average interactions per complex, {} residues'.format(chain),
             ['Residue'] + ['N ≥ {}'.format(h) for h in header],
             rows,
+            # From white to green: most contacted.
+            shade=(35, 139, 69),
         ),
     ]
 
