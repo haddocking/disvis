@@ -13,21 +13,21 @@ From the test-case directory, a coarse run (9.72° rotational sampling, 7416
 rotations, 2 Å grid)
 
 ```bash
-disvis O14250.pdb Q9UT97.pdb restraints.dat -a 9.72 -vs 2 -p 8 --report -d coarse
+disvis O14250.pdb Q9UT97.pdb restraints.dat -a 9.72 -vs 2 -p 8 -d coarse
 ```
 
 and a fine run (5.27°, 53256 rotations, 1 Å grid)
 
 ```bash
-disvis O14250.pdb Q9UT97.pdb restraints.dat -a 5.27 -vs 1 -p 8 --report -d fine
+disvis O14250.pdb Q9UT97.pdb restraints.dat -a 5.27 -vs 1 -p 8 -d fine
 ```
 
 Use `-g` instead of `-p 8` to run on the GPU (see `INSTALLATION.md`). For
-RNA polymerase II, use `1wcm_A.pdb 1wcm_E.pdb` as input. `--report` writes
+RNA polymerase II, use `1wcm_A.pdb 1wcm_E.pdb` as input. DisVis writes
 `report.html`; view it with `python -m http.server -d coarse` and
 http://localhost:8000/report.html.
 
-`check_test_cases.py` runs both test cases (with `--report`) and compares the
+`check_test_cases.py` runs both test cases and compares the
 output files byte for byte with the reference results (the report is not
 compared), e.g. from the repository root:
 
@@ -51,7 +51,7 @@ Windows.
   VkFFT (pyvkfft), which gives byte-identical output for all four runs on the
   RTX 6000 Ada, the GTX 1080 Ti and the Apple M2 Pro GPU.
 * PRE5-PUP2 only, `cpu/coarse-is-oa`: the coarse CPU run with
-  `-is selection.res -oa --report` (occupancy grids and interaction analysis);
+  `-is selection.res -oa` (occupancy grids and interaction analysis);
   its other output files are identical to `cpu/coarse`.
 
 The CPU output files (`accessible_complexes.out`, `violations.out`,

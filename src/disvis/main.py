@@ -183,12 +183,12 @@ def parse_args():
     )
 
     p.add_argument(
-        '--report',
+        '--no-report',
         dest='report',
-        action='store_true',
+        action='store_false',
         help=(
-            "Write report.html and state.mvsj in the output directory: the "
-            "results with a Mol* view of the accessible interaction space."
+            "Do not write report.html and state.mvsj (the results with a "
+            "Mol* view of the accessible interaction space)."
         ),
     )
 

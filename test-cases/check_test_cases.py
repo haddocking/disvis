@@ -63,7 +63,7 @@ def run_case(case, grid, args, outdir):
     ) or shutil.which('disvis')
     command = [
         disvis, receptor, ligand, 'restraints.dat',
-        '-a', angle, '-vs', voxelspacing, '-d', outdir, '--report',
+        '-a', angle, '-vs', voxelspacing, '-d', outdir,
     ]  # fmt: skip
     command += ['-g'] if args.gpu else ['-p', str(args.nproc)]
     subprocess.run(command, cwd=casedir, check=True, stdout=subprocess.DEVNULL)

@@ -1,9 +1,10 @@
-"""Test of the --report option.
+"""Test of the report (report.html and state.mvsj).
 
 Run from the repository root with python -m unittest.
 """
 
 import json
+import logging
 import os
 import tempfile
 from os.path import dirname, join
@@ -22,10 +23,12 @@ class TestReport(TestCase):
                 join(DATA, f)
                 for f in ('O14250.pdb', 'Q9UT97.pdb', 'restraints.dat')
             ]
-            argv += ['-a', '40', '-vs', '3', '-np', '-oa', '--report']
+            argv += ['-a', '40', '-vs', '3', '-np', '-oa']
             argv += ['-is', join(DATA, 'selection.res'), '-d', directory]
             with patch('sys.argv', argv), patch('builtins.print'):
                 disvis_main.main()
+            # Close disvis.log: Windows cannot remove an open file.
+            logging.shutdown()
 
             with open(join(directory, 'accessible_complexes.out')) as f:
                 rows = [line.split() for line in f if line[0] != '#']
@@ -45,7 +48,7 @@ class TestReport(TestCase):
             with open(join(directory, 'report.html'), encoding='utf-8') as f:
                 html = f.read()
             self.assertIn('A27(CA)-A18(CA)', html)
-            self.assertIn('ligand residues', html)
+            self.assertIn('Most contacted ligand residues', html)
 
 
 if __name__ == '__main__':

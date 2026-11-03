@@ -26,6 +26,8 @@ with warnings.catch_warnings():
     )
 
 MOLSTAR_VERSION = '4.18.0'
+# Number of residues in the lists of the most contacted residues.
+TOP = 10
 
 TEMPLATE = Template("""\
 <!DOCTYPE html>
@@ -46,6 +48,7 @@ TEMPLATE = Template("""\
   table { border-collapse: collapse; margin: 0.5rem 0 1rem; }
   th, td { border: 1px solid #a0a0a0; padding: 4px 8px; text-align: right; }
   tr.high { font-weight: bold; background: #f8d7da; }
+  table.sortable th { cursor: pointer; }
   #file-hint { background: #fff3cd; padding: 0.5rem; }
   @media (max-width: 900px) {
     .container { flex-direction: column; height: auto; }
@@ -68,8 +71,32 @@ the files of the viewer. Serve this directory with
   <div id="viewer"><mvs-stories-viewer /></div>
   <div id="controls"><mvs-stories-snapshot-markdown /></div>
 </div>
-<section>${tables}</section>
+<section>
+<p><i>Click a column header to sort a table by that column; click again to
+reverse the order.</i></p>
+${tables}</section>
 <script>
+// Sort a table by a column on a click on its header, again to reverse.
+document.querySelectorAll('table.sortable th').forEach(th => {
+  th.title = 'Click to sort';
+  th.addEventListener('click', () => {
+    const table = th.closest('table');
+    const col = th.cellIndex;
+    const rows = [...table.rows].slice(1);
+    const key = r => {
+      const text = r.cells[col].textContent;
+      const x = parseFloat(text);
+      return isNaN(x) ? text : x;
+    };
+    const dir = th.dataset.dir === 'desc' ? 1 : -1;
+    th.dataset.dir = dir === 1 ? 'asc' : 'desc';
+    rows.sort((a, b) => {
+      const x = key(a), y = key(b);
+      return dir * (x < y ? -1 : x > y ? 1 : 0);
+    });
+    rows.forEach(r => table.tBodies[0].appendChild(r));
+  });
+});
 if (location.protocol === 'file:') {
   document.getElementById('file-hint').hidden = false;
 } else {
@@ -96,9 +123,15 @@ def _restraint_labels(restraints):
     return labels
 
 
-def _table(title, header, rows, highlight=()):
-    """Return an HTML table; rows whose index is in highlight are bold."""
-    html = ['<h3>{}</h3>'.format(escape(title)), '<table><tr>']
+def _table(title, header, rows, highlight=(), sortable=True):
+    """Return an HTML table; rows whose index is in highlight are bold.
+
+    A sortable table is sorted by a column when its header is clicked.
+    """
+    html = [
+        '<h3>{}</h3>'.format(escape(title)),
+        '<table class="sortable"><tr>' if sortable else '<table><tr>',
+    ]
     html += ['<th>{}</th>'.format(escape(h)) for h in header]
     html.append('</tr>')
     for i, row in enumerate(rows):
@@ -127,6 +160,36 @@ def _receptor_colors(fname):
             rgb = [round(255 + t * (c - 255)) for c in (178, 24, 43)]
             colors[n].append((int(row[0]), '#{:02x}{:02x}{:02x}'.format(*rgb)))
     return colors, vmax
+
+
+def _interaction_tables(chain, fname):
+    """Return the tables of the residue interactions of a chain.
+
+    The first lists, for each N, the most contacted residues, most first;
+    the second gives the average interactions per complex of all residues.
+    """
+    rows = _read_rows(fname)
+    with open(fname, encoding='utf-8') as f:
+        header = f.readline().split()[1:]
+    top = []
+    for i, h in enumerate(header, 1):
+        ranked = sorted(rows, key=lambda r: -float(r[i]))[:TOP]
+        top.append([h, ', '.join(r[0] for r in ranked if float(r[i]) > 0)])
+    return [
+        _table(
+            'Most contacted {} residues (top {:d}, most first)'.format(
+                chain, TOP
+            ),
+            ['N ≥', 'Residues'],
+            top,
+            sortable=False,
+        ),
+        _table(
+            'Average interactions per complex, {} residues'.format(chain),
+            ['Residue'] + ['N ≥ {}'.format(h) for h in header],
+            rows,
+        ),
+    ]
 
 
 def _snapshot(
@@ -302,18 +365,7 @@ def generate_report(directory, receptor, restraints, options):
     for chain in ('receptor', 'ligand'):
         fname = '{}_interactions.txt'.format(chain)
         if exists(joiner(fname)):
-            rows = _read_rows(joiner(fname))
-            with open(joiner(fname), encoding='utf-8') as f:
-                header = f.readline().split()[1:]
-            tables.append(
-                _table(
-                    'Average interactions per complex, {} residues'.format(
-                        chain
-                    ),
-                    ['Residue'] + ['N ≥ {}'.format(h) for h in header],
-                    rows,
-                )
-            )
+            tables += _interaction_tables(chain, joiner(fname))
             downloads.append(fname)
 
     html = TEMPLATE.substitute(

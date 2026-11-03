@@ -27,7 +27,7 @@ dependencies = [
     # roughly halves the run time compared with the NumPy FFT; not available
     # in Pyodide (WebAssembly)
     "pyfftw; platform_machine != 'wasm32'",
-    "molviewspec",  # --report
+    "molviewspec",  # report.html
 ]
 
 [project.optional-dependencies]

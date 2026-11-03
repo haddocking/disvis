@@ -16,6 +16,7 @@
   table { border-collapse: collapse; margin: 0.5rem 0 1rem; }
   th, td { border: 1px solid #a0a0a0; padding: 4px 8px; text-align: right; }
   tr.high { font-weight: bold; background: #f8d7da; }
+  table.sortable th { cursor: pointer; }
   #file-hint { background: #fff3cd; padding: 0.5rem; }
   @media (max-width: 900px) {
     .container { flex-direction: column; height: auto; }
@@ -38,8 +39,32 @@ the files of the viewer. Serve this directory with
   <div id="viewer"><mvs-stories-viewer /></div>
   <div id="controls"><mvs-stories-snapshot-markdown /></div>
 </div>
-<section><h3>Accessible complexes</h3><table><tr><th>Consistent restraints (N)</th><th>Complexes with at least N</th><th>Fraction</th></tr><tr><td>0</td><td>7131608576</td><td>100 %</td></tr><tr><td>1</td><td>1593312894</td><td>22.3 %</td></tr><tr><td>2</td><td>996777726</td><td>14 %</td></tr><tr><td>3</td><td>757902174</td><td>10.6 %</td></tr><tr><td>4</td><td>93791518</td><td>1.32 %</td></tr><tr><td>5</td><td>12616126</td><td>0.177 %</td></tr><tr><td>6</td><td>7348857</td><td>0.103 %</td></tr><tr><td>7</td><td>2788009</td><td>0.0391 %</td></tr></table><h3>Fraction of complexes violating each restraint</h3><table><tr><th>N</th><th>A27(CA)-A18(CA)</th><th>A122(CA)-A125(CA)</th><th>A122(CA)-A128(CA)</th><th>A122(CA)-A127(CA)</th><th>A55(CA)-A169(CA)</th><th>A55(CA)-A179(CA)</th><th>A54(CA)-A179(CA)</th></tr><tr><td>1</td><td>0.7153</td><td>0.7390</td><td>0.7280</td><td>0.7299</td><td>0.6139</td><td>0.6460</td><td>0.6535</td></tr><tr><td>2</td><td>0.8590</td><td>0.6419</td><td>0.5992</td><td>0.5797</td><td>0.5009</td><td>0.4618</td><td>0.4802</td></tr><tr><td>3</td><td>0.8513</td><td>0.5887</td><td>0.5722</td><td>0.5751</td><td>0.4273</td><td>0.4172</td><td>0.4144</td></tr><tr><td>4</td><td>0.0785</td><td>0.4725</td><td>0.4345</td><td>0.4481</td><td>0.4559</td><td>0.4443</td><td>0.4237</td></tr><tr><td>5</td><td>0.3245</td><td>0.3377</td><td>0.0577</td><td>0.1362</td><td>0.2071</td><td>0.1100</td><td>0.0233</td></tr><tr><td>6</td><td>0.2348</td><td>0.2245</td><td>0.0040</td><td>0.0052</td><td>0.1198</td><td>0.0322</td><td>0.0001</td></tr></table><h3>Z-scores (above 1: possible false positive)</h3><table><tr><th>#</th><th>Restraint</th><th>Average violated fraction</th><th>Standard deviation</th><th>Z-score</th></tr><tr class="high"><td>1</td><td>A27(CA)-A18(CA)</td><td>0.438</td><td>0.338</td><td>1.527</td></tr><tr class="high"><td>2</td><td>A122(CA)-A125(CA)</td><td>0.429</td><td>0.240</td><td>1.372</td></tr><tr><td>3</td><td>A122(CA)-A128(CA)</td><td>0.342</td><td>0.290</td><td>-0.225</td></tr><tr><td>4</td><td>A122(CA)-A127(CA)</td><td>0.353</td><td>0.279</td><td>-0.019</td></tr><tr><td>5</td><td>A55(CA)-A169(CA)</td><td>0.332</td><td>0.208</td><td>-0.411</td></tr><tr><td>6</td><td>A55(CA)-A179(CA)</td><td>0.302</td><td>0.232</td><td>-0.970</td></tr><tr><td>7</td><td>A54(CA)-A179(CA)</td><td>0.285</td><td>0.251</td><td>-1.275</td></tr></table></section>
+<section>
+<p><i>Click a column header to sort a table by that column; click again to
+reverse the order.</i></p>
+<h3>Accessible complexes</h3><table class="sortable"><tr><th>Consistent restraints (N)</th><th>Complexes with at least N</th><th>Fraction</th></tr><tr><td>0</td><td>7131608576</td><td>100 %</td></tr><tr><td>1</td><td>1593312894</td><td>22.3 %</td></tr><tr><td>2</td><td>996777726</td><td>14 %</td></tr><tr><td>3</td><td>757902174</td><td>10.6 %</td></tr><tr><td>4</td><td>93791518</td><td>1.32 %</td></tr><tr><td>5</td><td>12616126</td><td>0.177 %</td></tr><tr><td>6</td><td>7348857</td><td>0.103 %</td></tr><tr><td>7</td><td>2788009</td><td>0.0391 %</td></tr></table><h3>Fraction of complexes violating each restraint</h3><table class="sortable"><tr><th>N</th><th>A27(CA)-A18(CA)</th><th>A122(CA)-A125(CA)</th><th>A122(CA)-A128(CA)</th><th>A122(CA)-A127(CA)</th><th>A55(CA)-A169(CA)</th><th>A55(CA)-A179(CA)</th><th>A54(CA)-A179(CA)</th></tr><tr><td>1</td><td>0.7153</td><td>0.7390</td><td>0.7280</td><td>0.7299</td><td>0.6139</td><td>0.6460</td><td>0.6535</td></tr><tr><td>2</td><td>0.8590</td><td>0.6419</td><td>0.5992</td><td>0.5797</td><td>0.5009</td><td>0.4618</td><td>0.4802</td></tr><tr><td>3</td><td>0.8513</td><td>0.5887</td><td>0.5722</td><td>0.5751</td><td>0.4273</td><td>0.4172</td><td>0.4144</td></tr><tr><td>4</td><td>0.0785</td><td>0.4725</td><td>0.4345</td><td>0.4481</td><td>0.4559</td><td>0.4443</td><td>0.4237</td></tr><tr><td>5</td><td>0.3245</td><td>0.3377</td><td>0.0577</td><td>0.1362</td><td>0.2071</td><td>0.1100</td><td>0.0233</td></tr><tr><td>6</td><td>0.2348</td><td>0.2245</td><td>0.0040</td><td>0.0052</td><td>0.1198</td><td>0.0322</td><td>0.0001</td></tr></table><h3>Z-scores (above 1: possible false positive)</h3><table class="sortable"><tr><th>#</th><th>Restraint</th><th>Average violated fraction</th><th>Standard deviation</th><th>Z-score</th></tr><tr class="high"><td>1</td><td>A27(CA)-A18(CA)</td><td>0.438</td><td>0.338</td><td>1.527</td></tr><tr class="high"><td>2</td><td>A122(CA)-A125(CA)</td><td>0.429</td><td>0.240</td><td>1.372</td></tr><tr><td>3</td><td>A122(CA)-A128(CA)</td><td>0.342</td><td>0.290</td><td>-0.225</td></tr><tr><td>4</td><td>A122(CA)-A127(CA)</td><td>0.353</td><td>0.279</td><td>-0.019</td></tr><tr><td>5</td><td>A55(CA)-A169(CA)</td><td>0.332</td><td>0.208</td><td>-0.411</td></tr><tr><td>6</td><td>A55(CA)-A179(CA)</td><td>0.302</td><td>0.232</td><td>-0.970</td></tr><tr><td>7</td><td>A54(CA)-A179(CA)</td><td>0.285</td><td>0.251</td><td>-1.275</td></tr></table></section>
 <script>
+// Sort a table by a column on a click on its header, again to reverse.
+document.querySelectorAll('table.sortable th').forEach(th => {
+  th.title = 'Click to sort';
+  th.addEventListener('click', () => {
+    const table = th.closest('table');
+    const col = th.cellIndex;
+    const rows = [...table.rows].slice(1);
+    const key = r => {
+      const text = r.cells[col].textContent;
+      const x = parseFloat(text);
+      return isNaN(x) ? text : x;
+    };
+    const dir = th.dataset.dir === 'desc' ? 1 : -1;
+    th.dataset.dir = dir === 1 ? 'asc' : 'desc';
+    rows.sort((a, b) => {
+      const x = key(a), y = key(b);
+      return dir * (x < y ? -1 : x > y ? 1 : 0);
+    });
+    rows.forEach(r => table.tBodies[0].appendChild(r));
+  });
+});
 if (location.protocol === 'file:') {
   document.getElementById('file-hint').hidden = false;
 } else {
