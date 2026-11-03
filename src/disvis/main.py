@@ -8,6 +8,7 @@ from time import time
 import multiprocessing as mp
 from argparse import ArgumentParser
 import logging
+import shlex
 
 import numpy as np
 
@@ -827,6 +828,17 @@ def main():  # noqa: C901
     seconds = int(round(time() - time0))
     m, s = divmod(seconds, 60)
     write('Total time passed: {:d}m {:2d}s'.format(m, s))
+
+    if args.report:
+        # Browsers do not let a report opened from disk load its files.
+        with open(joiner('disvis.log'), 'a', encoding='utf-8') as f:
+            f.write(
+                '{0:s}\nTo view report.html, serve the output directory:\n'
+                '  python -m http.server -d {1:s}\n'
+                'and open http://localhost:8000/report.html\n{0:s}\n'.format(
+                    '=' * 70, shlex.quote(args.directory)
+                )
+            )
 
 
 if __name__ == '__main__':
