@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <title>DisVis Report</title>
-<script src="https://cdn.jsdelivr.net/npm/molstar@4.18.0/build/mvs-stories/mvs-stories.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/molstar@5.13.1/build/mvs-stories/mvs-stories.js"></script>
 <link rel="stylesheet" type="text/css"
-  href="https://cdn.jsdelivr.net/npm/molstar@4.18.0/build/mvs-stories/mvs-stories.css">
+  href="https://cdn.jsdelivr.net/npm/molstar@5.13.1/build/mvs-stories/mvs-stories.css">
 <style>
   body { margin: 0; font-family: sans-serif; }
   header, section { padding: 0 1rem; }
@@ -29,7 +29,7 @@
 <header>
 <h2>DisVis Report</h2>
 <details><summary>Options</summary><ul></ul></details>
-<p>Download: <a href="accessible_complexes.out">accessible_complexes.out</a> <a href="violations.out">violations.out</a> <a href="z-score.out">z-score.out</a> <a href="accessible_interaction_space.mrc">accessible_interaction_space.mrc</a> <a href="1wcm_A.pdb">1wcm_A.pdb</a></p>
+<p>Download: <a href="accessible_complexes.out">accessible_complexes.out</a> <a href="violations.out">violations.out</a> <a href="z-score.out">z-score.out</a> <a href="accessible_interaction_space.mrc">accessible_interaction_space.mrc</a> <a href="1wcm_A.pdb">1wcm_A.pdb</a> <a href="1wcm_E.pdb">1wcm_E.pdb</a> <a href="restraints.dat">restraints.dat</a></p>
 <p id="file-hint" hidden>The browser does not let a page opened from disk load
 the files of the viewer. Serve this directory with
 <code>python -m http.server -d &lt;directory&gt;</code> and open
@@ -42,7 +42,7 @@ the files of the viewer. Serve this directory with
 <section>
 <p><i>Click a column header to sort a table by that column; click again to
 reverse the order.</i></p>
-<h3>Accessible complexes</h3><table class="sortable"><tr><th>Consistent restraints (N)</th><th>Complexes with at least N</th><th>Fraction</th></tr><tr><td>0</td><td>19595735477</td><td>100 %</td></tr><tr><td>1</td><td>2527257442</td><td>12.9 %</td></tr><tr><td>2</td><td>1043895421</td><td>5.33 %</td></tr><tr><td>3</td><td>321164376</td><td>1.64 %</td></tr><tr><td>4</td><td>99477665</td><td>0.508 %</td></tr><tr><td>5</td><td>19625480</td><td>0.1 %</td></tr><tr><td>6</td><td>5871747</td><td>0.03 %</td></tr><tr><td>7</td><td>14350</td><td>7.32e-05 %</td></tr><tr><td>8</td><td>0</td><td>0 %</td></tr></table><h3>Fraction of complexes violating each restraint</h3><table class="sortable"><tr><th>N</th><th>A1003(CB)-E166(CB)</th><th>A129(CB)-E161(CB)</th><th>A129(CB)-E171(CB)</th><th>A15(CB)-E171(CB)</th><th>A934(CB)-E201(CB)</th><th>A938(CB)-E201(CB)</th><th>A180(CB)-E122(CB)</th><th>A1092(CB)-E152(CB)</th></tr><tr><td>1</td><td>0.7346</td><td>0.8125</td><td>0.7808</td><td>0.8118</td><td>0.7433</td><td>0.7794</td><td>0.7691</td><td>0.9789</td></tr><tr><td>2</td><td>0.6771</td><td>0.6166</td><td>0.5852</td><td>0.7248</td><td>0.5047</td><td>0.4971</td><td>0.9715</td><td>0.9956</td></tr><tr><td>3</td><td>0.3111</td><td>0.3459</td><td>0.2887</td><td>0.4348</td><td>0.6502</td><td>0.6178</td><td>0.9670</td><td>0.9951</td></tr><tr><td>4</td><td>0.0809</td><td>0.1535</td><td>0.0590</td><td>0.2379</td><td>0.6476</td><td>0.6000</td><td>0.9650</td><td>0.9998</td></tr><tr><td>5</td><td>0.0164</td><td>0.1416</td><td>0.0013</td><td>0.3583</td><td>0.1825</td><td>0.0634</td><td>0.9367</td><td>0.9998</td></tr><tr><td>6</td><td>0.0005</td><td>0.0000</td><td>0.0000</td><td>0.0001</td><td>0.0013</td><td>0.0000</td><td>0.9956</td><td>1.0000</td></tr><tr><td>7</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>1.0000</td></tr></table><h3>Z-scores (above 1: possible false positive)</h3><table class="sortable"><tr><th>#</th><th>Restraint</th><th>Average violated fraction</th><th>Standard deviation</th><th>Z-score</th></tr><tr><td>1</td><td>A1003(CB)-E166(CB)</td><td>0.260</td><td>0.300</td><td>-0.789</td></tr><tr><td>2</td><td>A129(CB)-E161(CB)</td><td>0.296</td><td>0.291</td><td>-0.652</td></tr><tr><td>3</td><td>A129(CB)-E171(CB)</td><td>0.245</td><td>0.297</td><td>-0.848</td></tr><tr><td>4</td><td>A15(CB)-E171(CB)</td><td>0.367</td><td>0.297</td><td>-0.378</td></tr><tr><td>5</td><td>A934(CB)-E201(CB)</td><td>0.390</td><td>0.297</td><td>-0.289</td></tr><tr><td>6</td><td>A938(CB)-E201(CB)</td><td>0.365</td><td>0.308</td><td>-0.384</td></tr><tr class="high"><td>7</td><td>A180(CB)-E122(CB)</td><td>0.801</td><td>0.334</td><td>1.294</td></tr><tr class="high"><td>8</td><td>A1092(CB)-E152(CB)</td><td>0.996</td><td>0.007</td><td>2.046</td></tr></table></section>
+<h3>Accessible complexes</h3><table class="sortable"><tr><th>Consistent restraints (N)</th><th>Complexes with at least N</th><th>Fraction</th></tr><tr><td>8</td><td>0</td><td>0 %</td></tr><tr><td>7</td><td>14350</td><td>7.32e-05 %</td></tr><tr><td>6</td><td>5871747</td><td>0.03 %</td></tr><tr><td>5</td><td>19625480</td><td>0.1 %</td></tr><tr><td>4</td><td>99477665</td><td>0.508 %</td></tr><tr><td>3</td><td>321164376</td><td>1.64 %</td></tr><tr><td>2</td><td>1043895421</td><td>5.33 %</td></tr><tr><td>1</td><td>2527257442</td><td>12.9 %</td></tr><tr><td>0</td><td>19595735477</td><td>100 %</td></tr></table><h3>Fraction of complexes violating each restraint</h3><table class="sortable"><tr><th>N</th><th>A1003(CB)-E166(CB)</th><th>A129(CB)-E161(CB)</th><th>A129(CB)-E171(CB)</th><th>A15(CB)-E171(CB)</th><th>A934(CB)-E201(CB)</th><th>A938(CB)-E201(CB)</th><th>A180(CB)-E122(CB)</th><th>A1092(CB)-E152(CB)</th></tr><tr><td>1</td><td>0.7346</td><td>0.8125</td><td>0.7808</td><td>0.8118</td><td>0.7433</td><td>0.7794</td><td>0.7691</td><td>0.9789</td></tr><tr><td>2</td><td>0.6771</td><td>0.6166</td><td>0.5852</td><td>0.7248</td><td>0.5047</td><td>0.4971</td><td>0.9715</td><td>0.9956</td></tr><tr><td>3</td><td>0.3111</td><td>0.3459</td><td>0.2887</td><td>0.4348</td><td>0.6502</td><td>0.6178</td><td>0.9670</td><td>0.9951</td></tr><tr><td>4</td><td>0.0809</td><td>0.1535</td><td>0.0590</td><td>0.2379</td><td>0.6476</td><td>0.6000</td><td>0.9650</td><td>0.9998</td></tr><tr><td>5</td><td>0.0164</td><td>0.1416</td><td>0.0013</td><td>0.3583</td><td>0.1825</td><td>0.0634</td><td>0.9367</td><td>0.9998</td></tr><tr><td>6</td><td>0.0005</td><td>0.0000</td><td>0.0000</td><td>0.0001</td><td>0.0013</td><td>0.0000</td><td>0.9956</td><td>1.0000</td></tr><tr><td>7</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>1.0000</td></tr></table><h3>Z-scores (above 1: possible false positive)</h3><table class="sortable"><tr><th>#</th><th>Restraint</th><th>Average violated fraction</th><th>Standard deviation</th><th>Z-score</th></tr><tr><td>1</td><td>A1003(CB)-E166(CB)</td><td>0.260</td><td>0.300</td><td>-0.789</td></tr><tr><td>2</td><td>A129(CB)-E161(CB)</td><td>0.296</td><td>0.291</td><td>-0.652</td></tr><tr><td>3</td><td>A129(CB)-E171(CB)</td><td>0.245</td><td>0.297</td><td>-0.848</td></tr><tr><td>4</td><td>A15(CB)-E171(CB)</td><td>0.367</td><td>0.297</td><td>-0.378</td></tr><tr><td>5</td><td>A934(CB)-E201(CB)</td><td>0.390</td><td>0.297</td><td>-0.289</td></tr><tr><td>6</td><td>A938(CB)-E201(CB)</td><td>0.365</td><td>0.308</td><td>-0.384</td></tr><tr class="high"><td>7</td><td>A180(CB)-E122(CB)</td><td>0.801</td><td>0.334</td><td>1.294</td></tr><tr class="high"><td>8</td><td>A1092(CB)-E152(CB)</td><td>0.996</td><td>0.007</td><td>2.046</td></tr></table></section>
 <script>
 // Sort a table by a column on a click on its header, again to reverse.
 document.querySelectorAll('table.sortable th').forEach(th => {
@@ -58,6 +58,11 @@ document.querySelectorAll('table.sortable th').forEach(th => {
     };
     const dir = th.dataset.dir === 'desc' ? 1 : -1;
     th.dataset.dir = dir === 1 ? 'asc' : 'desc';
+    // Show the sorted column and its direction.
+    for (const h of table.rows[0].cells) {
+      h.textContent = h.textContent.replace(/ [▲▼]$/, '');
+    }
+    th.textContent += dir === 1 ? ' ▲' : ' ▼';
     rows.sort((a, b) => {
       const x = key(a), y = key(b);
       return dir * (x < y ? -1 : x > y ? 1 : 0);

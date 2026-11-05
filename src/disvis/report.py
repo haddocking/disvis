@@ -21,7 +21,7 @@ from molviewspec import (
 
 from disvis.helpers import parse_interactions
 
-MOLSTAR_VERSION = '4.18.0'
+MOLSTAR_VERSION = '5.13.1'
 # Number of residues in the lists of the most contacted residues.
 TOP = 10
 
@@ -86,6 +86,11 @@ document.querySelectorAll('table.sortable th').forEach(th => {
     };
     const dir = th.dataset.dir === 'desc' ? 1 : -1;
     th.dataset.dir = dir === 1 ? 'asc' : 'desc';
+    // Show the sorted column and its direction.
+    for (const h of table.rows[0].cells) {
+      h.textContent = h.textContent.replace(/ [▲▼]$$/, '');
+    }
+    th.textContent += dir === 1 ? ' ▲' : ' ▼';
     rows.sort((a, b) => {
       const x = key(a), y = key(b);
       return dir * (x < y ? -1 : x > y ? 1 : 0);
@@ -286,18 +291,32 @@ def _snapshot(
     )
 
 
-def generate_report(directory, receptor, restraints, options):
+def _copy_inputs(directory, fnames):
+    """Copy the input files (None is skipped) to directory; return names."""
+    names = []
+    for fname in fnames:
+        if fname:
+            target = join(directory, basename(fname))
+            if not (exists(target) and samefile(fname, target)):
+                shutil.copyfile(fname, target)
+            names.append(basename(fname))
+    return names
+
+
+def generate_report(
+    directory, receptor, ligand, restraints, options, selection=None
+):
     """Write report.html and state.mvsj in the DisVis output directory.
 
-    receptor is the fixed chain (copied to the directory, so the report can
-    load it), restraints the restraints file, and options the command-line
-    options shown in the report. Returns the path of report.html.
+    receptor (the fixed chain), ligand (the scanning chain), restraints and
+    the optional interaction selection are the input files: they are copied
+    to the directory, where the report links them and loads the receptor.
+    options are the command-line options shown in the report. Returns the
+    path of report.html.
     """
     joiner = partial(join, directory)
-    receptor_name = basename(receptor)
-    target = joiner(receptor_name)
-    if not (exists(target) and samefile(receptor, target)):
-        shutil.copyfile(receptor, target)
+    inputs = _copy_inputs(directory, (receptor, ligand, restraints, selection))
+    receptor_name = inputs[0]
 
     labels = _restraint_labels(restraints)
     nrestraints = len(labels)
@@ -356,7 +375,8 @@ def generate_report(directory, receptor, restraints, options):
                 'Complexes with at least N',
                 'Fraction',
             ],
-            complexes,
+            # The most restraints first, as the snapshots.
+            complexes[::-1],
         )
     ]
     violations = [
@@ -396,7 +416,7 @@ def generate_report(directory, receptor, restraints, options):
         'violations.out',
         'z-score.out',
         'accessible_interaction_space.mrc',
-        receptor_name,
+        *inputs,
     ]
     for chain, data in interactions.items():
         tables += _interaction_tables(chain, data)

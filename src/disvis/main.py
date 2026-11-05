@@ -820,7 +820,12 @@ def main():  # noqa: C901
         from disvis.report import generate_report
 
         fname = generate_report(
-            args.directory, args.receptor, args.restraints, vars(args)
+            args.directory,
+            args.receptor,
+            args.ligand,
+            args.restraints,
+            vars(args),
+            args.interaction_selection,
         )
         write('Writing report to: {:s}'.format(fname))
 
@@ -836,14 +841,16 @@ def main():  # noqa: C901
 
     if args.report:
         # Browsers do not let a report opened from disk load its files.
-        with open(joiner('disvis.log'), 'a', encoding='utf-8') as f:
-            f.write(
-                '{0:s}\nTo view report.html, serve the output directory:\n'
-                '  python -m http.server -d {1:s}\n'
-                'and open http://localhost:8000/report.html\n{0:s}\n'.format(
-                    '=' * 70, shlex.quote(args.directory)
-                )
+        footer = (
+            '{0:s}\nTo view report.html, serve the output directory:\n'
+            '  python -m http.server -d {1:s}\n'
+            'and open http://localhost:8000/report.html\n{0:s}'.format(
+                '=' * 70, shlex.quote(args.directory)
             )
+        )
+        print(footer)
+        with open(joiner('disvis.log'), 'a', encoding='utf-8') as f:
+            f.write(footer + '\n')
 
 
 if __name__ == '__main__':

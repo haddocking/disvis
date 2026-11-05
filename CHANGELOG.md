@@ -4,8 +4,9 @@
 
 - Added report.html generation to visualise results (Mol* view of the
   accessible interaction space and occupancy grids; with `-is`, the most
-  contacted residues); turned off with `--no-report`. New dependency:
-  molviewspec - Issue #46
+  contacted residues), with the input files copied to the output directory
+  for download; turned off with `--no-report`. New dependency: molviewspec -
+  Issue #46
 
 ## 3.0.0
 
