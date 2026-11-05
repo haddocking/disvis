@@ -1,5 +1,10 @@
 # Changelog
 
+## Latest changes
+
+- The output directory (`-d`) is kept as given, so the terminal, `disvis.log`
+  and `args.json` show relative paths such as `myrun/z-score.out` - Issue #53
+
 ## 3.0.0
 
 Changes compared with 2.3.0, the last Python 2 release.
