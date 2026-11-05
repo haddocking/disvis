@@ -5,6 +5,7 @@ It refers to them by relative names, so the directory can be served as is,
 e.g. with `python -m http.server -d <directory>`.
 """
 
+import csv
 import shutil
 from functools import partial
 from html import escape
@@ -109,9 +110,16 @@ if (location.protocol === 'file:') {
 """)  # noqa: E501
 
 
-def _read_rows(fname):
-    """Return the rows of a whitespace-separated table, without comments."""
-    with open(fname, encoding='utf-8') as f:
+def _read_rows(fname, delimiter=None):
+    """Return the rows of an output table, without its header.
+
+    Without delimiter, the columns have a fixed width and the header lines
+    start with #; with a delimiter (--delimiter), the header is the first
+    line.
+    """
+    with open(fname, encoding='utf-8', newline='') as f:
+        if delimiter:
+            return list(csv.reader(f, delimiter=delimiter))[1:]
         return [line.split() for line in f if not line.startswith('#')]
 
 
@@ -304,15 +312,22 @@ def _copy_inputs(directory, fnames):
 
 
 def generate_report(
-    directory, receptor, ligand, restraints, options, selection=None
+    directory,
+    receptor,
+    ligand,
+    restraints,
+    options,
+    selection=None,
+    delimiter=None,
 ):
     """Write report.html and state.mvsj in the DisVis output directory.
 
     receptor (the fixed chain), ligand (the scanning chain), restraints and
     the optional interaction selection are the input files: they are copied
     to the directory, where the report links them and loads the receptor.
-    options are the command-line options shown in the report. Returns the
-    path of report.html.
+    options are the command-line options shown in the report, delimiter
+    that of the .out files (None: fixed width). Returns the path of
+    report.html.
     """
     joiner = partial(join, directory)
     inputs = _copy_inputs(directory, (receptor, ligand, restraints, selection))
@@ -323,7 +338,7 @@ def generate_report(
 
     # Accessible complexes, up to the first N without any; the percentages
     # from the counts, as the fractions in the file have only 6 decimals.
-    rows = _read_rows(joiner('accessible_complexes.out'))
+    rows = _read_rows(joiner('accessible_complexes.out'), delimiter)
     total = int(rows[0][3])
     complexes = []
     for row in rows:
@@ -379,11 +394,11 @@ def generate_report(
             complexes[::-1],
         )
     ]
-    violations = [
-        row
-        for row in _read_rows(joiner('violations.out'))[1:]
-        if any(float(x) for x in row[1:])
-    ]
+    violations = _read_rows(joiner('violations.out'), delimiter)
+    if not delimiter:
+        # The first row numbers the restraints.
+        violations = violations[1:]
+    violations = [r for r in violations if any(float(x) for x in r[1:])]
     tables.append(
         _table(
             'Fraction of complexes violating each restraint',
@@ -394,7 +409,7 @@ def generate_report(
     zscores = [
         [row[0], label] + row[1:]
         for row, label in zip(
-            _read_rows(joiner('z-score.out')), labels, strict=True
+            _read_rows(joiner('z-score.out'), delimiter), labels, strict=True
         )
     ]
     tables.append(

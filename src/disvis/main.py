@@ -184,6 +184,19 @@ def parse_args():
     )
 
     p.add_argument(
+        '--delimiter',
+        dest='delimiter',
+        metavar='<str>',
+        # '\\t' as typed in a shell is a tab
+        type=lambda s: '\t' if s == '\\t' else s,
+        default=None,
+        help=(
+            "Delimiter of the columns in the .out files, e.g. ',' or '\\t', "
+            "with a header line. Default is fixed width."
+        ),
+    )
+
+    p.add_argument(
         '--no-report',
         dest='report',
         action='store_false',
@@ -635,14 +648,23 @@ def main():  # noqa: C901
                 f_accessible_complexes.name
             )
         )
-        header = (
-            '# consistent restraints | accessible complexes |'
-            + 'relative | cumulative accessible complexes | relative\n'
-        )
+        if args.delimiter:
+            header = (
+                'consistent_restraints accessible_complexes relative '
+                'cumulative_accessible_complexes cumulative_relative\n'
+            ).replace(' ', args.delimiter)
+            line = '{0:d} {2:d} {3:.6f} {4:d} {5:.6f}\n'
+            line = line.replace(' ', args.delimiter)
+        else:
+            header = (
+                '# consistent restraints | accessible complexes |'
+                + 'relative | cumulative accessible complexes | relative\n'
+            )
+            line = '{0:3d} {2:{1}d} {3:8.6f} {4:{1}d} {5:8.6f}\n'
         f_accessible_complexes.write(header)
         for n, acc in enumerate(accessible_complexes):
             f_accessible_complexes.write(
-                '{0:3d} {2:{1}d} {3:8.6f} {4:{1}d} {5:8.6f}\n'.format(
+                line.format(
                     n,
                     digits,
                     int(acc),
@@ -659,25 +681,41 @@ def main():  # noqa: C901
         write('Writing violations to file: {:s}'.format(f_viol.name))
         num_violations = violations.sum(axis=1)
         nrestraints = num_violations.shape[0]
-        header = (
-            '# row represents the number of consistent restraints\n'
-            '# column represents how often that restraint is '
-            'violated\n'
-        )
-        f_viol.write(header)
-        header = ('   ' + '{:8d}' * nrestraints + '\n').format(
-            *range(1, nrestraints + 1)
-        )
-        f_viol.write(header)
+        # Rows: consistent restraints; columns: how often each restraint is
+        # violated.
+        if args.delimiter:
+            f_viol.write(
+                args.delimiter.join(
+                    ['consistent_restraints']
+                    + [str(i) for i in range(1, nrestraints + 1)]
+                )
+                + '\n'
+            )
+        else:
+            header = (
+                '# row represents the number of consistent restraints\n'
+                '# column represents how often that restraint is '
+                'violated\n'
+            )
+            f_viol.write(header)
+            header = ('   ' + '{:8d}' * nrestraints + '\n').format(
+                *range(1, nrestraints + 1)
+            )
+            f_viol.write(header)
         for n, line in enumerate(cum_violations):
-            f_viol.write('{:<2d} '.format(n + 1))
-            for word in line:
-                if num_violations[n] > 0:
-                    percentage_violated = word / cum_complexes[n + 1]
-                else:
-                    percentage_violated = 0
-                f_viol.write('{:8.4f}'.format(percentage_violated))
-            f_viol.write('\n')
+            if num_violations[n] > 0:
+                percentages = line / cum_complexes[n + 1]
+            else:
+                percentages = np.zeros_like(line)
+            if args.delimiter:
+                words = [str(n + 1)] + [
+                    '{:.4f}'.format(x) for x in percentages
+                ]
+                f_viol.write(args.delimiter.join(words) + '\n')
+            else:
+                f_viol.write('{:<2d} '.format(n + 1))
+                f_viol.write(''.join('{:8.4f}'.format(x) for x in percentages))
+                f_viol.write('\n')
 
     # Give user indication for false positives.
     # Determine minimum number of false positives.
@@ -720,9 +758,17 @@ def main():  # noqa: C901
 
     with open(joiner('z-score.out'), 'w', encoding='utf-8') as f:
         write('Writing z-score of each restraint to {:s}'.format(f.name))
+        line = '{:2d} {:6.3f} {:6.3f} {:6.3f}\n'
+        if args.delimiter:
+            f.write(
+                'restraint average_violation std_violation z_score\n'.replace(
+                    ' ', args.delimiter
+                )
+            )
+            line = '{:d} {:.3f} {:.3f} {:.3f}\n'.replace(' ', args.delimiter)
         for n in range(zscore_violations.shape[0]):
             f.write(
-                '{:2d} {:6.3f} {:6.3f} {:6.3f}\n'.format(
+                line.format(
                     n + 1,
                     average_restraint_violation[n],
                     std_restraint_violation[n],
@@ -826,6 +872,7 @@ def main():  # noqa: C901
             args.restraints,
             vars(args),
             args.interaction_selection,
+            args.delimiter,
         )
         write('Writing report to: {:s}'.format(fname))
 

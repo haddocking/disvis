@@ -7,6 +7,9 @@
   contacted residues), with the input files copied to the output directory
   for download; turned off with `--no-report`. New dependency: molviewspec -
   Issue #46
+- New `--delimiter` option: `accessible_complexes.out`, `violations.out` and
+  `z-score.out` with comma- or tab-separated columns and a header line,
+  instead of fixed width - Issue #52
 
 ## 3.0.0
 
