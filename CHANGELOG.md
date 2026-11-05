@@ -1,5 +1,10 @@
 # Changelog
 
+## Latest changes
+
+- `import disvis` works when DisVis is not installed (e.g. extensions built in
+  place in a source checkout); the version is then `0+unknown` - Issue #51
+
 ## 3.0.0
 
 Changes compared with 2.3.0, the last Python 2 release.
