@@ -1,26 +1,38 @@
-2026-10-19 22:50:12,863 Reading fixed model from: 1wcm_A.pdb
-2026-10-19 22:50:12,882 Reading scanning model from: 1wcm_E.pdb
-2026-10-19 22:50:12,886 Reading in rotations.
-2026-10-19 22:50:12,890 Requested rotational sampling density: 5.27
-2026-10-19 22:50:12,890 Real rotational sampling density: 5.27
-2026-10-19 22:50:12,890 Number of rotations: 53256
-2026-10-19 22:50:12,890 Reading in restraints from file: restraints.dat
-2026-10-19 22:50:12,891 Number of distance restraints: 8
-2026-10-19 22:50:12,891 Voxel spacing set to: 1.00
-2026-10-19 22:50:12,891 Interaction radius set to: 3.00
-2026-10-19 22:50:12,891 Minimum required interaction volume: 300.00
-2026-10-19 22:50:12,891 Maximum allowed volume of clashes: 200.00
-2026-10-19 22:50:12,891 Number of processors used: 8
-2026-10-19 22:50:12,891 Number of rotations per job: 6657
-2026-10-19 22:50:12,891 Creating jobs
-2026-10-19 22:50:12,903 Starting jobs
-2026-10-19 22:50:13,683 Waiting for jobs to finish
-2026-10-19 23:37:40,556 Searching done. Combining results
-2026-10-19 23:37:40,582 Cleaning
-2026-10-19 23:37:40,584 Writing accessible interaction space to: /Users/abonvin/haddock_git/disvis/test-cases/RNA-polymerase-II/A-E/example-results/cpu/fine/accessible_interaction_space.mrc
-2026-10-19 23:37:40,610 Writing number of accessible complexes to: /Users/abonvin/haddock_git/disvis/test-cases/RNA-polymerase-II/A-E/example-results/cpu/fine/accessible_complexes.out
-2026-10-19 23:37:40,610 Writing violations to file: /Users/abonvin/haddock_git/disvis/test-cases/RNA-polymerase-II/A-E/example-results/cpu/fine/violations.out
-2026-10-19 23:37:40,610 Not all restraints are consistent. Number of false-positive restraints present is at least: 1
-2026-10-19 23:37:40,611 Possible false-positive restraints (z-score > 1.0): 7 8
-2026-10-19 23:37:40,611 Writing z-score of each restraint to /Users/abonvin/haddock_git/disvis/test-cases/RNA-polymerase-II/A-E/example-results/cpu/fine/z-score.out
-2026-10-19 23:37:40,611 Total time passed: 47m 28s
+======================================================================
+DisVis 3.0.0
+Visualizing and quantifying the accessible interaction space of
+distance-restrained biomolecular complexes
+https://github.com/haddocking/disvis
+======================================================================
+2026-11-06 16:01:28,043 Reading fixed model from: 1wcm_A.pdb
+2026-11-06 16:01:28,062 Reading scanning model from: 1wcm_E.pdb
+2026-11-06 16:01:28,066 Reading in rotations.
+2026-11-06 16:01:28,069 Requested rotational sampling density: 5.27
+2026-11-06 16:01:28,069 Real rotational sampling density: 5.27
+2026-11-06 16:01:28,069 Number of rotations: 53256
+2026-11-06 16:01:28,070 Reading in restraints from file: restraints.dat
+2026-11-06 16:01:28,071 Number of distance restraints: 8
+2026-11-06 16:01:28,071 Voxel spacing set to: 1.00
+2026-11-06 16:01:28,071 Interaction radius set to: 3.00
+2026-11-06 16:01:28,071 Minimum required interaction volume: 300.00
+2026-11-06 16:01:28,071 Maximum allowed volume of clashes: 200.00
+2026-11-06 16:01:28,071 Number of processors used: 8
+2026-11-06 16:01:28,071 Number of rotations per job: 6657
+2026-11-06 16:01:28,071 Creating jobs
+2026-11-06 16:01:28,089 Starting jobs
+2026-11-06 16:01:29,612 Waiting for jobs to finish
+2026-11-06 16:30:18,968 Searching done. Combining results
+2026-11-06 16:30:18,996 Cleaning
+2026-11-06 16:30:18,999 Writing accessible interaction space to: /Users/abonvin/haddock_git/disvis/test-cases/RNA-polymerase-II/A-E/example-results/cpu/fine/accessible_interaction_space.mrc
+2026-11-06 16:30:19,024 Writing number of accessible complexes to: /Users/abonvin/haddock_git/disvis/test-cases/RNA-polymerase-II/A-E/example-results/cpu/fine/accessible_complexes.out
+2026-11-06 16:30:19,027 Writing violations to file: /Users/abonvin/haddock_git/disvis/test-cases/RNA-polymerase-II/A-E/example-results/cpu/fine/violations.out
+2026-11-06 16:30:19,027 Not all restraints are consistent. Number of false-positive restraints present is at least: 1
+2026-11-06 16:30:19,027 Possible false-positive restraints (z-score > 1.0): 7 8
+2026-11-06 16:30:19,027 Writing z-score of each restraint to /Users/abonvin/haddock_git/disvis/test-cases/RNA-polymerase-II/A-E/example-results/cpu/fine/z-score.out
+2026-11-06 16:30:19,162 Writing report to: /Users/abonvin/haddock_git/disvis/test-cases/RNA-polymerase-II/A-E/example-results/cpu/fine/report.html
+2026-11-06 16:30:19,162 Total time passed: 28m 51s
+======================================================================
+To view report.html, serve the output directory:
+  python -m http.server -d /Users/abonvin/haddock_git/disvis/test-cases/RNA-polymerase-II/A-E/example-results/cpu/fine
+and open http://localhost:8000/report.html
+======================================================================

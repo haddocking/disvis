@@ -2,6 +2,15 @@
 
 ## Latest changes
 
+- Added report.html generation to visualise results (Mol* view of the
+  accessible interaction space and occupancy grids; with `-is`, the most
+  contacted residues), with the input files copied to the output directory
+  for download; turned off with `--no-report`. New dependency: molviewspec -
+  Issue #46
+- `disvis.log` starts with a header giving the DisVis version and ends with
+  how to view report.html (`python -m http.server`) - Issue #46
+- `import disvis` works when DisVis is not installed (e.g. extensions built in
+  place in a source checkout); the version is then `0+unknown` - Issue #51
 - The output directory (`-d`) is kept as given, so the terminal, `disvis.log`
   and `args.json` show relative paths such as `myrun/z-score.out` - Issue #53
 

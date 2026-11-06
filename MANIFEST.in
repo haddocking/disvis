@@ -3,4 +3,4 @@ include src/disvis/libdisvis.pyx
 include src/disvis/_extensions.c
 include CHANGELOG.md INSTALLATION.md
 # The unit tests, with their data
-recursive-include tests *.py *.pdb *.dat *.res
+recursive-include tests *.py *.pdb *.dat *.res *.out *.txt

@@ -1,19 +1,32 @@
-2026-10-20 19:39:21,534 Reading fixed model from: O14250.pdb
-2026-10-20 19:39:21,538 Reading scanning model from: Q9UT97.pdb
-2026-10-20 19:39:21,542 Reading in rotations.
-2026-10-20 19:39:21,544 Requested rotational sampling density: 9.72
-2026-10-20 19:39:21,544 Real rotational sampling density: 9.72
-2026-10-20 19:39:21,544 Number of rotations: 7416
-2026-10-20 19:39:21,544 Reading in restraints from file: restraints.dat
-2026-10-20 19:39:21,545 Number of distance restraints: 7
-2026-10-20 19:39:21,545 Voxel spacing set to: 2.00
-2026-10-20 19:39:21,545 Interaction radius set to: 3.00
-2026-10-20 19:39:21,545 Minimum required interaction volume: 300.00
-2026-10-20 19:39:21,545 Maximum allowed volume of clashes: 200.00
-2026-10-20 19:39:21,545 Using GPU accelerated search.
-2026-10-20 19:39:25,197 Writing accessible interaction space to: /trinity/login/abonvin/haddock_git/disvis/linux-tests/gpu-ref-gpu002/pre5_coarse/accessible_interaction_space.mrc
-2026-10-20 19:39:25,203 Writing number of accessible complexes to: /trinity/login/abonvin/haddock_git/disvis/linux-tests/gpu-ref-gpu002/pre5_coarse/accessible_complexes.out
-2026-10-20 19:39:25,204 Writing violations to file: /trinity/login/abonvin/haddock_git/disvis/linux-tests/gpu-ref-gpu002/pre5_coarse/violations.out
-2026-10-20 19:39:25,204 Possible false-positive restraints (z-score > 1.0): 1 2
-2026-10-20 19:39:25,204 Writing z-score of each restraint to /trinity/login/abonvin/haddock_git/disvis/linux-tests/gpu-ref-gpu002/pre5_coarse/z-score.out
-2026-10-20 19:39:25,205 Total time passed: 0m  4s
+======================================================================
+DisVis 3.0.0
+Visualizing and quantifying the accessible interaction space of
+distance-restrained biomolecular complexes
+https://github.com/haddocking/disvis
+======================================================================
+2026-11-06 15:52:25,434 OpenCL device: NVIDIA RTX 6000 Ada Generation
+2026-11-06 15:52:25,434 Reading fixed model from: O14250.pdb
+2026-11-06 15:52:25,439 Reading scanning model from: Q9UT97.pdb
+2026-11-06 15:52:25,443 Reading in rotations.
+2026-11-06 15:52:25,451 Requested rotational sampling density: 9.72
+2026-11-06 15:52:25,451 Real rotational sampling density: 9.72
+2026-11-06 15:52:25,451 Number of rotations: 7416
+2026-11-06 15:52:25,451 Reading in restraints from file: restraints.dat
+2026-11-06 15:52:25,453 Number of distance restraints: 7
+2026-11-06 15:52:25,453 Voxel spacing set to: 2.00
+2026-11-06 15:52:25,453 Interaction radius set to: 3.00
+2026-11-06 15:52:25,453 Minimum required interaction volume: 300.00
+2026-11-06 15:52:25,453 Maximum allowed volume of clashes: 200.00
+2026-11-06 15:52:25,453 Using GPU accelerated search.
+2026-11-06 15:52:28,247 Writing accessible interaction space to: /trinity/login/abonvin/haddock_git/disvis-46-report/test-cases/PRE5-PUP2-complex/example-results/gpu/coarse/accessible_interaction_space.mrc
+2026-11-06 15:52:28,251 Writing number of accessible complexes to: /trinity/login/abonvin/haddock_git/disvis-46-report/test-cases/PRE5-PUP2-complex/example-results/gpu/coarse/accessible_complexes.out
+2026-11-06 15:52:28,252 Writing violations to file: /trinity/login/abonvin/haddock_git/disvis-46-report/test-cases/PRE5-PUP2-complex/example-results/gpu/coarse/violations.out
+2026-11-06 15:52:28,252 Possible false-positive restraints (z-score > 1.0): 1 2
+2026-11-06 15:52:28,253 Writing z-score of each restraint to /trinity/login/abonvin/haddock_git/disvis-46-report/test-cases/PRE5-PUP2-complex/example-results/gpu/coarse/z-score.out
+2026-11-06 15:52:28,590 Writing report to: /trinity/login/abonvin/haddock_git/disvis-46-report/test-cases/PRE5-PUP2-complex/example-results/gpu/coarse/report.html
+2026-11-06 15:52:28,590 Total time passed: 0m  3s
+======================================================================
+To view report.html, serve the output directory:
+  python -m http.server -d /trinity/login/abonvin/haddock_git/disvis-46-report/test-cases/PRE5-PUP2-complex/example-results/gpu/coarse
+and open http://localhost:8000/report.html
+======================================================================

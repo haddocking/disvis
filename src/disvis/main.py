@@ -8,6 +8,7 @@ from time import time
 import multiprocessing as mp
 from argparse import ArgumentParser
 import logging
+import shlex
 
 import numpy as np
 
@@ -178,6 +179,16 @@ def parse_args():
             "a volume where each grid point represents the "
             "normalized probability of that spot being "
             "occupied by the ligand."
+        ),
+    )
+
+    p.add_argument(
+        '--no-report',
+        dest='report',
+        action='store_false',
+        help=(
+            "Do not write report.html and state.mvsj (the results with a "
+            "Mol* view of the accessible interaction space)."
         ),
     )
 
@@ -468,10 +479,19 @@ def main():  # noqa: C901
     joiner = Joiner(args.directory)
     dump_args(args, joiner('args.json'))
 
+    with open(joiner('disvis.log'), 'w', encoding='utf-8') as f:
+        f.write(
+            '{0:s}\nDisVis {1:s}\n'
+            'Visualizing and quantifying the accessible interaction space of\n'
+            'distance-restrained biomolecular complexes\n'
+            'https://github.com/haddocking/disvis\n{0:s}\n'.format(
+                '=' * 70, __version__
+            )
+        )
     # force: an imported library may already have configured the root logger.
     logging.basicConfig(
         filename=joiner('disvis.log'),
-        filemode='w',
+        filemode='a',
         level=logging.INFO,
         format='%(asctime)s %(message)s',
         force=True,
@@ -795,10 +815,41 @@ def main():  # noqa: C901
                     f.write(' {:6.3f}'.format(relative_interactions))
                 f.write('\n')
 
+    if args.report:
+        from disvis.report import generate_report
+
+        fname = generate_report(
+            args.directory,
+            args.receptor,
+            args.ligand,
+            args.restraints,
+            vars(args),
+            args.interaction_selection,
+        )
+        write('Writing report to: {:s}'.format(fname))
+
     # time indication
     seconds = int(round(time() - time0))
     m, s = divmod(seconds, 60)
     write('Total time passed: {:d}m {:2d}s'.format(m, s))
+    # Close disvis.log, so the footer below is its only writer (and Windows
+    # can remove the file, e.g. in the tests).
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+        handler.close()
+
+    if args.report:
+        # Browsers do not let a report opened from disk load its files.
+        footer = (
+            '{0:s}\nTo view report.html, serve the output directory:\n'
+            '  python -m http.server -d {1:s}\n'
+            'and open http://localhost:8000/report.html\n{0:s}'.format(
+                '=' * 70, shlex.quote(args.directory)
+            )
+        )
+        print(footer)
+        with open(joiner('disvis.log'), 'a', encoding='utf-8') as f:
+            f.write(footer + '\n')
 
 
 if __name__ == '__main__':

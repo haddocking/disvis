@@ -1,0 +1,18 @@
+{
+    "angle": 9.72,
+    "directory": "/Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/coarse-is-oa",
+    "gpu": false,
+    "interaction_radius": 3.0,
+    "interaction_restraints_cutoff": null,
+    "interaction_selection": "selection.res",
+    "ligand": "Q9UT97.pdb",
+    "max_clash": 200,
+    "min_interaction": 300,
+    "nproc": 8,
+    "occupancy_analysis": true,
+    "progress": false,
+    "receptor": "O14250.pdb",
+    "report": true,
+    "restraints": "restraints.dat",
+    "voxelspacing": 2.0
+}

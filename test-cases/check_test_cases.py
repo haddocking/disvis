@@ -69,7 +69,7 @@ def run_case(case, grid, args, outdir):
     subprocess.run(command, cwd=casedir, check=True, stdout=subprocess.DEVNULL)
 
     with open(os.path.join(outdir, 'disvis.log'), encoding='utf-8') as f:
-        last = f.readlines()[-1][24:].strip()
+        last = [line for line in f if 'Total time' in line][-1][24:].strip()
     print('{:s} {:s}: {:s}'.format(case, grid, last))
     reference = os.path.join(
         casedir, 'example-results', 'gpu' if args.gpu else 'cpu', grid
