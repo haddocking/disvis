@@ -2,7 +2,7 @@
 
 from os import makedirs, remove
 from queue import Empty
-from os.path import join, abspath
+from os.path import join
 from sys import stdout, exit
 from time import time
 import multiprocessing as mp
@@ -105,7 +105,6 @@ def parse_args():
         '--directory',
         dest='directory',
         metavar='<dir>',
-        type=abspath,
         default='.',
         help='Directory where results are written to. '
         'Default is current directory.',
