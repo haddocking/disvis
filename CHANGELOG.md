@@ -9,6 +9,8 @@
   Issue #46
 - `disvis.log` starts with a header giving the DisVis version and ends with
   how to view report.html (`python -m http.server`) - Issue #46
+- `import disvis` works when DisVis is not installed (e.g. extensions built in
+  place in a source checkout); the version is then `0+unknown` - Issue #51
 
 ## 3.0.0
 
