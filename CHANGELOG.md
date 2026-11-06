@@ -13,6 +13,9 @@
   place in a source checkout); the version is then `0+unknown` - Issue #51
 - The output directory (`-d`) is kept as given, so the terminal, `disvis.log`
   and `args.json` show relative paths such as `myrun/z-score.out` - Issue #53
+- New `--delimiter` option: `accessible_complexes.out`, `violations.out` and
+  `z-score.out` with comma- or tab-separated columns and a header line,
+  instead of fixed width - Issue #52
 
 ## 3.0.0
 

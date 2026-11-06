@@ -64,6 +64,33 @@ class TestReport(TestCase):
             self.assertIn('A27(CA)-A18(CA)', html)
             self.assertIn('Most contacted ligand residues', html)
 
+    def test_delimiter(self):
+        # The same run with --delimiter , gives the same report.
+        html = []
+        for delimiter in (None, ','):
+            with tempfile.TemporaryDirectory() as directory:
+                shutil.copytree(
+                    join(DATA, 'output'), directory, dirs_exist_ok=True
+                )
+                if delimiter:
+                    shutil.copytree(
+                        join(DATA, 'output-csv'),
+                        directory,
+                        dirs_exist_ok=True,
+                    )
+                fname = generate_report(
+                    directory,
+                    *[
+                        join(DATA, f)
+                        for f in ('O14250.pdb', 'Q9UT97.pdb', 'restraints.dat')
+                    ],
+                    {},
+                    delimiter=delimiter,
+                )
+                with open(fname, encoding='utf-8') as f:
+                    html.append(f.read())
+        self.assertEqual(html[0], html[1])
+
 
 if __name__ == '__main__':
     main()
