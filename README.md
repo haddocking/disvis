@@ -5,8 +5,11 @@
 [![ci](https://github.com/haddocking/disvis/actions/workflows/ci.yml/badge.svg)](https://github.com/haddocking/disvis/actions/workflows/ci.yml)
 [![SBGrid Badge](https://img.shields.io/badge/DisVis-blue?label=SBGrid&labelColor=%3D)](https://sbgrid.org/software/titles/disvis)
 [![bio.tools](https://img.shields.io/badge/bio.tools-disvis-orange)](https://bio.tools/disvis)
-[![AI Declaration](https://img.shields.io/badge/AI_Declaration-aidecl.yaml-blue)](aidecl.yaml)
+[![AI Declaration](https://img.shields.io/badge/AI_Declaration-aidecl.yaml-blue)](https://github.com/haddocking/disvis/blob/main/aidecl.yaml)
 
+Documentation: <https://www.bonvinlab.org/disvis>
+
+<!-- --8<-- [start:about] -->
 ## About DisVis
 
 **DisVis** is a Python package and command line tool to visualize and quantify 
@@ -27,8 +30,10 @@ The Python packages DisVis needs are listed in `pyproject.toml` and installed
 automatically by *pip*. GPU acceleration also needs an OpenCL 1.2+ enabled GPU
 and the optional `gpu` packages (see INSTALLATION.md).
 
+<!-- --8<-- [end:about] -->
 
 ## Installation
+<!-- --8<-- [start:installation] -->
 
 **DisVis** is best installed in a virtual environment. Open a terminal and type
 
@@ -88,7 +93,9 @@ distribution, such as [Anaconda](https://www.anaconda.com/download), and the
 [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/).
 Follow the general instructions above to install **DisVis**.
 
+<!-- --8<-- [end:installation] -->
 
+<!-- --8<-- [start:usage] -->
 ## Usage
 
 The general pattern to invoke *disvis* is
@@ -250,7 +257,9 @@ where *N* is one of the column numbers of the interaction file. This writes
 *receptor_interactions.pdb*, which can be colored on B-factor, e.g. with
 `spectrum b, blue_red` in PyMOL or `color bfactor` in ChimeraX.
 
+<!-- --8<-- [end:usage] -->
 
+<!-- --8<-- [start:end] -->
 Licensing
 ---------
 
@@ -297,6 +306,9 @@ requests.
 ## AI Declaration
 
 Large language models (LLM) were used in this repository since
-[v3.0.0](CHANGELOG.md), for the port to Python 3 and the later changes. The
-changes were always reviewed by a human before being merged. See
-[aidecl.yaml](aidecl.yaml) for machine-readable details of the LLM usage.
+[v3.0.0](https://github.com/haddocking/disvis/blob/main/CHANGELOG.md), for the
+port to Python 3 and the later changes. The changes were always reviewed by a
+human before being merged. See
+[aidecl.yaml](https://github.com/haddocking/disvis/blob/main/aidecl.yaml) for
+machine-readable details of the LLM usage.
+<!-- --8<-- [end:end] -->

@@ -1,4 +1,5 @@
 # DisVis test cases
+<!-- --8<-- [start:cases] -->
 
 Two test cases, each with reference results and timings on different hardware.
 
@@ -67,8 +68,10 @@ Each directory also has the report of its results (`report.html`, with
 `state.mvsj` and a copy of the fixed chain), made from these files with
 `disvis.report.generate_report`; view it with `python -m http.server -d <dir>`
 and http://localhost:8000/report.html.
+<!-- --8<-- [end:cases] -->
 
 ## Benchmarks
+<!-- --8<-- [start:benchmarks] -->
 
 Run times (as reported at the end of `disvis.log`) with DisVis 3.0.0 and
 Python 3.14. CPU runs use pyFFTW unless marked NumPy FFT. GPU runs use VkFFT
@@ -111,3 +114,4 @@ Notes:
   processes. The EPYC 7451 cores are about 2.7× slower than the M2 Pro
   performance cores.
 * The 2015 results predate the 2017 fix of the ligand van der Waals radii.
+<!-- --8<-- [end:benchmarks] -->

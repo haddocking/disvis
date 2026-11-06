@@ -16,6 +16,9 @@
 - New `--delimiter` option: `accessible_complexes.out`, `violations.out` and
   `z-score.out` with comma- or tab-separated columns and a header line,
   instead of fixed width - Issue #52
+- Documentation site, <https://www.bonvinlab.org/disvis> (`docs/`, MkDocs),
+  with the web service, the CLI reference, the example reports and a
+  JupyterLite notebook that runs DisVis in the browser - Issue #50
 
 ## 3.0.0
 

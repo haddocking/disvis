@@ -53,8 +53,9 @@ The package is in `src/disvis/`:
   (restraint spaces, violations, interactions, grid rotation).
 
 Outside the package: `tests/` (unit tests), `scripts/` (analysis scripts for
-DisVis output) and `test-cases/` (test cases with reference results, see
-`test-cases/README.md`).
+DisVis output), `test-cases/` (test cases with reference results, see
+`test-cases/README.md`) and `docs/` (the documentation site, see
+[Documentation](#documentation)).
 
 All grids are indexed as `[z, y, x]`; coordinates are `(x, y, z)`.
 
@@ -115,6 +116,27 @@ with identical z-scores.
 If a change intentionally alters the output, explain why in the pull request,
 and update the reference results and `test-cases/README.md`.
 
+## Documentation
+
+The documentation site, <https://www.bonvinlab.org/disvis>, is built with
+[MkDocs Material](https://squidfunk.github.io/mkdocs-material/) (`mkdocs.yml`,
+`docs/`) and deployed to GitHub Pages by `.github/workflows/pages.yml` on every
+push to `main`. Its pages include sections of `README.md`, `INSTALLATION.md`,
+`CONTRIBUTING.md` and `test-cases/README.md`, marked with
+`<!-- --8<-- [start:name] -->` and `<!-- --8<-- [end:name] -->`: edit these
+files, not a copy in `docs/`. The CLI reference is generated from the `disvis`
+arguments, and the example reports are those of the CPU reference results.
+
+The "Try it in your browser" page runs `docs/lite/content/disvis_demo.ipynb` in
+JupyterLite, with a WebAssembly wheel of DisVis built from the source. To build
+and view the site (the wheel is built from the last commit):
+
+```bash
+pip install -e '.[docs]'
+make -C docs          # wheel, MkDocs and JupyterLite, into site/
+make -C docs serve    # http://localhost:8000
+```
+
 ## Pull requests
 
 Work on a branch and open a pull request into `main`; fill in the pull-request
@@ -141,7 +163,7 @@ Checklist:
 
 - Tests added for new code.
 - Documentation added: docstrings, and `README.md` / `INSTALLATION.md` when
-  the usage or installation changes.
+  the usage or installation changes (the documentation site includes them).
 - `CHANGELOG.md` updated.
 - Reference results unchanged, or updated with an explanation.
 - No new dependencies without discussion.

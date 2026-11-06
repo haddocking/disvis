@@ -34,6 +34,20 @@ dependencies = [
 # GPU acceleration; pyvkfft is built from source (see INSTALLATION.md).
 gpu = ["pyopencl", "mako", "pyvkfft"]
 dev = ["ruff", "cython-lint"]
+# Documentation site (docs/, built with make -C docs)
+docs = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.14",
+    "mkdocs-rich-argparse>=0.2.0",
+    # JupyterLite demo (docs/lite/), with the WebAssembly wheel of DisVis,
+    # built with the cibuildwheel of the wasm job in pypi-publish.yml. The
+    # Pyodide of the wheel (cibuildwheel) must match that of the JupyterLite
+    # kernel (both 2026_0): update them together.
+    "jupyterlite-core>=0.6.4",
+    "jupyterlite-pyodide-kernel==0.8.7",
+    "jupyter-server>=2.0.0",
+    "cibuildwheel==4.3.5",
+]
 
 [project.urls]
 homepage = "https://github.com/haddocking/disvis"

@@ -11,3 +11,11 @@ disvis.egg-info/
 *.html
 *.mrc
 .venv/
+
+# Documentation site (make -C docs)
+site/
+docs/lite/pypi/
+docs/wheel-src/
+docs/.jupyterlite.doit.db
+docs/lite/.cache/
+.ipynb_checkpoints/
