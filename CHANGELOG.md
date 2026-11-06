@@ -7,6 +7,8 @@
   contacted residues), with the input files copied to the output directory
   for download; turned off with `--no-report`. New dependency: molviewspec -
   Issue #46
+- `disvis.log` starts with a header giving the DisVis version and ends with
+  how to view report.html (`python -m http.server`) - Issue #46
 
 ## 3.0.0
 
