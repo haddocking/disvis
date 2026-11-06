@@ -23,6 +23,8 @@ improve it, do not assume it is already optimal.
   reference results, pull requests and releases. Follow it.
 - `test-cases/README.md`: the test cases, reference results and benchmarks.
 - `CHANGELOG.md`: update it with every user-visible change.
+- `docs/`, `mkdocs.yml`: the documentation site; its pages
+  include sections of the Markdown files above (--8<-- markers).
 
 ## Rules for agents
 
