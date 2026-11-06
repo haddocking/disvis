@@ -1,0 +1,42 @@
+======================================================================
+DisVis 3.0.0
+Visualizing and quantifying the accessible interaction space of
+distance-restrained biomolecular complexes
+https://github.com/haddocking/disvis
+======================================================================
+2026-11-06 15:50:47,011 Reading fixed model from: O14250.pdb
+2026-11-06 15:50:47,015 Reading scanning model from: Q9UT97.pdb
+2026-11-06 15:50:47,019 Reading in rotations.
+2026-11-06 15:50:47,020 Requested rotational sampling density: 9.72
+2026-11-06 15:50:47,020 Real rotational sampling density: 9.72
+2026-11-06 15:50:47,020 Number of rotations: 7416
+2026-11-06 15:50:47,020 Reading in restraints from file: restraints.dat
+2026-11-06 15:50:47,020 Number of distance restraints: 7
+2026-11-06 15:50:47,021 Reading in interaction selection from file: selection.res
+2026-11-06 15:50:47,021 Number of receptor residues: 88
+2026-11-06 15:50:47,021 Number of ligand residues: 94
+2026-11-06 15:50:47,021 Voxel spacing set to: 2.00
+2026-11-06 15:50:47,021 Interaction radius set to: 3.00
+2026-11-06 15:50:47,021 Minimum required interaction volume: 300.00
+2026-11-06 15:50:47,021 Maximum allowed volume of clashes: 200.00
+2026-11-06 15:50:47,021 Performing occupancy analysis
+2026-11-06 15:50:47,021 Number of processors used: 8
+2026-11-06 15:50:47,021 Number of rotations per job: 927
+2026-11-06 15:50:47,021 Creating jobs
+2026-11-06 15:50:47,038 Starting jobs
+2026-11-06 15:50:48,044 Waiting for jobs to finish
+2026-11-06 15:51:12,957 Searching done. Combining results
+2026-11-06 15:51:12,967 Cleaning
+2026-11-06 15:51:12,970 Writing accessible interaction space to: /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/coarse-is-oa/accessible_interaction_space.mrc
+2026-11-06 15:51:12,972 Writing number of accessible complexes to: /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/coarse-is-oa/accessible_complexes.out
+2026-11-06 15:51:12,972 Writing violations to file: /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/coarse-is-oa/violations.out
+2026-11-06 15:51:12,972 Possible false-positive restraints (z-score > 1.0): 1 2
+2026-11-06 15:51:12,972 Writing z-score of each restraint to /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/coarse-is-oa/z-score.out
+2026-11-06 15:51:12,977 Writing contacted receptor residue interactions to files.
+2026-11-06 15:51:13,072 Writing report to: /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/coarse-is-oa/report.html
+2026-11-06 15:51:13,072 Total time passed: 0m 26s
+======================================================================
+To view report.html, serve the output directory:
+  python -m http.server -d /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/coarse-is-oa
+and open http://localhost:8000/report.html
+======================================================================
