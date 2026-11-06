@@ -183,6 +183,10 @@ ones. A simple example for the selection-file
 This will select residue numbers 1, 2, 3, and 4 for the receptor, and 101, 302,
 and 888 for the ligand.
 
+*disvis* also writes an HTML report of the results, with a Mol* view of the
+accessible interaction space (and of the occupancy grids with `-oa`); see
+[Viewing the report](#viewing-the-report).
+
 
 ### Output
 
@@ -203,7 +207,8 @@ Standard *disvis* outputs 5 files:
   the score, the more likely the restraint is a false-positive. Z-scores above
   1.0 are explicitly mentioned in the output.
 * *disvis.log*: a log file showing all the parameters used, together with date
-  and time indications.
+  and time indications. It starts with the DisVis version and ends with how to
+  view the report.
 
 If an occupancy and/or interaction analysis was requested, *disvis* also
 outputs the following files:
@@ -215,6 +220,24 @@ outputs the following files:
   number of interactions per complex each selected residue made, for both the
   receptor and ligand molecule. Each column denotes the minimal number of
   consistent restraints of each complex for which interactions were counted.
+
+*disvis* also writes *report.html* and *state.mvsj* (the MolViewSpec state of
+the Mol* view), and copies the input files into the output directory, so the
+report can show and link them (`--no-report` turns this off).
+
+#### Viewing the report
+
+The report loads the files of the output directory, which browsers do not allow
+for a page opened from disk. Serve the output directory with Python instead
+
+```bash
+python -m http.server -d <directory>
+```
+
+and open <http://localhost:8000/report.html> in a web browser. Stop the server
+with `Ctrl-C`. If port 8000 is in use, choose another one, e.g.
+`python -m http.server 8080 -d <directory>` and
+<http://localhost:8080/report.html>.
 
 To visualize the most contacted residues, write the average number of
 interactions into the B-factor column of the receptor or ligand PDB file

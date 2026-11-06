@@ -1,25 +1,37 @@
-2026-10-19 20:50:27,903 Reading fixed model from: O14250.pdb
-2026-10-19 20:50:27,909 Reading scanning model from: Q9UT97.pdb
-2026-10-19 20:50:27,913 Reading in rotations.
-2026-10-19 20:50:27,917 Requested rotational sampling density: 5.27
-2026-10-19 20:50:27,917 Real rotational sampling density: 5.27
-2026-10-19 20:50:27,917 Number of rotations: 53256
-2026-10-19 20:50:27,917 Reading in restraints from file: restraints.dat
-2026-10-19 20:50:27,918 Number of distance restraints: 7
-2026-10-19 20:50:27,918 Voxel spacing set to: 1.00
-2026-10-19 20:50:27,918 Interaction radius set to: 3.00
-2026-10-19 20:50:27,918 Minimum required interaction volume: 300.00
-2026-10-19 20:50:27,918 Maximum allowed volume of clashes: 200.00
-2026-10-19 20:50:27,918 Number of processors used: 8
-2026-10-19 20:50:27,918 Number of rotations per job: 6657
-2026-10-19 20:50:27,918 Creating jobs
-2026-10-19 20:50:27,929 Starting jobs
-2026-10-19 20:50:28,819 Waiting for jobs to finish
-2026-10-19 21:01:53,354 Searching done. Combining results
-2026-10-19 21:01:53,365 Cleaning
-2026-10-19 21:01:53,366 Writing accessible interaction space to: /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/fine/accessible_interaction_space.mrc
-2026-10-19 21:01:53,375 Writing number of accessible complexes to: /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/fine/accessible_complexes.out
-2026-10-19 21:01:53,375 Writing violations to file: /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/fine/violations.out
-2026-10-19 21:01:53,375 Possible false-positive restraints (z-score > 1.0): 1 2
-2026-10-19 21:01:53,376 Writing z-score of each restraint to /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/fine/z-score.out
-2026-10-19 21:01:53,376 Total time passed: 11m 25s
+======================================================================
+DisVis 3.0.0
+Visualizing and quantifying the accessible interaction space of
+distance-restrained biomolecular complexes
+https://github.com/haddocking/disvis
+======================================================================
+2026-11-06 15:51:23,454 Reading fixed model from: O14250.pdb
+2026-11-06 15:51:23,458 Reading scanning model from: Q9UT97.pdb
+2026-11-06 15:51:23,461 Reading in rotations.
+2026-11-06 15:51:23,465 Requested rotational sampling density: 5.27
+2026-11-06 15:51:23,465 Real rotational sampling density: 5.27
+2026-11-06 15:51:23,465 Number of rotations: 53256
+2026-11-06 15:51:23,465 Reading in restraints from file: restraints.dat
+2026-11-06 15:51:23,465 Number of distance restraints: 7
+2026-11-06 15:51:23,465 Voxel spacing set to: 1.00
+2026-11-06 15:51:23,465 Interaction radius set to: 3.00
+2026-11-06 15:51:23,465 Minimum required interaction volume: 300.00
+2026-11-06 15:51:23,466 Maximum allowed volume of clashes: 200.00
+2026-11-06 15:51:23,466 Number of processors used: 8
+2026-11-06 15:51:23,466 Number of rotations per job: 6657
+2026-11-06 15:51:23,466 Creating jobs
+2026-11-06 15:51:23,489 Starting jobs
+2026-11-06 15:51:24,890 Waiting for jobs to finish
+2026-11-06 16:01:27,672 Searching done. Combining results
+2026-11-06 16:01:27,682 Cleaning
+2026-11-06 16:01:27,683 Writing accessible interaction space to: /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/fine/accessible_interaction_space.mrc
+2026-11-06 16:01:27,692 Writing number of accessible complexes to: /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/fine/accessible_complexes.out
+2026-11-06 16:01:27,692 Writing violations to file: /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/fine/violations.out
+2026-11-06 16:01:27,693 Possible false-positive restraints (z-score > 1.0): 1 2
+2026-11-06 16:01:27,693 Writing z-score of each restraint to /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/fine/z-score.out
+2026-11-06 16:01:27,840 Writing report to: /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/fine/report.html
+2026-11-06 16:01:27,840 Total time passed: 10m  4s
+======================================================================
+To view report.html, serve the output directory:
+  python -m http.server -d /Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/fine
+and open http://localhost:8000/report.html
+======================================================================

@@ -1,0 +1,3612 @@
+{
+  "kind": "multiple",
+  "metadata": {
+    "description": "DisVis results",
+    "timestamp": "2026-11-03T10:57:04.172610+00:00",
+    "version": "1.8"
+  },
+  "snapshots": [
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "O14250.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            },
+                            "children": [
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "color": "white"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 1
+                                  },
+                                  "color": "#f9eced"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 2
+                                  },
+                                  "color": "#f4dfe2"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 3
+                                  },
+                                  "color": "#ebc3c8"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 4
+                                  },
+                                  "color": "#eac0c6"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 5
+                                  },
+                                  "color": "#e9bec4"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 8
+                                  },
+                                  "color": "#c44d5b"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 9
+                                  },
+                                  "color": "#d0727e"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 13
+                                  },
+                                  "color": "#fbf4f5"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 15
+                                  },
+                                  "color": "#fefcfd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 16
+                                  },
+                                  "color": "#fffeff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 17
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 18
+                                  },
+                                  "color": "#fefcfc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 24
+                                  },
+                                  "color": "#d47f8a"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 27
+                                  },
+                                  "color": "#dc969e"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 30
+                                  },
+                                  "color": "#e8babf"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 31
+                                  },
+                                  "color": "#cf6e7a"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 51
+                                  },
+                                  "color": "#edcace"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 53
+                                  },
+                                  "color": "#d6858f"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 54
+                                  },
+                                  "color": "#de9ca4"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 55
+                                  },
+                                  "color": "#eac0c5"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 56
+                                  },
+                                  "color": "#db929b"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 58
+                                  },
+                                  "color": "#e5b0b7"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 60
+                                  },
+                                  "color": "#eac0c5"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 61
+                                  },
+                                  "color": "#f6e4e6"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 65
+                                  },
+                                  "color": "#fcf6f7"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 68
+                                  },
+                                  "color": "#fefbfc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 77
+                                  },
+                                  "color": "#c24958"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 79
+                                  },
+                                  "color": "#bc3647"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 82
+                                  },
+                                  "color": "#e0a3ab"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 83
+                                  },
+                                  "color": "#db929b"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 86
+                                  },
+                                  "color": "#ecc5ca"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 90
+                                  },
+                                  "color": "#f4dfe1"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 93
+                                  },
+                                  "color": "#fbf2f3"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 94
+                                  },
+                                  "color": "#fbf4f5"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 96
+                                  },
+                                  "color": "#fefbfb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 97
+                                  },
+                                  "color": "#fcf5f6"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 98
+                                  },
+                                  "color": "#fdfafb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 99
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 100
+                                  },
+                                  "color": "#fefdfd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 101
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 107
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 110
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 114
+                                  },
+                                  "color": "#fefbfb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 117
+                                  },
+                                  "color": "#fdf8f9"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 118
+                                  },
+                                  "color": "#f7e7e9"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 121
+                                  },
+                                  "color": "#f9edee"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 122
+                                  },
+                                  "color": "#edcace"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 123
+                                  },
+                                  "color": "#d98e97"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 124
+                                  },
+                                  "color": "#b41f31"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 125
+                                  },
+                                  "color": "#b2182b"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 163
+                                  },
+                                  "color": "#f1d4d8"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 164
+                                  },
+                                  "color": "#faf0f1"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 166
+                                  },
+                                  "color": "#fefcfc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 167
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 169
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 170
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 200
+                                  },
+                                  "color": "#fefcfd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 201
+                                  },
+                                  "color": "#fcf6f7"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 202
+                                  },
+                                  "color": "#faeff0"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 203
+                                  },
+                                  "color": "#fdfafa"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 204
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 206
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 207
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 208
+                                  },
+                                  "color": "#fdf9fa"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 218
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 220
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 224
+                                  },
+                                  "color": "#fefcfc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 225
+                                  },
+                                  "color": "#fcf7f8"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 6.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "occupancy_7.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "relative_isovalue": 2
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "forestgreen"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.3
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 7 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **7 of 7** restraints: 48283 complexes (0.0387 %).\n\nOccupancy (green, 2 sigma): where the scanning chain is most often found in these complexes.\n\nFixed chain: the selected residues colored by their average number of interactions per complex, from white (0) to red (2.74).",
+        "description_format": "markdown",
+        "key": "n7",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "O14250.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            },
+                            "children": [
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "color": "white"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 1
+                                  },
+                                  "color": "#f7e6e8"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 2
+                                  },
+                                  "color": "#f3dadd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 3
+                                  },
+                                  "color": "#eabfc5"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 4
+                                  },
+                                  "color": "#eac0c5"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 5
+                                  },
+                                  "color": "#ebc2c7"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 8
+                                  },
+                                  "color": "#ce6d79"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 9
+                                  },
+                                  "color": "#dc969e"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 13
+                                  },
+                                  "color": "#fcf6f7"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 15
+                                  },
+                                  "color": "#fefcfc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 16
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 17
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 18
+                                  },
+                                  "color": "#fefbfc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 24
+                                  },
+                                  "color": "#dd9aa3"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 27
+                                  },
+                                  "color": "#e4adb4"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 30
+                                  },
+                                  "color": "#edc9cd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 31
+                                  },
+                                  "color": "#d78690"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 51
+                                  },
+                                  "color": "#ebc3c8"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 53
+                                  },
+                                  "color": "#c95e6b"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 54
+                                  },
+                                  "color": "#d0727d"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 55
+                                  },
+                                  "color": "#dfa0a7"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 56
+                                  },
+                                  "color": "#d5818b"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 58
+                                  },
+                                  "color": "#e2a8af"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 60
+                                  },
+                                  "color": "#e7b7bd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 61
+                                  },
+                                  "color": "#f4dde0"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 65
+                                  },
+                                  "color": "#fcf5f6"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 68
+                                  },
+                                  "color": "#fdfafb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 77
+                                  },
+                                  "color": "#ca5f6c"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 79
+                                  },
+                                  "color": "#bf4050"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 82
+                                  },
+                                  "color": "#e2a9b0"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 83
+                                  },
+                                  "color": "#e0a3aa"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 86
+                                  },
+                                  "color": "#efced2"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 90
+                                  },
+                                  "color": "#f6e4e6"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 93
+                                  },
+                                  "color": "#faf1f3"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 94
+                                  },
+                                  "color": "#fcf5f5"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 96
+                                  },
+                                  "color": "#fefbfb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 97
+                                  },
+                                  "color": "#fcf6f6"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 98
+                                  },
+                                  "color": "#fdfafa"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 99
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 100
+                                  },
+                                  "color": "#fefdfd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 101
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 107
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 110
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 114
+                                  },
+                                  "color": "#fefdfd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 117
+                                  },
+                                  "color": "#fefbfb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 118
+                                  },
+                                  "color": "#faf0f1"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 121
+                                  },
+                                  "color": "#fbf3f4"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 122
+                                  },
+                                  "color": "#f3dcdf"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 123
+                                  },
+                                  "color": "#e5b2b8"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 124
+                                  },
+                                  "color": "#c95c69"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 125
+                                  },
+                                  "color": "#c75765"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 152
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 163
+                                  },
+                                  "color": "#f2d7da"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 164
+                                  },
+                                  "color": "#f8ebed"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 166
+                                  },
+                                  "color": "#fdf9fa"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 167
+                                  },
+                                  "color": "#fefcfc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 169
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 170
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 173
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 200
+                                  },
+                                  "color": "#fbf4f5"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 201
+                                  },
+                                  "color": "#f6e4e7"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 202
+                                  },
+                                  "color": "#f3dadd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 203
+                                  },
+                                  "color": "#f9edee"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 204
+                                  },
+                                  "color": "#fdfafb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 206
+                                  },
+                                  "color": "#fefdfd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 207
+                                  },
+                                  "color": "#fefcfc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 208
+                                  },
+                                  "color": "#fcf6f7"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 218
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 220
+                                  },
+                                  "color": "#fefdfd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 224
+                                  },
+                                  "color": "#fefbfb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 225
+                                  },
+                                  "color": "#fcf6f7"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 5.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "occupancy_6.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "relative_isovalue": 2
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "forestgreen"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.3
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 6 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **6 of 7** restraints: 128880 complexes (0.103 %).\n\nOccupancy (green, 2 sigma): where the scanning chain is most often found in these complexes.\n\nFixed chain: the selected residues colored by their average number of interactions per complex, from white (0) to red (2.74).",
+        "description_format": "markdown",
+        "key": "n6",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "O14250.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            },
+                            "children": [
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "color": "white"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 1
+                                  },
+                                  "color": "#f4dde0"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 2
+                                  },
+                                  "color": "#efd0d4"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 3
+                                  },
+                                  "color": "#e7b6bc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 4
+                                  },
+                                  "color": "#e8bbc0"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 5
+                                  },
+                                  "color": "#eabfc4"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 8
+                                  },
+                                  "color": "#d37b86"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 9
+                                  },
+                                  "color": "#e0a2aa"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 13
+                                  },
+                                  "color": "#fcf6f7"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 15
+                                  },
+                                  "color": "#fefbfb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 16
+                                  },
+                                  "color": "#fefdfd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 17
+                                  },
+                                  "color": "#fefdfd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 18
+                                  },
+                                  "color": "#fefbfb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 24
+                                  },
+                                  "color": "#e1a4ac"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 27
+                                  },
+                                  "color": "#e6b4ba"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 30
+                                  },
+                                  "color": "#eecdd1"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 31
+                                  },
+                                  "color": "#db929b"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 51
+                                  },
+                                  "color": "#ecc6ca"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 53
+                                  },
+                                  "color": "#c95c69"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 54
+                                  },
+                                  "color": "#ce6c78"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 55
+                                  },
+                                  "color": "#dd99a2"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 56
+                                  },
+                                  "color": "#d47d87"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 58
+                                  },
+                                  "color": "#e1a4ab"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 60
+                                  },
+                                  "color": "#e7b6bc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 61
+                                  },
+                                  "color": "#f3dcdf"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 65
+                                  },
+                                  "color": "#fbf4f5"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 68
+                                  },
+                                  "color": "#fdfafa"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 77
+                                  },
+                                  "color": "#cf707b"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 79
+                                  },
+                                  "color": "#c5515f"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 82
+                                  },
+                                  "color": "#e4afb6"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 83
+                                  },
+                                  "color": "#e3acb3"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 86
+                                  },
+                                  "color": "#f0d2d6"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 90
+                                  },
+                                  "color": "#f6e5e7"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 93
+                                  },
+                                  "color": "#fbf2f3"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 94
+                                  },
+                                  "color": "#fcf5f6"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 96
+                                  },
+                                  "color": "#fdfafb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 97
+                                  },
+                                  "color": "#fcf6f7"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 98
+                                  },
+                                  "color": "#fdfafb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 99
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 100
+                                  },
+                                  "color": "#fefdfd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 101
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 107
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 110
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 114
+                                  },
+                                  "color": "#fefdfd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 117
+                                  },
+                                  "color": "#fefbfb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 118
+                                  },
+                                  "color": "#faf1f2"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 121
+                                  },
+                                  "color": "#fbf3f4"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 122
+                                  },
+                                  "color": "#f4dee1"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 123
+                                  },
+                                  "color": "#e8b9bf"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 124
+                                  },
+                                  "color": "#cf6f7b"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 125
+                                  },
+                                  "color": "#cf6e7a"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 152
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 154
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 163
+                                  },
+                                  "color": "#f2d9dc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 164
+                                  },
+                                  "color": "#f8eaec"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 166
+                                  },
+                                  "color": "#fcf7f8"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 167
+                                  },
+                                  "color": "#fdfafb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 169
+                                  },
+                                  "color": "#fefdfe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 170
+                                  },
+                                  "color": "#fefdfe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 173
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 174
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 200
+                                  },
+                                  "color": "#fbf2f3"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 201
+                                  },
+                                  "color": "#f5e1e4"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 202
+                                  },
+                                  "color": "#f2d8db"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 203
+                                  },
+                                  "color": "#f8ebed"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 204
+                                  },
+                                  "color": "#fdfafa"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 206
+                                  },
+                                  "color": "#fefcfd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 207
+                                  },
+                                  "color": "#fefbfb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 208
+                                  },
+                                  "color": "#fbf4f5"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 217
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 218
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 220
+                                  },
+                                  "color": "#fefcfd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 224
+                                  },
+                                  "color": "#fdf9f9"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 225
+                                  },
+                                  "color": "#fbf3f4"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 4.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "occupancy_5.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "relative_isovalue": 2
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "forestgreen"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.3
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 5 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **5 of 7** restraints: 221202 complexes (0.177 %).\n\nOccupancy (green, 2 sigma): where the scanning chain is most often found in these complexes.\n\nFixed chain: the selected residues colored by their average number of interactions per complex, from white (0) to red (2.74).",
+        "description_format": "markdown",
+        "key": "n5",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "O14250.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            },
+                            "children": [
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "color": "white"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 1
+                                  },
+                                  "color": "#efcfd3"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 2
+                                  },
+                                  "color": "#ecc5c9"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 3
+                                  },
+                                  "color": "#e7b8be"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 4
+                                  },
+                                  "color": "#e8bbc1"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 5
+                                  },
+                                  "color": "#e7b7bd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 8
+                                  },
+                                  "color": "#e0a2aa"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 9
+                                  },
+                                  "color": "#e6b3b9"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 13
+                                  },
+                                  "color": "#ebc3c8"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 15
+                                  },
+                                  "color": "#ecc7cc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 16
+                                  },
+                                  "color": "#edc8cc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 17
+                                  },
+                                  "color": "#eac1c6"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 18
+                                  },
+                                  "color": "#efcfd3"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 24
+                                  },
+                                  "color": "#f0d2d6"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 27
+                                  },
+                                  "color": "#f1d6da"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 30
+                                  },
+                                  "color": "#f5e1e3"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 31
+                                  },
+                                  "color": "#ecc7cc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 41
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 51
+                                  },
+                                  "color": "#f3dadd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 53
+                                  },
+                                  "color": "#dc97a0"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 54
+                                  },
+                                  "color": "#db939c"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 55
+                                  },
+                                  "color": "#e1a5ad"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 56
+                                  },
+                                  "color": "#dfa0a7"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 58
+                                  },
+                                  "color": "#ecc5ca"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 60
+                                  },
+                                  "color": "#f1d6d9"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 61
+                                  },
+                                  "color": "#f8eaec"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 65
+                                  },
+                                  "color": "#fdfafa"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 68
+                                  },
+                                  "color": "#fefdfd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 77
+                                  },
+                                  "color": "#ecc7cc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 79
+                                  },
+                                  "color": "#e7b7bd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 82
+                                  },
+                                  "color": "#f3dbde"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 83
+                                  },
+                                  "color": "#f2d8db"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 86
+                                  },
+                                  "color": "#f8ebec"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 90
+                                  },
+                                  "color": "#fbf3f4"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 93
+                                  },
+                                  "color": "#fdf9f9"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 94
+                                  },
+                                  "color": "#fdf8f9"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 96
+                                  },
+                                  "color": "#fefcfc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 97
+                                  },
+                                  "color": "#fdf9fa"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 98
+                                  },
+                                  "color": "#fdfafa"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 99
+                                  },
+                                  "color": "#fefcfc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 100
+                                  },
+                                  "color": "#fefdfd"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 101
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 106
+                                  },
+                                  "color": "#fefcfc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 107
+                                  },
+                                  "color": "#fefbfb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 110
+                                  },
+                                  "color": "#fbf2f3"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 114
+                                  },
+                                  "color": "#f6e4e6"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 117
+                                  },
+                                  "color": "#f4dee1"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 118
+                                  },
+                                  "color": "#f0d3d7"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 121
+                                  },
+                                  "color": "#ecc5ca"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 122
+                                  },
+                                  "color": "#e8b9bf"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 123
+                                  },
+                                  "color": "#e2a7ae"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 124
+                                  },
+                                  "color": "#db929b"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 125
+                                  },
+                                  "color": "#e0a3aa"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 139
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 140
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 152
+                                  },
+                                  "color": "#f8eaeb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 154
+                                  },
+                                  "color": "#fbf3f4"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 157
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 163
+                                  },
+                                  "color": "#f5e0e3"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 164
+                                  },
+                                  "color": "#f5e2e4"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 166
+                                  },
+                                  "color": "#f9edee"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 167
+                                  },
+                                  "color": "#f9eef0"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 169
+                                  },
+                                  "color": "#fdf8f9"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 170
+                                  },
+                                  "color": "#fcf5f6"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 173
+                                  },
+                                  "color": "#fefbfb"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 174
+                                  },
+                                  "color": "#fefcfc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 176
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 177
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 178
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 179
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 181
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 183
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 184
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 185
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 189
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 193
+                                  },
+                                  "color": "#fefbfc"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 200
+                                  },
+                                  "color": "#f1d6d9"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 201
+                                  },
+                                  "color": "#eac0c5"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 202
+                                  },
+                                  "color": "#e9bec3"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 203
+                                  },
+                                  "color": "#f0d2d5"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 204
+                                  },
+                                  "color": "#f7e7e9"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 206
+                                  },
+                                  "color": "#faf0f1"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 207
+                                  },
+                                  "color": "#fbf2f3"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 208
+                                  },
+                                  "color": "#f9eef0"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 217
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 218
+                                  },
+                                  "color": "#ffffff"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 220
+                                  },
+                                  "color": "#fffefe"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 224
+                                  },
+                                  "color": "#fdf9fa"
+                                }
+                              },
+                              {
+                                "kind": "color",
+                                "params": {
+                                  "selector": {
+                                    "auth_seq_id": 225
+                                  },
+                                  "color": "#fcf5f6"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 3.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "occupancy_4.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "relative_isovalue": 2
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "forestgreen"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.3
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 4 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **4 of 7** restraints: 1643867 complexes (1.32 %).\n\nOccupancy (green, 2 sigma): where the scanning chain is most often found in these complexes.\n\nFixed chain: the selected residues colored by their average number of interactions per complex, from white (0) to red (2.74).",
+        "description_format": "markdown",
+        "key": "n4",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "O14250.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 2.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 3 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **3 of 7** restraints: 13245746 complexes (10.6 %).",
+        "description_format": "markdown",
+        "key": "n3",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "O14250.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 1.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 2 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **2 of 7** restraints: 17405929 complexes (13.9 %).",
+        "description_format": "markdown",
+        "key": "n2",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "O14250.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 0.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 1 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **1 of 7** restraints: 27771853 complexes (22.2 %).",
+        "description_format": "markdown",
+        "key": "n1",
+        "linger_duration_ms": 1000
+      }
+    }
+  ]
+}
