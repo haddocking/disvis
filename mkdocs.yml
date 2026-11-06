@@ -1,0 +1,72 @@
+site_name: DisVis
+site_url: https://www.bonvinlab.org/disvis
+repo_name: haddocking/disvis
+repo_url: https://github.com/haddocking/disvis
+watch: [mkdocs.yml, README.md, INSTALLATION.md, CONTRIBUTING.md, test-cases/README.md]
+use_directory_urls: false
+# docs/test-cases links to test-cases/: the site shows the reports of the CPU
+# reference results.
+exclude_docs: |
+  test-cases/README.md
+  test-cases/check_test_cases.py
+  test-cases/**/gpu/
+  *.bld
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - content.code.copy
+  palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+
+plugins:
+  - search
+  - mkdocs-rich-argparse:
+      package: disvis
+
+markdown_extensions:
+  # The pages include sections of README.md and the other Markdown files of
+  # the repository, between <!-- --8<-- [start:name] --> and [end:name].
+  - pymdownx.snippets:
+      base_path: [!relative $config_dir]
+      check_paths: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Manual: manual.md
+  - Example: example.md
+  - Performance: performance.md
+  - Contributing guidelines: contributing.md
+  - CLI Reference: cli.md
+  - Try it in your browser: jupyterlite.md

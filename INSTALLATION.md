@@ -1,4 +1,5 @@
 # Installation instructions for GPU-accelerated DisVis
+<!-- --8<-- [start:gpu] -->
 
 This document shows how to set up GPU-accelerated DisVis using the OpenCL
 framework, with [pyopencl](https://github.com/inducer/pyopencl) and the VkFFT
@@ -59,3 +60,4 @@ The results should agree with the GPU results in `example-results/gpu/coarse`
 and the CPU results in `example-results/cpu/coarse` to within single-precision
 rounding (relative differences of about 1e-5). Timings on several GPUs are
 listed in `test-cases/README.md`.
+<!-- --8<-- [end:gpu] -->
