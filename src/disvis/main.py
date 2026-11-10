@@ -731,8 +731,10 @@ def main():  # noqa: C901
         write(msg)
 
     # next give possible false-positives based on the percentage of violations
-    # and their associated Z-score
-    if n == 1:
+    # and their associated Z-score, if not all restraints are consistent: the
+    # Z-scores are relative, one is above 1 even when all are.
+    consistent = n == 1
+    if consistent:
         n = None
     else:
         n = -n + 1
@@ -746,7 +748,7 @@ def main():  # noqa: C901
     ) / average_restraint_violation.std()
     ind_false_positives = np.flatnonzero(zscore_violations >= 1.0)
     nfalse_positives = ind_false_positives.size
-    if nfalse_positives > 0:
+    if nfalse_positives > 0 and not consistent:
         ind_false_positives += 1
         write(
             (

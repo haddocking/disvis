@@ -1,32 +1,31 @@
 ======================================================================
-DisVis 3.0.0
+DisVis 3.1.0
 Visualizing and quantifying the accessible interaction space of
 distance-restrained biomolecular complexes
 https://github.com/haddocking/disvis
 ======================================================================
-2026-11-06 15:52:32,978 OpenCL device: NVIDIA RTX 6000 Ada Generation
-2026-11-06 15:52:32,978 Reading fixed model from: O14250.pdb
-2026-11-06 15:52:32,983 Reading scanning model from: Q9UT97.pdb
-2026-11-06 15:52:32,987 Reading in rotations.
-2026-11-06 15:52:32,997 Requested rotational sampling density: 5.27
-2026-11-06 15:52:32,997 Real rotational sampling density: 5.27
-2026-11-06 15:52:32,997 Number of rotations: 53256
-2026-11-06 15:52:32,997 Reading in restraints from file: restraints.dat
-2026-11-06 15:52:32,998 Number of distance restraints: 7
-2026-11-06 15:52:32,998 Voxel spacing set to: 1.00
-2026-11-06 15:52:32,998 Interaction radius set to: 3.00
-2026-11-06 15:52:32,998 Minimum required interaction volume: 300.00
-2026-11-06 15:52:32,998 Maximum allowed volume of clashes: 200.00
-2026-11-06 15:52:32,998 Using GPU accelerated search.
-2026-11-06 15:53:00,193 Writing accessible interaction space to: /trinity/login/abonvin/haddock_git/disvis-46-report/test-cases/PRE5-PUP2-complex/example-results/gpu/fine/accessible_interaction_space.mrc
-2026-11-06 15:53:00,238 Writing number of accessible complexes to: /trinity/login/abonvin/haddock_git/disvis-46-report/test-cases/PRE5-PUP2-complex/example-results/gpu/fine/accessible_complexes.out
-2026-11-06 15:53:00,239 Writing violations to file: /trinity/login/abonvin/haddock_git/disvis-46-report/test-cases/PRE5-PUP2-complex/example-results/gpu/fine/violations.out
-2026-11-06 15:53:00,239 Possible false-positive restraints (z-score > 1.0): 1 2
-2026-11-06 15:53:00,239 Writing z-score of each restraint to /trinity/login/abonvin/haddock_git/disvis-46-report/test-cases/PRE5-PUP2-complex/example-results/gpu/fine/z-score.out
-2026-11-06 15:53:00,364 Writing report to: /trinity/login/abonvin/haddock_git/disvis-46-report/test-cases/PRE5-PUP2-complex/example-results/gpu/fine/report.html
-2026-11-06 15:53:00,364 Total time passed: 0m 28s
+2026-11-10 07:40:16,129 OpenCL device: NVIDIA RTX 6000 Ada Generation
+2026-11-10 07:40:16,129 Reading fixed model from: O14250.pdb
+2026-11-10 07:40:16,133 Reading scanning model from: Q9UT97.pdb
+2026-11-10 07:40:16,137 Reading in rotations.
+2026-11-10 07:40:16,151 Requested rotational sampling density: 5.27
+2026-11-10 07:40:16,151 Real rotational sampling density: 5.27
+2026-11-10 07:40:16,151 Number of rotations: 53256
+2026-11-10 07:40:16,151 Reading in restraints from file: restraints.dat
+2026-11-10 07:40:16,152 Number of distance restraints: 7
+2026-11-10 07:40:16,152 Voxel spacing set to: 1.00
+2026-11-10 07:40:16,152 Interaction radius set to: 3.00
+2026-11-10 07:40:16,152 Minimum required interaction volume: 300.00
+2026-11-10 07:40:16,152 Maximum allowed volume of clashes: 200.00
+2026-11-10 07:40:16,152 Using GPU accelerated search.
+2026-11-10 07:40:42,371 Writing accessible interaction space to: /trinity/login/abonvin/disvis-report-fix/out/fine/accessible_interaction_space.mrc
+2026-11-10 07:40:42,455 Writing number of accessible complexes to: /trinity/login/abonvin/disvis-report-fix/out/fine/accessible_complexes.out
+2026-11-10 07:40:42,455 Writing violations to file: /trinity/login/abonvin/disvis-report-fix/out/fine/violations.out
+2026-11-10 07:40:42,456 Writing z-score of each restraint to /trinity/login/abonvin/disvis-report-fix/out/fine/z-score.out
+2026-11-10 07:40:42,578 Writing report to: /trinity/login/abonvin/disvis-report-fix/out/fine/report.html
+2026-11-10 07:40:42,578 Total time passed: 0m 27s
 ======================================================================
 To view report.html, serve the output directory:
-  python -m http.server -d /trinity/login/abonvin/haddock_git/disvis-46-report/test-cases/PRE5-PUP2-complex/example-results/gpu/fine
+  python -m http.server -d /trinity/login/abonvin/disvis-report-fix/out/fine
 and open http://localhost:8000/report.html
 ======================================================================

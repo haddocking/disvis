@@ -1,5 +1,6 @@
 {
     "angle": 9.72,
+    "delimiter": null,
     "directory": "/Users/abonvin/haddock_git/disvis/test-cases/PRE5-PUP2-complex/example-results/cpu/coarse-is-oa",
     "gpu": false,
     "interaction_radius": 3.0,
