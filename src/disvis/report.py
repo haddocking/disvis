@@ -398,7 +398,10 @@ def generate_report(
     if not delimiter:
         # The first row numbers the restraints.
         violations = violations[1:]
-    violations = [r for r in violations if any(float(x) for x in r[1:])]
+    # Only the N with complexes; all N if all restraints are consistent,
+    # whose row is 0 as no complex violates a restraint.
+    accessible = {n for n, cumulative, _ in complexes if cumulative}
+    violations = [r for r in violations if int(r[0]) in accessible]
     tables.append(
         _table(
             'Fraction of complexes violating each restraint',
@@ -412,9 +415,14 @@ def generate_report(
             _read_rows(joiner('z-score.out'), delimiter), labels, strict=True
         )
     ]
+    # The Z-scores are relative: one is above 1 even when all restraints
+    # are consistent, which leaves no false positive to flag.
+    consistent = nrestraints in accessible
     tables.append(
         _table(
-            'Z-scores (above 1: possible false positive)',
+            'Z-scores (all restraints are consistent)'
+            if consistent
+            else 'Z-scores (above 1.0: possible false positive)',
             [
                 '#',
                 'Restraint',
@@ -423,7 +431,9 @@ def generate_report(
                 'Z-score',
             ],
             zscores,
-            {i for i, row in enumerate(zscores) if float(row[4]) >= 1},
+            ()
+            if consistent
+            else {i for i, row in enumerate(zscores) if float(row[4]) >= 1},
         )
     )
     downloads = [

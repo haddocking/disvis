@@ -63,6 +63,10 @@ class TestReport(TestCase):
                 html = f.read()
             self.assertIn('A27(CA)-A18(CA)', html)
             self.assertIn('Most contacted ligand residues', html)
+            # All 7 restraints are consistent: their row of violations (0)
+            # is shown, and no Z-score flags a false positive.
+            self.assertIn('<tr><td>7</td><td>0.0000</td>', html)
+            self.assertNotIn('class="high"', html)
 
     def test_delimiter(self):
         # The same run with --delimiter , gives the same report.

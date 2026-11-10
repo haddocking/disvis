@@ -19,6 +19,10 @@
 - Documentation site, <https://www.bonvinlab.org/disvis> (`docs/`, MkDocs),
   with the web service, the CLI reference, the example reports and a
   JupyterLite notebook that runs DisVis in the browser - Issue #50
+- report.html: the violations table shows the row of complexes consistent
+  with all restraints (all 0). When all restraints are consistent, neither
+  report.html nor `disvis.log` flags restraints as possible false positives
+  (Z-score above 1.0)
 
 ## 3.0.0
 

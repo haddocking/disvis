@@ -211,8 +211,9 @@ Standard *disvis* outputs 5 files:
   (UCSF Chimera is recommended for its easier manipulation of density
   data, but also PyMol works).
 * *z-score.out*: a text file giving the Z-score for each restraint. The higher
-  the score, the more likely the restraint is a false-positive. Z-scores above
-  1.0 are explicitly mentioned in the output.
+  the score, the more likely the restraint is a false-positive. If not all
+  restraints are consistent, Z-scores above 1.0 are explicitly mentioned in
+  the output.
 * *disvis.log*: a log file showing all the parameters used, together with date
   and time indications. It starts with the DisVis version and ends with how to
   view the report.
