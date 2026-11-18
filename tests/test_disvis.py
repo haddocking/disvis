@@ -239,6 +239,27 @@ assign (resid 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
             '1 of 2 restraints read with the first selection in the '
             'scanning chain',
         )
+        # Different chains: no warning, and both pairs read forward
+        pdb2b = PDB(pdb2.data.copy())
+        pdb2b.data['chain'] = 'B'
+        messages = []
+        forward = (
+            'assign (segid A and resid 27) (segid B and resid 18) 2 2 0 '
+            'or (segid A and resid 28) (segid B and resid 19)'
+        )
+        ((r1, r2, *_),) = parse_tbl(forward, pdb1, pdb2b, messages.append)
+        npairs = [
+            pdb1.select('resi', i).natoms * pdb2b.select('resi', j).natoms
+            for i, j in ((27, 18), (28, 19))
+        ]
+        self.assertEqual(r1.shape, (sum(npairs), 3))
+        self.assertEqual(
+            messages,
+            [
+                '0 of 1 restraints read with the first selection in the '
+                'scanning chain'
+            ],
+        )
         # Residue 3 is not in pdb2: in neither direction for both pairs
         mixed = 'assign (resid 3) (resid 30) 2 2 0 or (resid 30) (resid 3)'
         with self.assertRaises(ValueError):
