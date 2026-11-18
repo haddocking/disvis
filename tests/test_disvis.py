@@ -265,6 +265,21 @@ assign (resid 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
         with self.assertRaises(ValueError):
             parse_tbl(mixed, pdb1, pdb2)
 
+    def test_restraints_file_errors(self):
+        pdb = PDB.fromfile(join(DATA, 'single-atom.pdb'))
+        with TemporaryDirectory() as tmp:
+            for text, message in (
+                ('# no restraints\n', 'No restraints found'),
+                ('! a HADDOCK comment\n', 'Line 1 of '),
+                ('A 1 N A 1 N 0 2x\n', 'Line 1 of '),
+                ('A 1 N A 2 N 0 2\n', 'selection of line 1 of '),
+            ):
+                fname = join(tmp, 'restraints.dat')
+                with open(fname, 'w') as f:
+                    f.write(text)
+                with self.assertRaisesRegex(ValueError, message):
+                    parse_restraints(fname, pdb, pdb)
+
     def test_tbl_selection(self):
         # CNS precedence: not before and before or
         pdb = PDB.fromfile(join(DATA, 'O14250.pdb'))

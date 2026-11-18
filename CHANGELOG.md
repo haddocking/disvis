@@ -9,6 +9,9 @@
   r<sup>-6</sup>-summed effective distance (see README) - Issue #61
 - New test case `E2A-HPR`, with the ambiguous interaction restraints of the
   HADDOCK3 protein-protein docking example - Issue #61
+- A restraints file without restraints, or with a line that is not a
+  restraint, stops DisVis with an error naming the file and the line,
+  instead of an unrelated error - Issue #64
 
 ## 3.1.1
 
