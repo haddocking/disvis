@@ -21,8 +21,9 @@ from argparse import ArgumentParser
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CASES = {
-    'PRE5-PUP2-complex': ('O14250.pdb', 'Q9UT97.pdb'),
-    'RNA-polymerase-II/A-E': ('1wcm_A.pdb', '1wcm_E.pdb'),
+    'PRE5-PUP2-complex': ('O14250.pdb', 'Q9UT97.pdb', 'restraints.dat'),
+    'RNA-polymerase-II/A-E': ('1wcm_A.pdb', '1wcm_E.pdb', 'restraints.dat'),
+    'E2A-HPR': ('e2aP_1F3G.pdb', 'hpr_1.pdb', 'e2a-hpr_air.tbl'),
 }
 GRIDS = {'coarse': ('9.72', '2'), 'fine': ('5.27', '1')}
 OUTPUT = (
@@ -54,7 +55,7 @@ def parse_args():
 
 def run_case(case, grid, args, outdir):
     """Run one test case; return the names of the files that differ."""
-    receptor, ligand = CASES[case]
+    receptor, ligand, restraints = CASES[case]
     angle, voxelspacing = GRIDS[grid]
     casedir = os.path.join(ROOT, 'test-cases', case)
     # The disvis command of this Python, also outside an activated venv.
@@ -62,7 +63,7 @@ def run_case(case, grid, args, outdir):
         'disvis', path=os.path.dirname(sys.executable)
     ) or shutil.which('disvis')
     command = [
-        disvis, receptor, ligand, 'restraints.dat',
+        disvis, receptor, ligand, restraints,
         '-a', angle, '-vs', voxelspacing, '-d', outdir,
     ]  # fmt: skip
     command += ['-g'] if args.gpu else ['-p', str(args.nproc)]

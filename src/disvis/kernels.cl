@@ -12,6 +12,7 @@
 
 #define INTERACTION_CUTOFF2 (INTERACTION_CUTOFF * INTERACTION_CUTOFF)
 #define NRESTRAINTS2 (NRESTRAINTS * NRESTRAINTS)
+#define NWORDS ((NRESTRAINTS + 31) / 32)
 #define LLENGTH2 (LLENGTH * LLENGTH)
 #define SLICE ((SHAPE_X * SHAPE_Y))
 #define SIZE ((SHAPE_Z * SLICE))
@@ -109,44 +110,75 @@ void rotate_grid3d(
 
 
 kernel
+void restraint_bits(
+        global float4 *gcenter, global int *grestraint,
+        global float *gmindis, global float *gmaxdis, int ncenters,
+        global uint *bits
+        )
+{
+    // Set bit n of the restraint words of every translation within the
+    // distance range of a center of restraint n; grestraint[p] is the
+    // restraint of center p, and word w of translation i is
+    // bits[w * SIZE + i]. A work group handles one center at a time, and its
+    // work items the grid points of the box around the center.
+
+    int p, n, k, x, y, z, xmin, ymin, zmin, nx, ny, nz;
+    float dis2_z, dis2_zy, dis2_zyx, maxdis, mindis2, maxdis2;
+    float4 center;
+
+    for (p = get_group_id(0); p < ncenters; p += get_num_groups(0)) {
+        n = grestraint[p];
+        center = gcenter[p];
+        maxdis = gmaxdis[n];
+        mindis2 = SQUARE(gmindis[n]);
+        maxdis2 = SQUARE(maxdis);
+        xmin = max((int) ceil(center.s0 - maxdis), 0);
+        ymin = max((int) ceil(center.s1 - maxdis), 0);
+        zmin = max((int) ceil(center.s2 - maxdis), 0);
+        nx = min((int) floor(center.s0 + maxdis), SHAPE_X - 1) - xmin + 1;
+        ny = min((int) floor(center.s1 + maxdis), SHAPE_Y - 1) - ymin + 1;
+        nz = min((int) floor(center.s2 + maxdis), SHAPE_Z - 1) - zmin + 1;
+        if ((nx <= 0) || (ny <= 0) || (nz <= 0))
+            continue;
+        for (k = get_local_id(0); k < nx * ny * nz; k += get_local_size(0)) {
+            z = zmin + k / (nx * ny);
+            y = ymin + (k / nx) % ny;
+            x = xmin + k % nx;
+            dis2_z = SQUARE(z - center.s2);
+            dis2_zy = SQUARE(y - center.s1) + dis2_z;
+            dis2_zyx = dis2_zy + SQUARE(x - center.s0);
+            if ((dis2_zyx <= maxdis2) && (dis2_zyx >= mindis2))
+                atomic_or(bits + (n / 32) * SIZE + z * SLICE + y * SHAPE_X + x,
+                          1u << (n % 32));
+        }
+    }
+}
+
+
+kernel
 void reduced_interspace(
-        global float4 *gcenter, global float *gmindis, global float *gmaxdis,
-        global int *interspace, global int *red_interspace,
+        global uint *bits, global int *interspace, global int *red_interspace,
         global int *access_interspace
         )
 {
     // For every translation in the interaction space, count the distance
-    // restraints it is consistent with, and update the accessible
-    // interaction space, the highest count at every translation.
+    // restraints it is consistent with (the bits set by restraint_bits),
+    // and update the accessible interaction space, the highest count at
+    // every translation.
 
     size_t gid = get_global_id(0);
     size_t gstride = get_global_size(0);
 
-    int i, n, x, y, z, count;
-    float dis2_z, dis2_zy, dis2_zyx, mindis, maxdis, mindis2, maxdis2;
-    float4 center;
+    int i, w, count;
 
     for (i = gid; i < SIZE; i += gstride) {
         if (interspace[i] == 0) {
             red_interspace[i] = 0;
             continue;
         }
-        z = i / SLICE;
-        y = (i - z * SLICE) / SHAPE_X;
-        x = i - z * SLICE - y * SHAPE_X;
         count = 0;
-        for (n = 0; n < NRESTRAINTS; n++) {
-            center = gcenter[n];
-            maxdis = gmaxdis[n];
-            mindis = gmindis[n];
-            mindis2 = SQUARE(mindis);
-            maxdis2 = SQUARE(maxdis);
-            dis2_z = SQUARE(z - center.s2);
-            dis2_zy = SQUARE(y - center.s1) + dis2_z;
-            dis2_zyx = dis2_zy + SQUARE(x - center.s0);
-            if ((dis2_zyx <= maxdis2) && (dis2_zyx >= mindis2))
-                count++;
-        }
+        for (w = 0; w < NWORDS; w++)
+            count += popcount(bits[w * SIZE + i]);
         red_interspace[i] = count;
         if (count > access_interspace[i])
             access_interspace[i] = count;
@@ -191,20 +223,16 @@ void histogram(
 
 kernel
 void count_violations(
-        global float3 *center, global float *mindis2, global float *maxdis2,
-        global int *interspace, global int *viol
+        global uint *bits, global int *interspace, global int *viol
         )
 {
     // Count how often each restraint is violated in complexes consistent with
-    // N restraints.
+    // N restraints: restraint i is violated where restraint_bits did not set
+    // its bit.
 
     int i, x, y, z;
     int ind_z, ind_zy, consistent, offset;
-    float dist2;
     local int local_viol[NRESTRAINTS2];
-    local float3 local_center[NRESTRAINTS];
-    local float local_mindis2[NRESTRAINTS];
-    local float local_maxdis2[NRESTRAINTS];
 
     size_t zid = get_global_id(0);
     size_t yid = get_global_id(1);
@@ -218,12 +246,6 @@ void count_violations(
     // Prepare local memory
     for (i = lid; i < NRESTRAINTS2; i += lstride)
         local_viol[i] = 0;
-    // Move the centers and distances to local memory
-    for (i = lid; i < NRESTRAINTS; i += lstride) {
-            local_center[i] = center[i];
-            local_maxdis2[i] = maxdis2[i];
-            local_mindis2[i] = mindis2[i];
-    }
     barrier(CLK_LOCAL_MEM_FENCE);
 
     // Loop over the accessible interaction space and count the violations
@@ -239,10 +261,7 @@ void count_violations(
                     continue;
                 offset = (consistent - 1) * NRESTRAINTS;
                 for (i = 0; i < NRESTRAINTS; i++) {
-                    dist2 = SQUARE(x - local_center[i].s0) + 
-                            SQUARE(y - local_center[i].s1) +
-                            SQUARE(z - local_center[i].s2);
-                    if ((dist2 < local_mindis2[i]) || (dist2 > local_maxdis2[i]))
+                    if (!((bits[(i / 32) * SIZE + ind_zy + x] >> (i % 32)) & 1))
                         atomic_inc(local_viol + offset + i);
                 }
             }

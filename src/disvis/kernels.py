@@ -34,6 +34,8 @@ class Kernels:
         self._gws_rotate_points3d = (8 * 32 * 8 * 8,)
         self._gws_rotate_grid3d = (96, 64, 1)
         self._gws_reduced_interspace = (96 * 256,)
+        self._lws_restraint_bits = (64,)
+        self._max_groups_restraint_bits = 4096
 
         self._lws_histogram = (96,)
         self._gws_histogram = (96 * 32,)
@@ -170,20 +172,35 @@ class Kernels:
             queue, self._gws_rotate_grid3d, None, *args
         )
 
-    def reduced_interspace(
-        self, queue, centers, mindis, maxdis, interspace, red, access
-    ):
-        """Count the consistent restraints in the interaction space.
+    def restraint_bits(self, queue, centers, restraint, mindis, maxdis, bits):
+        """Set the bits of the restraints consistent at each translation.
 
-        red is set to the number of restraints each translation in
-        interspace (nonzero) is consistent with, and 0 elsewhere; access is
-        set to the maximum of access and red. centers holds the restraint
-        centers in grid units, mindis and maxdis the distance ranges.
+        Bit n of bits[n // 32] (an (nwords, z, y, x) uint32 array) is set
+        within mindis[n] and maxdis[n] of any of the centers (in grid units)
+        of restraint n, restraint[p] being the restraint of center p.
         """
+        ncenters = centers.shape[0]
         args = (
             centers.data,
+            restraint.data,
             mindis.data,
             maxdis.data,
+            np.int32(ncenters),
+            bits.data,
+        )
+        lws = self._lws_restraint_bits
+        gws = (lws[0] * min(ncenters, self._max_groups_restraint_bits),)
+        self._kernels['restraint_bits'](queue, gws, lws, *args)
+
+    def reduced_interspace(self, queue, bits, interspace, red, access):
+        """Count the consistent restraints in the interaction space.
+
+        red is set to the number of restraint bits (see restraint_bits) of
+        each translation in interspace (nonzero), and 0 elsewhere; access
+        is set to the maximum of access and red.
+        """
+        args = (
+            bits.data,
             interspace.data,
             red.data,
             access.data,
@@ -202,22 +219,14 @@ class Kernels:
             queue, self._gws_histogram, self._lws_histogram, *args
         )
 
-    def count_violations(
-        self, queue, centers, mindis2, maxdis2, interspace, viol
-    ):
+    def count_violations(self, queue, bits, interspace, viol):
         """Count how often each restraint is violated, and add it to viol.
 
-        viol[n - 1, i] counts the violations of restraint i in the complexes
-        consistent with n restraints. centers holds the restraint centers in
-        grid units, mindis2 and maxdis2 the squared distance ranges.
+        viol[n - 1, i] counts the violations of restraint i, whose bit (see
+        restraint_bits) is not set, in the complexes consistent with n
+        restraints.
         """
-        args = (
-            centers.data,
-            mindis2.data,
-            maxdis2.data,
-            interspace.data,
-            viol.data,
-        )
+        args = (bits.data, interspace.data, viol.data)
         self._kernels['count_violations'](
             queue,
             self._gws_count_violations,

@@ -20,7 +20,7 @@ from molviewspec import (
     create_builder,
 )
 
-from disvis.helpers import parse_interactions
+from disvis.helpers import count_tbl_restraints, parse_interactions
 
 MOLSTAR_VERSION = '5.13.1'
 # Number of residues in the lists of the most contacted residues.
@@ -124,10 +124,17 @@ def _read_rows(fname, delimiter=None):
 
 
 def _restraint_labels(restraints):
-    """Return labels such as A27(CA)-B18(CA) for the restraints file."""
+    """Return labels such as A27(CA)-B18(CA) for the restraints file.
+
+    The restraints of a HADDOCK restraints file are labelled by number.
+    """
     # Comments and empty lines as in helpers.parse_restraints.
     with open(restraints, encoding='utf-8') as f:
-        rows = [line.split() for line in f]
+        text = f.read()
+    ntbl = count_tbl_restraints(text)
+    if ntbl:
+        return [str(n) for n in range(1, ntbl + 1)]
+    rows = [line.split() for line in text.splitlines()]
     return [
         '{}{}({})-{}{}({})'.format(*row[:6])
         for row in rows

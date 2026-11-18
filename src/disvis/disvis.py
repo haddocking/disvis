@@ -107,10 +107,12 @@ class DisVis:
 
         The distance between the centers of receptor_selection and
         ligand_selection (PDB objects) should be between mindis and maxdis.
+        distance_restraints holds the restraints as returned by
+        helpers.parse_restraints.
         """
         distance_restraint = [
-            receptor_selection,
-            ligand_selection,
+            receptor_selection.center.reshape(1, 3),
+            ligand_selection.center.reshape(1, 3),
             mindis,
             maxdis,
         ]
@@ -224,16 +226,18 @@ class DisVis:
 
         # Setup the distance restraints
         self._nrestraints = len(self.distance_restraints)
-        self._grid_restraints = grid_restraints(
+        (
+            self._rrestraints,
+            self._lrestraints,
+            self._pair_offsets,
+            self._mindis,
+            self._maxdis,
+        ) = grid_restraints(
             self.distance_restraints,
             self.voxelspacing,
             self._origin,
             self.ligand.center,
         )
-        self._rrestraints = self._grid_restraints[:, 0:3]
-        self._lrestraints = self._grid_restraints[:, 3:6]
-        self._mindis = self._grid_restraints[:, 6]
-        self._maxdis = self._grid_restraints[:, 7]
 
         self._accessible_complexes = np.zeros(
             self._nrestraints + 1, dtype=np.float64
@@ -361,8 +365,14 @@ class DisVis:
         for arr in 'not_clashing interacting'.split():
             setattr(self, "_" + arr, np.zeros(self._shape, bool))
 
+        # Bit i of the restraint bytes of a grid point is set when the point
+        # is consistent with restraint i
+        self._consistent_bits = np.zeros(
+            list(self._shape) + [(self._nrestraints + 7) // 8], np.uint8
+        )
+
         # Array for rotating points and restraint coordinates
-        self._restraints_center = np.zeros_like(self._grid_restraints[:, 3:6])
+        self._restraints_center = np.zeros_like(self._lrestraints)
         self._rot_lrestraints = np.zeros_like(self._lrestraints)
         if self._interaction_analysis:
             self._rot_lselect = np.zeros_like(self._lselect)
@@ -420,11 +430,14 @@ class DisVis:
     def _get_restraint_space(self):
         # Determine the consistent restraint space
         self._restspace.fill(0)
+        self._consistent_bits.fill(0)
         distance_restraint(
             self._restraints_center,
+            self._pair_offsets,
             self._mindis,
             self._maxdis,
             self._restspace,
+            self._consistent_bits,
         )
 
     def _get_reduced_interspace(self):
@@ -440,10 +453,8 @@ class DisVis:
     def _count_violations(self, weight):
         # Count all sampled complexes
         count_violations(
-            self._restraints_center,
-            self._mindis,
-            self._maxdis,
             self._red_interspace,
+            self._consistent_bits,
             weight,
             self._violations,
         )
@@ -598,27 +609,32 @@ class DisVis:
             )
 
         # Restraints arrays
-        self._cl_rrestraints = np.zeros(
-            (self._nrestraints, 4), dtype=np.float32
-        )
+        npairs = self._rrestraints.shape[0]
+        self._cl_rrestraints = np.zeros((npairs, 4), dtype=np.float32)
         self._cl_rrestraints[:, :3] = self._rrestraints
         self._cl_rrestraints = cl_array.to_device(q, self._cl_rrestraints)
-        self._cl_lrestraints = np.zeros(
-            (self._nrestraints, 4), dtype=np.float32
-        )
+        self._cl_lrestraints = np.zeros((npairs, 4), dtype=np.float32)
         self._cl_lrestraints[:, :3] = self._lrestraints
         self._cl_lrestraints = cl_array.to_device(q, self._cl_lrestraints)
+        # The restraint of each center
+        self._cl_center_restraint = cl_array.to_device(
+            q,
+            np.repeat(
+                np.arange(self._nrestraints, dtype=np.int32),
+                np.diff(self._pair_offsets),
+            ),
+        )
         self._cl_mindis = cl_array.to_device(
             q, self._mindis.astype(np.float32)
         )
         self._cl_maxdis = cl_array.to_device(
             q, self._maxdis.astype(np.float32)
         )
-        self._cl_mindis2 = cl_array.to_device(
-            q, self._mindis.astype(np.float32) ** 2
-        )
-        self._cl_maxdis2 = cl_array.to_device(
-            q, self._maxdis.astype(np.float32) ** 2
+        # Bit n of word n // 32 is set where restraint n is consistent
+        self._cl_consistent_bits = cl_array.zeros(
+            q,
+            ((self._nrestraints + 31) // 32,) + tuple(self._shape),
+            dtype=np.uint32,
         )
         self._cl_rot_lrestraints = cl_array.zeros_like(self._cl_rrestraints)
         self._cl_restraints_center = cl_array.zeros_like(self._cl_rrestraints)
@@ -743,11 +759,18 @@ class DisVis:
     def _cl_get_reduced_interspace(self):
         # The number of consistent restraints in the interaction space, and
         # the accessible interaction space (the highest number so far)
-        self._cl_kernels.reduced_interspace(
+        self._cl_consistent_bits.fill(0)
+        self._cl_kernels.restraint_bits(
             self.queue,
             self._cl_restraints_center,
+            self._cl_center_restraint,
             self._cl_mindis,
             self._cl_maxdis,
+            self._cl_consistent_bits,
+        )
+        self._cl_kernels.reduced_interspace(
+            self.queue,
+            self._cl_consistent_bits,
             self._cl_interspace,
             self._cl_red_interspace,
             self._cl_access_interspace,
@@ -774,9 +797,7 @@ class DisVis:
         self._cl_kernels.set_to_i32(np.int32(0), self._cl_viol_hist)
         self._cl_kernels.count_violations(
             self.queue,
-            self._cl_restraints_center,
-            self._cl_mindis2,
-            self._cl_maxdis2,
+            self._cl_consistent_bits,
             self._cl_red_interspace,
             self._cl_viol_hist,
         )
@@ -902,22 +923,22 @@ class DisVis:
 def grid_restraints(restraints, voxelspacing, origin, lcenter):
     """Convert distance restraints to grid units.
 
-    Returns an (nrestraints, 8) array with, for each restraint, the
-    receptor selection center relative to origin, the ligand selection
-    center relative to lcenter, and the minimum and maximum distance, all
-    divided by voxelspacing.
+    Returns the (npairs, 3) receptor points relative to origin and ligand
+    points relative to lcenter of the point pairs of all restraints, the
+    offsets of each restraint's pairs (pairs offsets[n] to offsets[n + 1]
+    belong to restraint n), and the minimum and maximum distance of each
+    restraint, all divided by voxelspacing.
     """
-    nrestraints = len(restraints)
-    g_restraints = np.zeros((nrestraints, 8), dtype=np.float64)
-    for n in range(nrestraints):
-        r_sel, l_sel, mindis, maxdis = restraints[n]
+    r_points = np.concatenate([r[0] for r in restraints])
+    l_points = np.concatenate([r[1] for r in restraints])
+    offsets = np.cumsum([0] + [len(r[0]) for r in restraints], dtype=np.int32)
+    mindis = np.asarray([r[2] for r in restraints], dtype=np.float64)
+    maxdis = np.asarray([r[3] for r in restraints], dtype=np.float64)
 
-        r_pos = (r_sel.center - origin) / voxelspacing
-        l_pos = (l_sel.center - lcenter) / voxelspacing
-
-        g_restraints[n, 0:3] = r_pos
-        g_restraints[n, 3:6] = l_pos
-        g_restraints[n, 6] = mindis / voxelspacing
-        g_restraints[n, 7] = maxdis / voxelspacing
-
-    return g_restraints
+    return (
+        (r_points - origin) / voxelspacing,
+        (l_points - lcenter) / voxelspacing,
+        offsets,
+        mindis / voxelspacing,
+        maxdis / voxelspacing,
+    )

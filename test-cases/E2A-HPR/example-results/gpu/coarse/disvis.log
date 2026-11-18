@@ -1,0 +1,31 @@
+======================================================================
+DisVis 3.1.1
+Visualizing and quantifying the accessible interaction space of
+distance-restrained biomolecular complexes
+https://github.com/haddocking/disvis
+======================================================================
+2026-11-18 14:41:53,117 OpenCL device: NVIDIA RTX 6000 Ada Generation
+2026-11-18 14:41:53,117 Reading fixed model from: e2aP_1F3G.pdb
+2026-11-18 14:41:53,121 Reading scanning model from: hpr_1.pdb
+2026-11-18 14:41:53,122 Reading in rotations.
+2026-11-18 14:41:53,124 Requested rotational sampling density: 9.72
+2026-11-18 14:41:53,124 Real rotational sampling density: 9.72
+2026-11-18 14:41:53,124 Number of rotations: 7416
+2026-11-18 14:41:53,124 Reading in restraints from file: e2a-hpr_air.tbl
+2026-11-18 14:41:53,134 Number of distance restraints: 20
+2026-11-18 14:41:53,134 Voxel spacing set to: 2.00
+2026-11-18 14:41:53,134 Interaction radius set to: 3.00
+2026-11-18 14:41:53,134 Minimum required interaction volume: 300.00
+2026-11-18 14:41:53,134 Maximum allowed volume of clashes: 200.00
+2026-11-18 14:41:53,134 Using GPU accelerated search.
+2026-11-18 14:46:22,456 Writing accessible interaction space to: example-results/gpu/coarse/accessible_interaction_space.mrc
+2026-11-18 14:46:22,459 Writing number of accessible complexes to: example-results/gpu/coarse/accessible_complexes.out
+2026-11-18 14:46:22,460 Writing violations to file: example-results/gpu/coarse/violations.out
+2026-11-18 14:46:22,461 Writing z-score of each restraint to example-results/gpu/coarse/z-score.out
+2026-11-18 14:46:22,595 Writing report to: example-results/gpu/coarse/report.html
+2026-11-18 14:46:22,595 Total time passed: 4m 30s
+======================================================================
+To view report.html, serve the output directory:
+  python -m http.server -d example-results/gpu/coarse
+and open http://localhost:8000/report.html
+======================================================================
