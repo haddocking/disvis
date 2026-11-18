@@ -1,12 +1,22 @@
 # DisVis test cases
 <!-- --8<-- [start:cases] -->
 
-Two test cases, each with reference results and timings on different hardware.
+Three test cases, each with reference results; the first two also with
+timings on different hardware.
 
 | Test case                          | Fixed chain  | Scanning chain | Restraints                 |
 | ---------------------------------- | ------------ | -------------- | -------------------------- |
 | `PRE5-PUP2-complex`                | `O14250.pdb` | `Q9UT97.pdb`   | 7 cross-links              |
 | `RNA-polymerase-II/A-E`            | `1wcm_A.pdb` | `1wcm_E.pdb`   | 8 cross-links (from XLdb)  |
+| `E2A-HPR`                          | `e2aP_1F3G.pdb` | `hpr_1.pdb` | 20 ambiguous interaction restraints (HADDOCK format) |
+
+`E2A-HPR` comes from the protein-protein docking example of HADDOCK3
+(`examples/docking-protein-protein/data`): E2A (PDB 1F3G) and the first
+model of the HPr NMR ensemble, without hydrogens, with the ambiguous
+interaction restraints `e2a-hpr_air.tbl`. Their upper bound is 3.9 Å, a
+carbon-carbon contact, instead of the 2 Å used by HADDOCK (see the
+restraints section of the DisVis README). In the crystal structure of the
+complex (PDB 1GGR), 16 of the 20 restraints have an atom pair within 3.9 Å.
 
 ## Running the test cases
 
@@ -24,11 +34,12 @@ disvis O14250.pdb Q9UT97.pdb restraints.dat -a 5.27 -vs 1 -p 8 -d fine
 ```
 
 Use `-g` instead of `-p 8` to run on the GPU (see `INSTALLATION.md`). For
-RNA polymerase II, use `1wcm_A.pdb 1wcm_E.pdb` as input. DisVis writes
+RNA polymerase II, use `1wcm_A.pdb 1wcm_E.pdb` as input, and for E2A-HPR
+`e2aP_1F3G.pdb hpr_1.pdb e2a-hpr_air.tbl`. DisVis writes
 `report.html`; view it with `python -m http.server -d coarse` and
 http://localhost:8000/report.html.
 
-`check_test_cases.py` runs both test cases and compares the
+`check_test_cases.py` runs the test cases and compares the
 output files byte for byte with the reference results (the report is not
 compared), e.g. from the repository root:
 
@@ -51,6 +62,7 @@ Windows.
   6000 Ada, Python 3.14), made with the clFFT library. The GPU FFTs now use
   VkFFT (pyvkfft), which gives byte-identical output for all four runs on the
   RTX 6000 Ada, the GTX 1080 Ti and the Apple M2 Pro GPU.
+* E2A-HPR has the coarse results only.
 * PRE5-PUP2 only, `cpu/coarse-is-oa`: the coarse CPU run with
   `-is selection.res -oa` (occupancy grids and interaction analysis);
   its other output files are identical to `cpu/coarse`.

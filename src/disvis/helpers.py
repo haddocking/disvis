@@ -1,8 +1,12 @@
 """Input parsers and other helper functions."""
 
 from argparse import ArgumentTypeError
+from fnmatch import fnmatchcase
 import json
 from math import isfinite
+import re
+
+import numpy as np
 
 try:
     import pyopencl as cl
@@ -104,18 +108,25 @@ def parse_interaction_selection(fname, pdb1, pdb2):
 
 
 def parse_restraints(fname, pdb1, pdb2):
-    """Parse a restraints file.
+    """Parse a restraints file, in the DisVis or the HADDOCK format.
 
-    Each line gives chain, residue number and atom name in pdb1, the same
-    in pdb2, and the minimum and maximum distance. Returns a list of
-    [pdb1 selection, pdb2 selection, mindis, maxdis].
+    In the DisVis format, each line gives chain, residue number and atom
+    name in pdb1, the same in pdb2, and the minimum and maximum distance.
+    A file with assign statements is read in the HADDOCK format (see
+    parse_tbl). Returns a list of [pdb1 points, pdb2 points, mindis,
+    maxdis]: a restraint is satisfied when any pair of points (rows of the
+    two (npairs, 3) arrays) lies between mindis and maxdis. A DisVis
+    restraint has one pair, the centers of its two selections.
     """
     with open(fname, encoding='utf-8') as fid:
-        lines = fid.readlines()
+        text = fid.read()
+
+    if re.search(r'^\s*assign\b', text, re.IGNORECASE | re.MULTILINE):
+        return parse_tbl(text, pdb1, pdb2)
 
     dist_restraints = []
 
-    for raw_line in lines:
+    for raw_line in text.splitlines():
         # ignore comments and empty lines
         line = raw_line.strip()
         if line.startswith('#') or not line:
@@ -145,10 +156,146 @@ def parse_restraints(fname, pdb1, pdb2):
             )
 
         dist_restraints.append(
-            [pdb1_sel, pdb2_sel, float(mindis), float(maxdis)]
+            [
+                pdb1_sel.center.reshape(1, 3),
+                pdb2_sel.center.reshape(1, 3),
+                float(mindis),
+                float(maxdis),
+            ]
         )
 
     return dist_restraints
+
+
+def parse_tbl(text, pdb1, pdb2):
+    """Parse restraints in the HADDOCK (CNS) format.
+
+    Each restraint is assign (sel1) (sel2) d dminus dplus, optionally
+    followed by or (sel3) (sel4) ..., for distances between d - dminus and
+    d + dplus; ! starts a comment. Selections combine segid (matched
+    against the chain), resid (a number or a range first:last), name and
+    resname (* is a wildcard), all, not, and, or and parentheses. sel1 is
+    taken in pdb1 and sel2 in pdb2, or the reverse when sel1 or sel2 has no
+    atoms in its structure. Every atom of sel1 is paired with every atom of
+    sel2. Returns restraints as parse_restraints.
+    """
+    parser = _TblParser(text)
+    dist_restraints = []
+    while not parser.done():
+        pairs, mindis, maxdis = parser.restraint()
+
+        coor1 = []
+        coor2 = []
+        for sel1, sel2 in pairs:
+            mask1, mask2 = sel1(pdb1), sel2(pdb2)
+            if not (mask1.any() and mask2.any()):
+                mask1, mask2 = sel2(pdb1), sel1(pdb2)
+            if not (mask1.any() and mask2.any()):
+                raise ValueError(
+                    "A restraint selection was not found in restraint:\n"
+                    "{:s}".format(parser.current())
+                )
+            n1, n2 = mask1.sum(), mask2.sum()
+            coor1.append(np.repeat(pdb1.coor[mask1], n2, axis=0))
+            coor2.append(np.tile(pdb2.coor[mask2], (n1, 1)))
+
+        dist_restraints.append(
+            [np.concatenate(coor1), np.concatenate(coor2), mindis, maxdis]
+        )
+
+    return dist_restraints
+
+
+class _TblParser:
+    """Read the restraints of a HADDOCK restraints file one by one.
+
+    A selection is returned as a function that gives the atom mask of a
+    structure.
+    """
+
+    def __init__(self, text):
+        self.tokens = re.findall(r'[()]|[^\s()]+', re.sub(r'!.*', '', text))
+        self.pos = 0
+        self.start = 0
+
+    def done(self):
+        return self.pos == len(self.tokens)
+
+    def current(self):
+        """Return the text of the restraint read so far."""
+        return ' '.join(self.tokens[self.start : self.pos])
+
+    def peek(self):
+        return None if self.done() else self.tokens[self.pos].lower()
+
+    def take(self, expected=None):
+        if self.done():
+            raise ValueError("Restraints file ends in a restraint.")
+        token = self.tokens[self.pos]
+        self.pos += 1
+        if expected is not None and token.lower() != expected:
+            raise ValueError(
+                "Expected '{:s}' instead of '{:s}' in restraint:\n{:s}".format(
+                    expected, token, self.current()
+                )
+            )
+        return token
+
+    def restraint(self):
+        """Return the selection pairs, mindis and maxdis of a restraint."""
+        self.start = self.pos
+        self.take('assign')
+        pairs = [(self.expression(), self.expression())]
+        d, dminus, dplus = (float(self.take()) for _ in range(3))
+        while self.peek() == 'or':
+            self.take()
+            pairs.append((self.expression(), self.expression()))
+        return pairs, max(d - dminus, 0.0), d + dplus
+
+    def expression(self):
+        terms = [self.term()]
+        while self.peek() == 'or':
+            self.take()
+            terms.append(self.term())
+        return lambda pdb: np.logical_or.reduce([t(pdb) for t in terms])
+
+    def term(self):
+        factors = [self.factor()]
+        while self.peek() == 'and':
+            self.take()
+            factors.append(self.factor())
+        return lambda pdb: np.logical_and.reduce([f(pdb) for f in factors])
+
+    def factor(self):
+        keyword = self.take().lower()
+        if keyword == '(':
+            sel = self.expression()
+            self.take(')')
+            return sel
+        if keyword == 'not':
+            sel = self.factor()
+            return lambda pdb: ~sel(pdb)
+        if keyword == 'all':
+            return lambda pdb: np.ones(pdb.natoms, bool)
+        value = self.take()
+        if keyword == 'segid':
+            return lambda pdb: pdb.data['chain'] == value
+        if keyword == 'resid':
+            first, _, last = value.partition(':')
+            first, last = int(first), int(last or first)
+            return lambda pdb: (
+                (pdb.data['resi'] >= first) & (pdb.data['resi'] <= last)
+            )
+        if keyword in ('name', 'resname'):
+            field = 'name' if keyword == 'name' else 'resn'
+            return lambda pdb: np.asarray(
+                [fnmatchcase(x, value) for x in pdb.data[field]], bool
+            )
+        raise ValueError(
+            "Unknown selection keyword '{:s}' in restraint:\n{:s}".format(
+                keyword, self.current()
+            )
+        )
 
 
 def dump_args(args, fname):

@@ -110,11 +110,12 @@ class TestKernels(TestCase):
         self.assertTrue(np.allclose(answer, self.cl_out.get()))
 
     def test_reduced_interspace(self):
-        k = self.p.program.reduced_interspace
-
+        # The first restraint is ambiguous, with two overlapping centers
         center = np.array(
-            [[0, 0, 0, 0], [0, 0, 0, 0], [2, 3, 4, 0]], dtype=np.float32
+            [[0, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0], [2, 3, 4, 0]],
+            dtype=np.float32,
         )
+        offsets = np.array([0, 2, 3, 4], dtype=np.int32)
         maxdis = [1, 2, 1]
         # Translations in the interaction space: all but the first slice
         interspace = np.ones(self.shape, dtype=np.int32)
@@ -122,31 +123,34 @@ class TestKernels(TestCase):
         # Accessible interaction space so far: 1 everywhere
         access = np.ones(self.shape, dtype=np.int32)
 
-        cl_center = cl_array.to_device(self.queue, center)
-        cl_mindis = cl_array.zeros(self.queue, 3, dtype=np.float32)
-        cl_maxdis = cl_array.to_device(
-            self.queue, np.array(maxdis, dtype=np.float32)
+        q = self.queue
+        cl_bits = cl_array.zeros(q, (1,) + self.shape, dtype=np.uint32)
+        cl_red = cl_array.zeros(q, self.shape, dtype=np.int32)
+        cl_access = cl_array.to_device(q, access)
+        self.p.restraint_bits(
+            q,
+            cl_array.to_device(q, center),
+            cl_array.to_device(q, np.array([0, 0, 1, 2], dtype=np.int32)),
+            cl_array.zeros(q, 3, dtype=np.float32),
+            cl_array.to_device(q, np.array(maxdis, dtype=np.float32)),
+            cl_bits,
         )
-        cl_interspace = cl_array.to_device(self.queue, interspace)
-        cl_red = cl_array.zeros(self.queue, self.shape, dtype=np.int32)
-        cl_access = cl_array.to_device(self.queue, access)
-
-        args = (
-            cl_center.data,
-            cl_mindis.data,
-            cl_maxdis.data,
-            cl_interspace.data,
-            cl_red.data,
-            cl_access.data,
+        self.p.reduced_interspace(
+            q, cl_bits, cl_array.to_device(q, interspace), cl_red, cl_access
         )
-        k(self.queue, (64,), None, *args)
 
         # Every translation in the interaction space counts the restraints
         # it is consistent with; the others are 0.
         z, y, x = np.indices(self.shape)
         answer = np.zeros(self.shape, dtype=np.int32)
-        for (cx, cy, cz, _), dmax in zip(center, maxdis, strict=True):
-            dis2 = (x - cx) ** 2 + (y - cy) ** 2 + (z - cz) ** 2
+        for n, dmax in enumerate(maxdis):
+            dis2 = np.min(
+                [
+                    (x - cx) ** 2 + (y - cy) ** 2 + (z - cz) ** 2
+                    for cx, cy, cz, _ in center[offsets[n] : offsets[n + 1]]
+                ],
+                axis=0,
+            )
             answer += dis2 <= dmax**2
         answer *= interspace
         self.assertTrue(np.array_equal(answer, cl_red.get()))
@@ -171,37 +175,24 @@ class TestKernels(TestCase):
         self.assertTrue(np.allclose(answer, cl_hist.get()))
 
     def test_count_violations(self):
-        k = self.p.program.count_violations
-
-        center = np.asarray(
-            [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype=np.float32
-        )
-        mindis2 = np.asarray([0, 0, 0], dtype=np.float32)
-        maxdis2 = np.asarray([1, 1, 1], dtype=np.float32)
         interspace = np.zeros(self.shape, dtype=np.int32)
         interspace[-1, 0, 0] = 1
         interspace[-1, -1, 0] = 2
         interspace[-1, -1, -1] = 2
+        # Restraint 1 is consistent at the last translation only
+        bits = np.zeros((1,) + self.shape, dtype=np.uint32)
+        bits[0, -1, -1, -1] = 2
 
-        cl_center = cl_array.to_device(self.queue, center)
-        cl_mindis2 = cl_array.to_device(self.queue, mindis2)
-        cl_maxdis2 = cl_array.to_device(self.queue, maxdis2)
-        cl_interspace = cl_array.to_device(self.queue, interspace)
         cl_viol = cl_array.zeros(
             self.queue, self.values['nrestraints'] ** 2, dtype=np.int32
         )
-
-        args = (
-            cl_center.data,
-            cl_mindis2.data,
-            cl_maxdis2.data,
-            cl_interspace.data,
-            cl_viol.data,
+        self.p.count_violations(
+            self.queue,
+            cl_array.to_device(self.queue, bits),
+            cl_array.to_device(self.queue, interspace),
+            cl_viol,
         )
-        gws = (10, 10, 10)
-        lws = (10, 1, 1)
-        k(self.queue, gws, lws, *args)
-        answer = [[1, 1, 1], [2, 2, 2], [0, 0, 0]]
+        answer = [[1, 1, 1], [2, 1, 2], [0, 0, 0]]
         self.assertTrue(np.allclose(answer, cl_viol.get().reshape(3, 3)))
 
     def test_count_interactions(self):

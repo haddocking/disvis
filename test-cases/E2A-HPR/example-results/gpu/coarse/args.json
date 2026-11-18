@@ -1,0 +1,19 @@
+{
+    "angle": 9.72,
+    "delimiter": null,
+    "directory": "example-results/gpu/coarse",
+    "gpu": true,
+    "interaction_radius": 3.0,
+    "interaction_restraints_cutoff": null,
+    "interaction_selection": null,
+    "ligand": "hpr_1.pdb",
+    "max_clash": 200,
+    "min_interaction": 300,
+    "nproc": 1,
+    "occupancy_analysis": false,
+    "progress": true,
+    "receptor": "e2aP_1F3G.pdb",
+    "report": true,
+    "restraints": "e2a-hpr_air.tbl",
+    "voxelspacing": 2.0
+}

@@ -57,22 +57,18 @@ def count_interactions(np.ndarray[np.int32_t, ndim=3] interaction_space,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def count_violations(np.ndarray[np.float64_t, ndim=2] points,
-                     np.ndarray[np.float64_t, ndim=1] mindis,
-                     np.ndarray[np.float64_t, ndim=1] maxdis,
-                     np.ndarray[np.int32_t, ndim=3] interspace,
+def count_violations(np.ndarray[np.int32_t, ndim=3] interspace,
+                     np.ndarray[np.uint8_t, ndim=4] consistent_bits,
                      double weight,
                      np.ndarray[np.float64_t, ndim=2] violations):
     """Count how often each restraint is violated.
 
     For every ligand position in interspace consistent with n > 0
-    restraints, weight is added to violations[n - 1, i] when the position
-    is not between mindis[i] and maxdis[i] from points[i], the center of
-    restraint i.
+    restraints, weight is added to violations[n - 1, i] when bit i of
+    consistent_bits at that position (set by distance_restraint) is not set.
     """
     cdef:
         unsigned int x, y, z, i
-        double distance2, mindis2, maxdis2
 
     for z in range(interspace.shape[0]):
         for y in range(interspace.shape[1]):
@@ -82,13 +78,7 @@ def count_violations(np.ndarray[np.float64_t, ndim=2] points,
                     continue
 
                 for i in range(violations.shape[0]):
-                    distance2 = ((x - points[i, 0])**2
-                                 + (y - points[i, 1])**2
-                                 + (z - points[i, 2])**2)
-                    mindis2 = mindis[i]**2
-                    maxdis2 = maxdis[i]**2
-
-                    if distance2 < mindis2 or distance2 > maxdis2:
+                    if not consistent_bits[z, y, x, i >> 3] & (1 << (i & 7)):
                         violations[interspace[z, y, x] - 1, i] += weight
 
 
@@ -234,51 +224,63 @@ def binary_erosion(np.ndarray[np.float64_t, ndim=3] image,
 
 @cython.boundscheck(False)
 def distance_restraint(np.ndarray[np.float64_t, ndim=2] points,
+                       np.ndarray[np.int32_t, ndim=1] offsets,
                        np.ndarray[np.float64_t, ndim=1] mindis,
                        np.ndarray[np.float64_t, ndim=1] maxdis,
                        np.ndarray[np.int32_t, ndim=3] out,
+                       np.ndarray[np.uint8_t, ndim=4] consistent_bits,
                        ):
-    """Add 1 to out between mindis[n] and maxdis[n] from each point n.
+    """Add 1 to out where each restraint n is consistent.
 
-    The result counts, for each ligand position, the number of consistent
-    distance restraints. points holds the restraint centers as (x, y, z).
-    Grid points outside out are skipped. Returns out.
+    Restraint n is consistent between mindis[n] and maxdis[n] from any of
+    its points, points[offsets[n]] to points[offsets[n + 1] - 1], given as
+    (x, y, z). The result counts, for each ligand position, the number of
+    consistent distance restraints; bit n of consistent_bits[z, y, x] is set
+    where restraint n is consistent, so that it is counted once. Grid points
+    outside out are skipped. Returns out.
     """
     cdef:
-        unsigned int n
+        unsigned int n, p
         int x, y, z, xmin, ymin, zmin, xmax, ymax, zmax
+        unsigned char byte, bit
         double mindis2, maxdis2
         double z2, y2z2, x2y2z2
 
-    for n in range(points.shape[0]):
+    for n in range(offsets.shape[0] - 1):
 
         mindis2 = mindis[n]**2
         maxdis2 = maxdis[n]**2
+        byte = n >> 3
+        bit = 1 << (n & 7)
 
-        xmin = max(<int> ceil(points[n, 0] - maxdis[n]), 0)
-        ymin = max(<int> ceil(points[n, 1] - maxdis[n]), 0)
-        zmin = max(<int> ceil(points[n, 2] - maxdis[n]), 0)
+        for p in range(offsets[n], offsets[n + 1]):
 
-        xmax = min(<int> floor(points[n, 0] + maxdis[n]), out.shape[2] - 1)
-        ymax = min(<int> floor(points[n, 1] + maxdis[n]), out.shape[1] - 1)
-        zmax = min(<int> floor(points[n, 2] + maxdis[n]), out.shape[0] - 1)
+            xmin = max(<int> ceil(points[p, 0] - maxdis[n]), 0)
+            ymin = max(<int> ceil(points[p, 1] - maxdis[n]), 0)
+            zmin = max(<int> ceil(points[p, 2] - maxdis[n]), 0)
 
-        for z in range(zmin, zmax + 1):
+            xmax = min(<int> floor(points[p, 0] + maxdis[n]), out.shape[2] - 1)
+            ymax = min(<int> floor(points[p, 1] + maxdis[n]), out.shape[1] - 1)
+            zmax = min(<int> floor(points[p, 2] + maxdis[n]), out.shape[0] - 1)
 
-            z2 = (z - points[n, 2])**2
-            if z2 > maxdis2:
-                continue
+            for z in range(zmin, zmax + 1):
 
-            for y in range(ymin, ymax + 1):
-
-                y2z2 = (y - points[n, 1])**2 + z2
-                if y2z2 > maxdis2:
+                z2 = (z - points[p, 2])**2
+                if z2 > maxdis2:
                     continue
 
-                for x in range(xmin, xmax + 1):
+                for y in range(ymin, ymax + 1):
 
-                    x2y2z2 = (x - points[n, 0])**2 + y2z2
-                    if x2y2z2 <= maxdis2 and x2y2z2 >= mindis2:
-                        out[z, y, x] += 1
+                    y2z2 = (y - points[p, 1])**2 + z2
+                    if y2z2 > maxdis2:
+                        continue
+
+                    for x in range(xmin, xmax + 1):
+
+                        x2y2z2 = (x - points[p, 0])**2 + y2z2
+                        if (x2y2z2 <= maxdis2 and x2y2z2 >= mindis2
+                                and not consistent_bits[z, y, x, byte] & bit):
+                            consistent_bits[z, y, x, byte] |= bit
+                            out[z, y, x] += 1
 
     return out

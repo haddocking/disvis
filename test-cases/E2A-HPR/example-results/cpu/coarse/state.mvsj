@@ -1,0 +1,2030 @@
+{
+  "kind": "multiple",
+  "metadata": {
+    "description": "DisVis results",
+    "timestamp": "2026-11-18T13:41:32.552050+00:00",
+    "version": "1.8"
+  },
+  "snapshots": [
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 19.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 20 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **20 of 20** restraints: 21 complexes (4.65e-05 %).",
+        "description_format": "markdown",
+        "key": "n20",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 18.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 19 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **19 of 20** restraints: 192 complexes (0.000425 %).",
+        "description_format": "markdown",
+        "key": "n19",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 17.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 18 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **18 of 20** restraints: 648 complexes (0.00143 %).",
+        "description_format": "markdown",
+        "key": "n18",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 16.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 17 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **17 of 20** restraints: 1942 complexes (0.0043 %).",
+        "description_format": "markdown",
+        "key": "n17",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 15.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 16 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **16 of 20** restraints: 5195 complexes (0.0115 %).",
+        "description_format": "markdown",
+        "key": "n16",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 14.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 15 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **15 of 20** restraints: 12488 complexes (0.0277 %).",
+        "description_format": "markdown",
+        "key": "n15",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 13.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 14 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **14 of 20** restraints: 26608 complexes (0.0589 %).",
+        "description_format": "markdown",
+        "key": "n14",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 12.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 13 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **13 of 20** restraints: 50636 complexes (0.112 %).",
+        "description_format": "markdown",
+        "key": "n13",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 11.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 12 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **12 of 20** restraints: 91156 complexes (0.202 %).",
+        "description_format": "markdown",
+        "key": "n12",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 10.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 11 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **11 of 20** restraints: 159080 complexes (0.352 %).",
+        "description_format": "markdown",
+        "key": "n11",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 9.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 10 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **10 of 20** restraints: 268203 complexes (0.594 %).",
+        "description_format": "markdown",
+        "key": "n10",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 8.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 9 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **9 of 20** restraints: 437137 complexes (0.968 %).",
+        "description_format": "markdown",
+        "key": "n9",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 7.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 8 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **8 of 20** restraints: 698311 complexes (1.55 %).",
+        "description_format": "markdown",
+        "key": "n8",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 6.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 7 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **7 of 20** restraints: 1092769 complexes (2.42 %).",
+        "description_format": "markdown",
+        "key": "n7",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 5.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 6 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **6 of 20** restraints: 1656674 complexes (3.67 %).",
+        "description_format": "markdown",
+        "key": "n6",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 4.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 5 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **5 of 20** restraints: 2416146 complexes (5.35 %).",
+        "description_format": "markdown",
+        "key": "n5",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 3.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 4 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **4 of 20** restraints: 3377836 complexes (7.48 %).",
+        "description_format": "markdown",
+        "key": "n4",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 2.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 3 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **3 of 20** restraints: 4625159 complexes (10.2 %).",
+        "description_format": "markdown",
+        "key": "n3",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 1.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 2 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **2 of 20** restraints: 6345531 complexes (14 %).",
+        "description_format": "markdown",
+        "key": "n2",
+        "linger_duration_ms": 1000
+      }
+    },
+    {
+      "root": {
+        "kind": "root",
+        "children": [
+          {
+            "kind": "download",
+            "params": {
+              "url": "e2aP_1F3G.pdb"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "pdb"
+                },
+                "children": [
+                  {
+                    "kind": "structure",
+                    "params": {
+                      "type": "model"
+                    },
+                    "children": [
+                      {
+                        "kind": "component",
+                        "params": {
+                          "selector": "all"
+                        },
+                        "children": [
+                          {
+                            "kind": "focus",
+                            "params": {
+                              "radius_factor": 2
+                            }
+                          },
+                          {
+                            "kind": "representation",
+                            "params": {
+                              "type": "cartoon"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "download",
+            "params": {
+              "url": "accessible_interaction_space.mrc"
+            },
+            "children": [
+              {
+                "kind": "parse",
+                "params": {
+                  "format": "map"
+                },
+                "children": [
+                  {
+                    "kind": "volume",
+                    "params": {},
+                    "children": [
+                      {
+                        "kind": "volume_representation",
+                        "params": {
+                          "type": "isosurface",
+                          "absolute_isovalue": 0.5
+                        },
+                        "children": [
+                          {
+                            "kind": "color",
+                            "params": {
+                              "color": "darkslategray"
+                            }
+                          },
+                          {
+                            "kind": "opacity",
+                            "params": {
+                              "opacity": 0.7
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "metadata": {
+        "title": "At least 1 restraints",
+        "description": "Accessible interaction space (grey) of the center of mass of the scanning chain, for complexes consistent with at least **1 of 20** restraints: 8793236 complexes (19.5 %).",
+        "description_format": "markdown",
+        "key": "n1",
+        "linger_duration_ms": 1000
+      }
+    }
+  ]
+}

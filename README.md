@@ -124,6 +124,38 @@ should be longer than or equal to 10A and smaller than or equal to 20A.
 Comments can be added by starting the line with the pound sign (#) and empty
 lines are ignored.
 
+#### HADDOCK restraints
+
+DisVis also reads restraint files in the HADDOCK (CNS) format, recognised by
+their `assign` statements, including ambiguous restraints:
+
+```text
+! active residue 18 of chain A, passive residues 27 and 30 of chain F
+assign (segid A and resid 18) ((segid F and resid 27) or (segid F and resid 30)) 3.9 3.9 0.0
+assign (segid A and resid 22 and name CA) (segid F and resid 40:42 and name CA) 15.0 5.0 5.0
+  or (segid A and resid 24 and name CA) (segid F and resid 40:42 and name CA)
+```
+
+Each restraint `assign (sel1) (sel2) d dminus dplus` should be between
+`d - dminus` and `d + dplus`; `or (sel3) (sel4)` lines add further selection
+pairs to the restraint, and `!` starts a comment. Selections can use `segid`
+(matched against the chain identifier), `resid` (a number or a range such as
+`40:42`), `name` and `resname` (`*` is a wildcard), `all`, `not`, `and`, `or`
+and parentheses. The first selection is taken in the fixed chain and the
+second in the scanning chain; when one of them has no atoms there, the
+other way round, so restraints can be given in both directions.
+
+A restraint is consistent when **any** atom of its first selection and atom
+of its second selection lie within the distance range. This differs from
+HADDOCK, which combines all atom pairs into an effective distance,
+(Σ r<sup>-6</sup>)<sup>-1/6</sup>, shorter than the shortest atom-atom
+distance. The upper bounds used in HADDOCK, such as 2 Å for ambiguous
+interaction restraints, are therefore too short for DisVis: use instead an
+upper bound that two atoms in contact can reach, e.g. 3.9 Å, a
+carbon-carbon contact (see the `E2A-HPR` test case). The search time
+grows with the number of atom pairs of the restraints; selecting fewer atoms
+(e.g. `name CA`) keeps it short.
+
 
 ### Options
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Restraint files in the HADDOCK (CNS) format (`assign` statements), next to
+  the DisVis format, including ambiguous restraints: a restraint is
+  consistent when any atom pair of its selections is within the distance
+  range. Upper bounds must therefore be longer than in HADDOCK, which uses an
+  r<sup>-6</sup>-summed effective distance (see README) - Issue #61
+- New test case `E2A-HPR`, with the ambiguous interaction restraints of the
+  HADDOCK3 protein-protein docking example - Issue #61
+
 ## 3.1.1
 
 - report.html: the violations table shows the row of complexes consistent

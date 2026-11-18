@@ -18,7 +18,7 @@ with warnings.catch_warnings():
     warnings.filterwarnings(
         'ignore', 'Using extra keyword arguments on `Field`'
     )
-    from disvis.report import generate_report
+    from disvis.report import _restraint_labels, generate_report
 
 
 class TestReport(TestCase):
@@ -94,6 +94,19 @@ class TestReport(TestCase):
                 with open(fname, encoding='utf-8') as f:
                     html.append(f.read())
         self.assertEqual(html[0], html[1])
+
+    def test_tbl_labels(self):
+        # HADDOCK restraints are numbered, also over several lines.
+        tbl = """! assign (resid 1) (resid 2) 2.0 2.0 0.0
+assign (resid 27) (resid 18) 2.0 2.0 0.0
+  or (resid 28) (resid 18)
+ASSIGN (resid 29)
+       (resid 18) 2.0 2.0 0.0
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            with open(join(directory, 'restraints.tbl'), 'w') as f:
+                f.write(tbl)
+            self.assertEqual(_restraint_labels(f.name), ['1', '2'])
 
 
 if __name__ == '__main__':
