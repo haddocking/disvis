@@ -12,7 +12,12 @@ import numpy as np
 
 from disvis.pdb import PDB
 from disvis.disvis import DisVis
-from disvis.helpers import _TblParser, parse_restraints, positive_float
+from disvis.helpers import (
+    _TblParser,
+    parse_restraints,
+    parse_tbl,
+    positive_float,
+)
 from disvis.volume import radix235
 
 DATA = join(dirname(__file__), 'data')
@@ -198,7 +203,8 @@ class TestInputChecks(TestCase):
         pdb1 = PDB.fromfile(join(DATA, 'O14250.pdb'))
         pdb2 = PDB.fromfile(join(DATA, 'Q9UT97.pdb'))
         # The first restraint is the first line of restraints.dat. Residue
-        # 3 is only in pdb1, so the selections of the second are swapped.
+        # 3 is only in pdb1, so the second restraint is read reversed, its
+        # or pair too.
         tbl = """! HADDOCK restraints
 assign (segid A and resid 27 and name CA)
        (segid A and resid 18 and name CA) 10.0 10.0 13.0
@@ -218,8 +224,8 @@ assign (resid 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
         r1, r2, mindis, maxdis = restraints[1]
         res3 = pdb1.select('resi', 3).data['name']
         n3 = sum(name.startswith('C') for name in res3)
-        n125 = pdb2.select('resi', 125).natoms - 1
-        self.assertEqual(r1.shape, (n3 + 2 * n125, 3))
+        n125 = pdb1.select('resi', 125).natoms - 1
+        self.assertEqual(r1.shape, (n3 + n125 * 2, 3))
         self.assertTrue(
             np.array_equal(
                 r2[0], pdb2.select('resi', 30).select('name', 'CA').coor[0]
@@ -233,16 +239,33 @@ assign (resid 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
             '1 of 2 restraints read with the first selection in the '
             'scanning chain',
         )
+        # Residue 3 is not in pdb2: in neither direction for both pairs
+        mixed = 'assign (resid 3) (resid 30) 2 2 0 or (resid 30) (resid 3)'
+        with self.assertRaises(ValueError):
+            parse_tbl(mixed, pdb1, pdb2)
 
     def test_tbl_selection(self):
         # CNS precedence: not before and before or
         pdb = PDB.fromfile(join(DATA, 'O14250.pdb'))
         resi, ca = pdb.data['resi'], pdb.data['name'] == 'CA'
+        chain_a = pdb.data['chain'] == 'A'
+        gl = np.char.startswith(pdb.data['resn'].astype(str), 'GL')
         for sel, answer in (
             ('(not (resid 1 or resid 2) and name CA)', (resi > 2) & ca),
             (
                 '(resid 1 or resid 2 and name CA)',
                 (resi == 1) | (resi == 2) & ca,
+            ),
+            (
+                '((segid A and not resid 10) or (segid B and resid 20))',
+                chain_a & (resi != 10),
+            ),
+            (
+                '(resid 5:8 and not (name C* or resname GL*))',
+                (resi >= 5)
+                & (resi <= 8)
+                & ~np.char.startswith(pdb.data['name'].astype(str), 'C')
+                & ~gl,
             ),
         ):
             mask = _TblParser(sel).expression()(pdb)

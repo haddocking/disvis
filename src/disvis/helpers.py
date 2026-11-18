@@ -186,11 +186,13 @@ def parse_tbl(text, pdb1, pdb2, log=None):
     d + dplus; ! starts a comment. Selections combine segid (matched
     against the chain), resid (a number or a range first:last), name and
     resname (* is a wildcard), all, not, and, or and parentheses. sel1 is
-    taken in pdb1 and sel2 in pdb2, or the reverse when sel1 or sel2 has no
-    atoms in its structure. Every atom of sel1 is paired with every atom of
-    sel2. Returns restraints as parse_restraints. log, if given, is called
-    with the number of restraints read in the reverse direction and, when
-    pdb1 and pdb2 share chain identifiers, a warning.
+    taken in pdb1 and sel2 in pdb2 when every selection pair of the
+    restraint has atoms there, else the reverse for the whole restraint; a
+    restraint with atoms in neither direction raises a ValueError. Every
+    atom of sel1 is paired with every atom of sel2. Returns restraints as
+    parse_restraints. log, if given, is called with the number of
+    restraints read in the reverse direction and, when pdb1 and pdb2 share
+    chain identifiers, a warning.
     """
     shared = sorted(set(pdb1.chain_list) & set(pdb2.chain_list))
     if log and shared:
@@ -207,19 +209,21 @@ def parse_tbl(text, pdb1, pdb2, log=None):
     while not parser.done():
         pairs, mindis, maxdis = parser.restraint()
 
+        # One direction for the whole restraint: every pair must have atoms
+        masks = [(sel1(pdb1), sel2(pdb2)) for sel1, sel2 in pairs]
+        reversed_ = not all(m1.any() and m2.any() for m1, m2 in masks)
+        if reversed_:
+            masks = [(sel2(pdb1), sel1(pdb2)) for sel1, sel2 in pairs]
+            if not all(m1.any() and m2.any() for m1, m2 in masks):
+                raise ValueError(
+                    "The selections of a restraint were not found in the "
+                    "fixed and scanning chains, in either direction, in "
+                    "restraint:\n{:s}".format(parser.current())
+                )
+
         coor1 = []
         coor2 = []
-        reversed_ = False
-        for sel1, sel2 in pairs:
-            mask1, mask2 = sel1(pdb1), sel2(pdb2)
-            if not (mask1.any() and mask2.any()):
-                mask1, mask2 = sel2(pdb1), sel1(pdb2)
-                reversed_ = True
-            if not (mask1.any() and mask2.any()):
-                raise ValueError(
-                    "A restraint selection was not found in restraint:\n"
-                    "{:s}".format(parser.current())
-                )
+        for mask1, mask2 in masks:
             n1, n2 = mask1.sum(), mask2.sum()
             coor1.append(np.repeat(pdb1.coor[mask1], n2, axis=0))
             coor2.append(np.tile(pdb2.coor[mask2], (n1, 1)))
