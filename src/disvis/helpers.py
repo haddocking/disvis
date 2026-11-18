@@ -127,15 +127,23 @@ def parse_restraints(fname, pdb1, pdb2, log=None):
 
     dist_restraints = []
 
-    for raw_line in text.splitlines():
+    for n, raw_line in enumerate(text.splitlines(), 1):
         # ignore comments and empty lines
         line = raw_line.strip()
         if line.startswith('#') or not line:
             continue
 
-        (chain1, resi1, name1, chain2, resi2, name2, mindis, maxdis) = (
-            line.split()
-        )
+        words = line.split()
+        if len(words) != 8:
+            raise ValueError(
+                "Line {:d} of {:s} is not a restraint: a line gives the "
+                "chain, residue number and atom name in each structure, and "
+                "the minimum and maximum distance (HADDOCK restraint files "
+                "are recognised by their assign statements):\n{:s}".format(
+                    n, fname, line
+                )
+            )
+        chain1, resi1, name1, chain2, resi2, name2, mindis, maxdis = words
         pdb1_sel = (
             pdb1.select('chain', chain1)
             .select('resi', int(resi1))
@@ -165,6 +173,8 @@ def parse_restraints(fname, pdb1, pdb2, log=None):
             ]
         )
 
+    if not dist_restraints:
+        raise ValueError("No restraints found in {:s}".format(fname))
     return dist_restraints
 
 
