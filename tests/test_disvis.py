@@ -12,7 +12,7 @@ import numpy as np
 
 from disvis.pdb import PDB
 from disvis.disvis import DisVis
-from disvis.helpers import parse_restraints, positive_float
+from disvis.helpers import _TblParser, parse_restraints, positive_float
 from disvis.volume import radix235
 
 DATA = join(dirname(__file__), 'data')
@@ -208,7 +208,8 @@ assign (resid 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
         with TemporaryDirectory() as tmp:
             with open(join(tmp, 'restraints.tbl'), 'w') as f:
                 f.write(tbl)
-            restraints = parse_restraints(f.name, pdb1, pdb2)
+            messages = []
+            restraints = parse_restraints(f.name, pdb1, pdb2, messages.append)
         reference = parse_restraints(join(DATA, 'restraints.dat'), pdb1, pdb2)
 
         self.assertEqual(len(restraints), 2)
@@ -225,6 +226,27 @@ assign (resid 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
             )
         )
         self.assertEqual((mindis, maxdis), (0.0, 2.0))
+        # Both structures are chain A
+        self.assertTrue(messages[0].startswith('WARNING'))
+        self.assertEqual(
+            messages[1],
+            '1 of 2 restraints read with the first selection in the '
+            'scanning chain',
+        )
+
+    def test_tbl_selection(self):
+        # CNS precedence: not before and before or
+        pdb = PDB.fromfile(join(DATA, 'O14250.pdb'))
+        resi, ca = pdb.data['resi'], pdb.data['name'] == 'CA'
+        for sel, answer in (
+            ('(not (resid 1 or resid 2) and name CA)', (resi > 2) & ca),
+            (
+                '(resid 1 or resid 2 and name CA)',
+                (resi == 1) | (resi == 2) & ca,
+            ),
+        ):
+            mask = _TblParser(sel).expression()(pdb)
+            self.assertTrue(np.array_equal(mask, answer), sel)
 
     def test_positive_float(self):
         self.assertEqual(positive_float('0.5'), 0.5)

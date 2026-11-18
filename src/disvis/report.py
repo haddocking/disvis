@@ -6,7 +6,6 @@ e.g. with `python -m http.server -d <directory>`.
 """
 
 import csv
-import re
 import shutil
 from functools import partial
 from html import escape
@@ -21,7 +20,7 @@ from molviewspec import (
     create_builder,
 )
 
-from disvis.helpers import parse_interactions
+from disvis.helpers import count_tbl_restraints, parse_interactions
 
 MOLSTAR_VERSION = '5.13.1'
 # Number of residues in the lists of the most contacted residues.
@@ -132,11 +131,9 @@ def _restraint_labels(restraints):
     # Comments and empty lines as in helpers.parse_restraints.
     with open(restraints, encoding='utf-8') as f:
         text = f.read()
-    nassign = len(
-        re.findall(r'\bassign\b', re.sub(r'!.*', '', text), re.IGNORECASE)
-    )
-    if nassign:
-        return [str(n) for n in range(1, nassign + 1)]
+    ntbl = count_tbl_restraints(text)
+    if ntbl:
+        return [str(n) for n in range(1, ntbl + 1)]
     rows = [line.split() for line in text.splitlines()]
     return [
         '{}{}({})-{}{}({})'.format(*row[:6])

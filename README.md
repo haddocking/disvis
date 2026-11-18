@@ -143,7 +143,12 @@ pairs to the restraint, and `!` starts a comment. Selections can use `segid`
 `40:42`), `name` and `resname` (`*` is a wildcard), `all`, `not`, `and`, `or`
 and parentheses. The first selection is taken in the fixed chain and the
 second in the scanning chain; when one of them has no atoms there, the
-other way round, so restraints can be given in both directions.
+other way round, so restraints can be given in both directions, as in the
+AIR files of HADDOCK. DisVis reports in the log how many restraints were
+read the other way round. Different chain identifiers for the two chains
+are recommended: when they share one, `segid` cannot tell them apart, and a
+residue missing from one of them can make DisVis read a restraint in the
+wrong direction (DisVis then writes a warning to the log).
 
 A restraint is consistent when **any** atom of its first selection and atom
 of its second selection lie within the distance range. This differs from

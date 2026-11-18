@@ -1,6 +1,6 @@
 # Example
 
-The two test cases of DisVis are in the
+The three test cases of DisVis are in the
 [`test-cases`](https://github.com/haddocking/disvis/tree/main/test-cases)
 directory of the repository, with their input files and reference results.
 
@@ -18,3 +18,4 @@ view loads the files of the run):
 | PRE5-PUP2 | fine (5.27°, 1 Å) | [report](test-cases/PRE5-PUP2-complex/example-results/cpu/fine/report.html) |
 | RNA polymerase II | coarse (9.72°, 2 Å) | [report](test-cases/RNA-polymerase-II/A-E/example-results/cpu/coarse/report.html) |
 | RNA polymerase II | fine (5.27°, 1 Å) | [report](test-cases/RNA-polymerase-II/A-E/example-results/cpu/fine/report.html) |
+| E2A-HPR (HADDOCK restraints) | coarse (9.72°, 2 Å) | [report](test-cases/E2A-HPR/example-results/cpu/coarse/report.html) |

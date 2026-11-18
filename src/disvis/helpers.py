@@ -107,7 +107,7 @@ def parse_interaction_selection(fname, pdb1, pdb2):
     return pdb1_sel, pdb2_sel
 
 
-def parse_restraints(fname, pdb1, pdb2):
+def parse_restraints(fname, pdb1, pdb2, log=None):
     """Parse a restraints file, in the DisVis or the HADDOCK format.
 
     In the DisVis format, each line gives chain, residue number and atom
@@ -116,13 +116,14 @@ def parse_restraints(fname, pdb1, pdb2):
     parse_tbl). Returns a list of [pdb1 points, pdb2 points, mindis,
     maxdis]: a restraint is satisfied when any pair of points (rows of the
     two (npairs, 3) arrays) lies between mindis and maxdis. A DisVis
-    restraint has one pair, the centers of its two selections.
+    restraint has one pair, the centers of its two selections. log, if
+    given, is called with the messages of parse_tbl.
     """
     with open(fname, encoding='utf-8') as fid:
         text = fid.read()
 
-    if re.search(r'^\s*assign\b', text, re.IGNORECASE | re.MULTILINE):
-        return parse_tbl(text, pdb1, pdb2)
+    if count_tbl_restraints(text):
+        return parse_tbl(text, pdb1, pdb2, log)
 
     dist_restraints = []
 
@@ -167,7 +168,17 @@ def parse_restraints(fname, pdb1, pdb2):
     return dist_restraints
 
 
-def parse_tbl(text, pdb1, pdb2):
+def count_tbl_restraints(text):
+    """Return the number of restraints of a HADDOCK restraints file, or 0.
+
+    A HADDOCK restraints file has a line starting with assign.
+    """
+    if not re.search(r'^\s*assign\b', text, re.IGNORECASE | re.MULTILINE):
+        return 0
+    return sum(t.lower() == 'assign' for t in _TblParser(text).tokens)
+
+
+def parse_tbl(text, pdb1, pdb2, log=None):
     """Parse restraints in the HADDOCK (CNS) format.
 
     Each restraint is assign (sel1) (sel2) d dminus dplus, optionally
@@ -177,19 +188,33 @@ def parse_tbl(text, pdb1, pdb2):
     resname (* is a wildcard), all, not, and, or and parentheses. sel1 is
     taken in pdb1 and sel2 in pdb2, or the reverse when sel1 or sel2 has no
     atoms in its structure. Every atom of sel1 is paired with every atom of
-    sel2. Returns restraints as parse_restraints.
+    sel2. Returns restraints as parse_restraints. log, if given, is called
+    with the number of restraints read in the reverse direction and, when
+    pdb1 and pdb2 share chain identifiers, a warning.
     """
+    shared = sorted(set(pdb1.chain_list) & set(pdb2.chain_list))
+    if log and shared:
+        log(
+            "WARNING: the fixed and scanning chains share the chain "
+            "identifier(s) {:s}, so segid cannot tell them apart: the first "
+            "selection of a restraint is taken in the fixed chain unless it "
+            "has no atoms there. Different chain identifiers are "
+            "recommended.".format(', '.join(shared))
+        )
     parser = _TblParser(text)
     dist_restraints = []
+    nreversed = 0
     while not parser.done():
         pairs, mindis, maxdis = parser.restraint()
 
         coor1 = []
         coor2 = []
+        reversed_ = False
         for sel1, sel2 in pairs:
             mask1, mask2 = sel1(pdb1), sel2(pdb2)
             if not (mask1.any() and mask2.any()):
                 mask1, mask2 = sel2(pdb1), sel1(pdb2)
+                reversed_ = True
             if not (mask1.any() and mask2.any()):
                 raise ValueError(
                     "A restraint selection was not found in restraint:\n"
@@ -202,8 +227,20 @@ def parse_tbl(text, pdb1, pdb2):
         dist_restraints.append(
             [np.concatenate(coor1), np.concatenate(coor2), mindis, maxdis]
         )
+        nreversed += reversed_
 
+    if log:
+        log(
+            "{:d} of {:d} restraints read with the first selection in the "
+            "scanning chain".format(nreversed, len(dist_restraints))
+        )
     return dist_restraints
+
+
+def _fnmatch(values, pattern):
+    """Return the mask of the values that match pattern (* is a wildcard)."""
+    unique, inverse = np.unique(values, return_inverse=True)
+    return np.asarray([fnmatchcase(x, pattern) for x in unique], bool)[inverse]
 
 
 class _TblParser:
@@ -288,9 +325,7 @@ class _TblParser:
             )
         if keyword in ('name', 'resname'):
             field = 'name' if keyword == 'name' else 'resn'
-            return lambda pdb: np.asarray(
-                [fnmatchcase(x, value) for x in pdb.data[field]], bool
-            )
+            return lambda pdb: _fnmatch(pdb.data[field], value)
         raise ValueError(
             "Unknown selection keyword '{:s}' in restraint:\n{:s}".format(
                 keyword, self.current()

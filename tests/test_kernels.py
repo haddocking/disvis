@@ -130,7 +130,9 @@ class TestKernels(TestCase):
         self.p.restraint_bits(
             q,
             cl_array.to_device(q, center),
-            cl_array.to_device(q, np.array([0, 0, 1, 2], dtype=np.int32)),
+            cl_array.to_device(
+                q, np.repeat(np.arange(3, dtype=np.int32), np.diff(offsets))
+            ),
             cl_array.zeros(q, 3, dtype=np.float32),
             cl_array.to_device(q, np.array(maxdis, dtype=np.float32)),
             cl_bits,
@@ -158,6 +160,37 @@ class TestKernels(TestCase):
             np.array_equal(np.maximum(answer, access), cl_access.get())
         )
         self.assertGreater(answer.max(), 1)
+
+    def test_restraint_bits_33(self):
+        # Restraint 32, in the second word of bits, is the only one with
+        # its center in the grid.
+        values = dict(self.values, nrestraints=33)
+        p = Kernels(self.queue.context, values)
+        q = self.queue
+        center = np.full((33, 4), 100, dtype=np.float32)
+        center[32] = 0
+        interspace = np.ones(self.shape, dtype=np.int32)
+        cl_bits = cl_array.zeros(q, (2,) + self.shape, dtype=np.uint32)
+        cl_red = cl_array.zeros(q, self.shape, dtype=np.int32)
+        cl_interspace = cl_array.to_device(q, interspace)
+        p.restraint_bits(
+            q,
+            cl_array.to_device(q, center),
+            cl_array.arange(q, 33, dtype=np.int32),
+            cl_array.zeros(q, 33, dtype=np.float32),
+            cl_array.zeros(q, 33, dtype=np.float32) + 1,
+            cl_bits,
+        )
+        p.reduced_interspace(q, cl_bits, cl_interspace, cl_red, cl_red.copy())
+        cl_viol = cl_array.zeros(q, 33**2, dtype=np.int32)
+        p.count_violations(q, cl_bits, cl_red, cl_viol)
+
+        z, y, x = np.indices(self.shape)
+        answer = (x**2 + y**2 + z**2 <= 1).astype(np.int32)
+        self.assertTrue(np.array_equal(answer, cl_red.get()))
+        viol = cl_viol.get().reshape(33, 33)
+        self.assertTrue(np.all(viol[0, :32] == answer.sum()))
+        self.assertEqual(viol.sum(), 32 * answer.sum())
 
     def test_histogram(self):
         k = self.p.program.histogram
