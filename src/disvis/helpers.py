@@ -134,7 +134,11 @@ def parse_restraints(fname, pdb1, pdb2, log=None):
             continue
 
         words = line.split()
-        if len(words) != 8:
+        try:
+            chain1, resi1, name1, chain2, resi2, name2 = words[:6]
+            resi1, resi2 = int(resi1), int(resi2)
+            mindis, maxdis = (float(x) for x in words[6:])
+        except ValueError:
             raise ValueError(
                 "Line {:d} of {:s} is not a restraint: a line gives the "
                 "chain, residue number and atom name in each structure, and "
@@ -142,34 +146,32 @@ def parse_restraints(fname, pdb1, pdb2, log=None):
                 "are recognised by their assign statements):\n{:s}".format(
                     n, fname, line
                 )
-            )
-        chain1, resi1, name1, chain2, resi2, name2, mindis, maxdis = words
+            ) from None
         pdb1_sel = (
             pdb1.select('chain', chain1)
-            .select('resi', int(resi1))
+            .select('resi', resi1)
             .select('name', name1)
             .duplicate()
         )
         pdb2_sel = (
             pdb2.select('chain', chain2)
-            .select('resi', int(resi2))
+            .select('resi', resi2)
             .select('name', name2)
             .duplicate()
         )
 
         if pdb1_sel.natoms == 0 or pdb2_sel.natoms == 0:
             raise ValueError(
-                "A restraint selection was not found in line:\n{:s}".format(
-                    str(line)
-                )
+                "A restraint selection of line {:d} of {:s} was not found "
+                "in the structures:\n{:s}".format(n, fname, line)
             )
 
         dist_restraints.append(
             [
                 pdb1_sel.center.reshape(1, 3),
                 pdb2_sel.center.reshape(1, 3),
-                float(mindis),
-                float(maxdis),
+                mindis,
+                maxdis,
             ]
         )
 
