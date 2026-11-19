@@ -15,8 +15,10 @@ from disvis.disvis import Complexes, DisVis
 from disvis.helpers import (
     _TblParser,
     parse_restraints,
+    non_negative_int,
     parse_tbl,
     positive_float,
+    positive_int,
 )
 from disvis.rotations import proportional_orientations, quat_to_rotmat
 from disvis.volume import radix235
@@ -382,6 +384,15 @@ assi (resi 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
         ):
             mask = _TblParser(sel).expression()(pdb)
             self.assertTrue(np.array_equal(mask, answer), sel)
+
+    def test_integer_options(self):
+        self.assertEqual(non_negative_int('0'), 0)
+        self.assertEqual(positive_int('4'), 4)
+        for value in ('-1', '2.5', 'abc'):
+            with self.assertRaises(ArgumentTypeError):
+                non_negative_int(value)
+        with self.assertRaises(ArgumentTypeError):
+            positive_int('0')
 
     def test_positive_float(self):
         self.assertEqual(positive_float('0.5'), 0.5)

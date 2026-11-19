@@ -17,6 +17,7 @@ from disvis.disvis import Complexes
 from disvis.rotations import proportional_orientations, quat_to_rotmat
 from disvis.helpers import (
     dump_args,
+    non_negative_int,
     parse_interaction_selection,
     parse_restraints,
     percentage,
@@ -218,7 +219,7 @@ def parse_args():
         '--max-complexes',
         dest='max_complexes',
         metavar='<int>',
-        type=int,
+        type=non_negative_int,
         default=50000,
         help=(
             "With -wc, collect and write at most this number of complexes, "

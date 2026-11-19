@@ -13,7 +13,7 @@ from os.path import join
 
 import numpy as np
 
-from disvis.helpers import positive_float
+from disvis.helpers import non_negative_int, positive_float, positive_int
 from disvis.pdb import PDB
 
 
@@ -33,7 +33,7 @@ def parse_args():
     p.add_argument(
         '-n',
         '--number',
-        type=int,
+        type=non_negative_int,
         default=50000,
         metavar='<int>',
         help=(
@@ -53,7 +53,7 @@ def parse_args():
     p.add_argument(
         '-mp',
         '--min-population',
-        type=int,
+        type=positive_int,
         default=2,
         metavar='<int>',
         help='Minimum number of complexes in a cluster (default 2).',

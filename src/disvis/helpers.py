@@ -51,6 +51,25 @@ def positive_float(value):
     return number
 
 
+def non_negative_int(value):
+    """Return value as an int; an argparse type for integers >= 0."""
+    try:
+        number = int(value)
+    except ValueError:
+        number = -1
+    if number < 0:
+        raise ArgumentTypeError("{:s} is not an integer >= 0".format(value))
+    return number
+
+
+def positive_int(value):
+    """Return value as an int; an argparse type for integers > 0."""
+    number = non_negative_int(value)
+    if number == 0:
+        raise ArgumentTypeError("{:s} is not an integer > 0".format(value))
+    return number
+
+
 def percentage(value):
     """Return value as a float; an argparse type for percentages (0, 100]."""
     number = positive_float(value)
