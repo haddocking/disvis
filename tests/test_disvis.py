@@ -11,13 +11,16 @@ from unittest import TestCase, main
 import numpy as np
 
 from disvis.pdb import PDB
-from disvis.disvis import DisVis
+from disvis.disvis import Complexes, DisVis
 from disvis.helpers import (
     _TblParser,
     parse_restraints,
+    non_negative_int,
     parse_tbl,
     positive_float,
+    positive_int,
 )
+from disvis.rotations import proportional_orientations, quat_to_rotmat
 from disvis.volume import radix235
 
 DATA = join(dirname(__file__), 'data')
@@ -188,6 +191,73 @@ class TestDisVis(TestCase):
         dv._cpu_init()
         dv._cpu_search()
 
+    def collect(self, rotations, **options):
+        # The complexes of a search of the test structures
+        receptor = PDB.fromfile(join(DATA, 'O14250.pdb'))
+        ligand = PDB.fromfile(join(DATA, 'Q9UT97.pdb'))
+        dv = DisVis(print_callback=False)
+        dv.receptor, dv.ligand = receptor, ligand
+        dv.distance_restraints = parse_restraints(
+            join(DATA, 'restraints.dat'), receptor, ligand
+        )
+        dv.rotations = rotations
+        dv.voxelspacing = 2
+        dv.collect_complexes = True
+        for name, value in options.items():
+            setattr(dv, name, value)
+        dv.search()
+        return dv
+
+    def test_collect_complexes(self):
+        # Every complex collected, placed in A, is consistent with its number
+        # of restraints, the highest found or a percentage of it, and
+        # they are all collected.
+        dv = self.collect(quat_to_rotmat(proportional_orientations(40)[0]))
+        best = dv.complexes.most()
+        self.assertTrue(np.all(dv.complexes.consistent == best))
+        # The percentage of the highest number for best - 1 restraints
+        dv.complexes_percentage = 100 * (best - 1) / best
+        dv._collect_complexes()
+        c = dv.complexes
+        self.assertEqual(
+            len(c.rotation), dv.accessible_complexes[best - 1 :].sum()
+        )
+        self.assertEqual(len(c.rotation), c.counts[best - 1 :].sum())
+        for n, t, k in zip(
+            c.rotation, c.translation, c.consistent, strict=True
+        ):
+            placed = 0
+            for r, lig, mindis, maxdis in dv.distance_restraints:
+                placed_lig = (lig - dv.ligand.center) @ dv.rotations[n].T + t
+                dis = np.linalg.norm(r - placed_lig, axis=1).min()
+                placed += mindis <= dis <= maxdis
+            self.assertEqual(placed, k)
+
+    def test_collect_complexes_bounded(self):
+        # With max_complexes, the collection is bounded, and the sample
+        # selected from the collections of two halves of the rotations is
+        # that of all rotations.
+        rotations = quat_to_rotmat(proportional_orientations(40)[0])
+        half = len(rotations) // 2
+        options = {'complexes_percentage': 50, 'max_complexes': 20}
+        whole = self.collect(rotations, **options).complexes
+        parts = [
+            self.collect(rotations[:half], **options).complexes,
+            self.collect(rotations[half:], **options).complexes,
+        ]
+        self.assertGreater(whole.counts.sum(), 20)
+        self.assertLessEqual(
+            len(whole.rotation), 20 * np.count_nonzero(whole.counts)
+        )
+        merged = Complexes.concatenate(parts, [0, half])
+        for complexes in (whole, merged):
+            complexes.selected = complexes.select(50, 20)
+        (a, ta, na), (b, tb, nb) = whole.selected, merged.selected
+        self.assertEqual((ta, na), (tb, nb))
+        self.assertEqual(len(a.rotation), 20)
+        self.assertTrue(np.array_equal(a.rotation, b.rotation))
+        self.assertTrue(np.array_equal(a.key, b.key))
+
 
 class TestInputChecks(TestCase):
     def test_radix235(self):
@@ -203,12 +273,12 @@ class TestInputChecks(TestCase):
         pdb1 = PDB.fromfile(join(DATA, 'O14250.pdb'))
         pdb2 = PDB.fromfile(join(DATA, 'Q9UT97.pdb'))
         # The first restraint is the first line of restraints.dat. Residue
-        # 3 is only in pdb1, so the second restraint is read reversed, its
-        # or pair too.
+        # 3 is only in pdb1, so the second restraint (with keywords
+        # shortened as in CNS) is read reversed, its or pair too.
         tbl = """! HADDOCK restraints
 assign (segid A and resid 27 and name CA)
        (segid A and resid 18 and name CA) 10.0 10.0 13.0
-assign (resid 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
+assi (resi 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
   or (resid 122:123 and name CA) (resid 125 and not name CA)
 """
         with TemporaryDirectory() as tmp:
@@ -232,6 +302,14 @@ assign (resid 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
             )
         )
         self.assertEqual((mindis, maxdis), (0.0, 2.0))
+        # Upper distances shorter than min_maxdis are raised to it
+        messages = []
+        raised = parse_tbl(tbl, pdb1, pdb2, messages.append, min_maxdis=3.9)
+        self.assertEqual([r[3] for r in raised], [23.0, 3.9])
+        self.assertIn(
+            '1 of 2 restraints with an upper distance raised to 3.9 A',
+            messages,
+        )
         # Both structures are chain A
         self.assertTrue(messages[0].startswith('WARNING'))
         self.assertEqual(
@@ -306,6 +384,15 @@ assign (resid 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
         ):
             mask = _TblParser(sel).expression()(pdb)
             self.assertTrue(np.array_equal(mask, answer), sel)
+
+    def test_integer_options(self):
+        self.assertEqual(non_negative_int('0'), 0)
+        self.assertEqual(positive_int('4'), 4)
+        for value in ('-1', '2.5', 'abc'):
+            with self.assertRaises(ArgumentTypeError):
+                non_negative_int(value)
+        with self.assertRaises(ArgumentTypeError):
+            positive_int('0')
 
     def test_positive_float(self):
         self.assertEqual(positive_float('0.5'), 0.5)

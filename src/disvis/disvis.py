@@ -1,6 +1,7 @@
 """The DisVis search of the accessible interaction space."""
 
 from sys import stdout as _stdout
+import zlib
 from time import time as _time
 
 import numpy as np
@@ -28,6 +29,7 @@ except (ImportError, OSError):
     PYOPENCL = False
 
 from disvis import volume
+from .helpers import min_consistent
 from .libdisvis import (
     dilate_points,
     distance_restraint,
@@ -58,7 +60,12 @@ class DisVis:
     consistent restraints at each ligand position, and violations[n - 1, i]
     is the number of complexes consistent with n restraints that violate
     restraint i. With occupancy_analysis and with interaction selections,
-    occupancy_grids and interaction_matrix are also set.
+    occupancy_grids and interaction_matrix are also set. With
+    collect_complexes, complexes holds (see Complexes) the complexes
+    consistent with at least complexes_percentage percent of the highest
+    number of restraints found, at most max_complexes for each number of
+    consistent restraints; the ligand atoms of a complex are at
+    rotations[rotation] @ (x - ligand.center) + translation.
     """
 
     def __init__(self, fftw=True, print_callback=True):
@@ -81,6 +88,11 @@ class DisVis:
         self.interaction_distance = 10
         self.interaction_restraints_cutoff = None
         self.occupancy_analysis = False
+        # Collect the complexes consistent with at least
+        # complexes_percentage percent of the most restraints found
+        self.collect_complexes = False
+        self.complexes_percentage = 100
+        self.max_complexes = None
         self.queue = None
         # Rotations between waits for the GPU in the search: commands on
         # the queue run in order, so waiting after every step only leaves
@@ -98,6 +110,7 @@ class DisVis:
         self.accessible_interaction_space = None
         self.violations = None
         self.occupancy_grids = None
+        self.complexes = None
         self.interaction_matrix = None
 
     def add_distance_restraint(
@@ -127,6 +140,8 @@ class DisVis:
         else:
             self._gpu_init()
             self._gpu_search()
+        if self.collect_complexes:
+            self._collect_complexes()
 
         # Set the results
         self.accessible_interaction_space = volume.Volume(
@@ -490,26 +505,26 @@ class DisVis:
             self._interaction_matrix,
         )
 
+    def _rotation_interspace(self, rotmat):
+        # The number of consistent restraints of every translation of the
+        # ligand rotated by rotmat, in the interaction space
+        self._rotate_lcore(rotmat)
+        self._get_interaction_space()
+        self._get_restraints_center(rotmat)
+        self._get_restraint_space()
+        self._get_reduced_interspace()
+
     def _cpu_search(self):
 
         nrot = self.rotations.shape[0]
+        # The highest number of consistent restraints of each rotation
+        self._rotation_max = np.zeros(nrot, dtype=np.int32)
         time0 = _time()
         for n in range(nrot):
             rotmat = self.rotations[n]
             weight = self.weights[n]
-            # Rotate the ligand grid
-            self._rotate_lcore(rotmat)
-
-            self._get_interaction_space()
-
-            # Rotate the restraints
-            self._get_restraints_center(rotmat)
-
-            # Determine the consistent restraint space
-            self._get_restraint_space()
-
-            # Calculate the reduced accessible interaction
-            self._get_reduced_interspace()
+            self._rotation_interspace(rotmat)
+            self._record_rotation_max(n)
 
             # Perform some statistics, such as the number of restraint
             # violations and the number of accessible complexes consistent with
@@ -850,26 +865,23 @@ class DisVis:
             k.round(self._cl_tmp, self._cl_tmp)
             k.multiply_add2(self._cl_tmp, weight, self._cl_occ_grid[i])
 
+    def _cl_rotation_interspace(self, rotmat):
+        # As _rotation_interspace, on the GPU
+        self._cl_rotate_lcore(rotmat)
+        self._cl_get_interaction_space()
+        self._cl_get_restraints_center(rotmat)
+        self._cl_get_reduced_interspace()
+
     def _gpu_search(self):
 
         nrot = self.rotations.shape[0]
+        self._cl_rotation_max = cl_array.zeros(self.queue, nrot, np.int32)
         time0 = _time()
         for n in range(nrot):
             rotmat = self._cl_rotations[n]
             weight = np.float32(self.weights[n])
-
-            # Rotate the ligand
-            self._cl_rotate_lcore(rotmat)
-
-            # Calculate the clashing and interaction volume for each
-            # translation
-            self._cl_get_interaction_space()
-
-            # Rotate the restraints and determine the center point
-            self._cl_get_restraints_center(rotmat)
-
-            # Check for each complex how many restraints are consistent
-            self._cl_get_reduced_interspace()
+            self._cl_rotation_interspace(rotmat)
+            self._record_rotation_max(n)
 
             # Do some analysis such as counting complexes and violations
             self._cl_count_complexes(weight)
@@ -901,6 +913,7 @@ class DisVis:
         self._accessible_complexes[0] -= self._accessible_complexes[1:].sum()
 
         self._violations = self._cl_violations.get().astype(np.float64)
+        self._rotation_max = self._cl_rotation_max.get()
         self._cl_access_interspace.get(ary=self._access_interspace)
 
         if self.occupancy_analysis:
@@ -918,6 +931,170 @@ class DisVis:
                 self._interaction_matrix[i] = (
                     self._cl_interaction_matrix[i].get().astype(np.float64)
                 )
+
+    def _record_rotation_max(self, n):
+        # The highest number of consistent restraints of rotation n
+        if not self.collect_complexes:
+            return
+        if self.queue is None:
+            self._rotation_max[n] = self._red_interspace.max()
+        else:
+            self._cl_rotation_max[n : n + 1] = cl_array.max(
+                self._cl_red_interspace
+            ).reshape(1)
+
+    def _collect_complexes(self):
+        """Set complexes, from the rotations with the most restraints.
+
+        The rotations with complexes consistent with at least
+        complexes_percentage percent of the highest number of restraints of
+        the search are sampled again, on the same device, to find their
+        translations. With max_complexes, at most that number of complexes
+        is kept for each number of consistent restraints, those with the
+        smallest sampling keys.
+        """
+        threshold = max(
+            min_consistent(
+                self.complexes_percentage, int(self._rotation_max.max())
+            ),
+            1,
+        )
+        counts = np.zeros(self._nrestraints + 1, dtype=np.int64)
+        parts = []
+        nkept = 0
+        for n in np.flatnonzero(self._rotation_max >= threshold):
+            if self.queue is None:
+                self._rotation_interspace(self.rotations[n])
+                red = self._red_interspace.ravel()
+            else:
+                self._cl_rotation_interspace(self._cl_rotations[n])
+                red = self._cl_red_interspace.get().ravel()
+            voxel = np.flatnonzero(red >= threshold)
+            consistent = red[voxel]
+            counts += np.bincount(consistent, minlength=counts.size)
+            key = sampling_keys(self.rotations[n], voxel)
+            parts.append(
+                (
+                    np.full(voxel.size, n, dtype=np.int32),
+                    voxel,
+                    consistent,
+                    key,
+                )
+            )
+            nkept += voxel.size
+            # Bound the memory: prune when twice the sample is kept
+            if self.max_complexes and nkept > 2 * self.max_complexes:
+                parts = [_smallest_keys(parts, self.max_complexes)]
+                nkept = parts[0][0].size
+        if self.max_complexes:
+            parts = [_smallest_keys(parts, self.max_complexes)]
+        rotation, voxel, consistent, key = (
+            np.concatenate(
+                [part[i] for part in parts] or [np.zeros(0, np.int64)]
+            )
+            for i in range(4)
+        )
+        z, y, x = np.unravel_index(voxel, self._shape)
+        translation = (
+            np.stack([x, y, z], axis=1) * self.voxelspacing + self._origin
+        )
+        self.complexes = Complexes(
+            rotation.astype(np.int32), translation, consistent, key, counts
+        )
+
+
+class Complexes:
+    """Complexes found by a search, as collected with collect_complexes.
+
+    rotation is the index in rotations, translation the position of the
+    ligand center (in A), consistent the number of consistent restraints
+    and key the sampling key (see sampling_keys) of each complex; counts[n]
+    is the number of complexes found consistent with exactly n restraints,
+    also of those not kept.
+    """
+
+    def __init__(self, rotation, translation, consistent, key, counts):
+        self.rotation = rotation
+        self.translation = translation
+        self.consistent = consistent
+        self.key = key
+        self.counts = counts
+
+    @classmethod
+    def concatenate(cls, parts, offsets):
+        """Return the complexes of parts, with offsets added to rotation."""
+        return cls(
+            np.concatenate(
+                [p.rotation + o for p, o in zip(parts, offsets, strict=True)]
+            ),
+            np.concatenate([p.translation for p in parts]),
+            np.concatenate([p.consistent for p in parts]),
+            np.concatenate([p.key for p in parts]),
+            np.sum([p.counts for p in parts], axis=0),
+        )
+
+    def most(self):
+        """Return the highest number of consistent restraints found."""
+        found = np.flatnonzero(self.counts)
+        return int(found[-1]) if found.size else 0
+
+    def select(self, percentage, max_complexes=None):
+        """Return the complexes consistent with percentage of the most.
+
+        Returns the complexes consistent with at least that percentage of
+        the highest number of restraints found, rounded up, at most
+        max_complexes of them (those with the smallest keys), ordered by
+        rotation and key, and the threshold and number found.
+        """
+        threshold = max(min_consistent(percentage, self.most()), 1)
+        nfound = int(self.counts[threshold:].sum())
+        index = np.flatnonzero(self.consistent >= threshold)
+        if max_complexes and index.size > max_complexes:
+            smallest = np.argpartition(self.key[index], max_complexes - 1)
+            index = index[smallest[:max_complexes]]
+        index = index[np.lexsort((self.key[index], self.rotation[index]))]
+        selected = Complexes(
+            self.rotation[index],
+            self.translation[index],
+            self.consistent[index],
+            self.key[index],
+            self.counts,
+        )
+        return selected, threshold, nfound
+
+
+def sampling_keys(rotmat, voxel):
+    """Return a pseudo-random key for each complex of rotmat and voxel.
+
+    The key depends only on the rotation matrix and the voxel index, so
+    that a sample of the complexes with the smallest keys is the same for
+    any split of the rotations over jobs and on the CPU and the GPU.
+    """
+    seed = np.uint64(zlib.crc32(np.ascontiguousarray(rotmat).tobytes()))
+    x = (seed << np.uint64(32)) | np.asarray(voxel, dtype=np.uint64)
+    # splitmix64; the integer arithmetic wraps around
+    x = x + np.uint64(0x9E3779B97F4A7C15)
+    x = (x ^ (x >> np.uint64(30))) * np.uint64(0xBF58476D1CE4E5B9)
+    x = (x ^ (x >> np.uint64(27))) * np.uint64(0x94D049BB133111EB)
+    return x ^ (x >> np.uint64(31))
+
+
+def _smallest_keys(parts, size):
+    """Return the parts, for each number of restraints the size smallest keys.
+
+    parts are (rotation, voxel, consistent, key) array tuples.
+    """
+    rotation, voxel, consistent, key = (
+        np.concatenate([part[i] for part in parts]) for i in range(4)
+    )
+    keep = []
+    for n in np.unique(consistent):
+        index = np.flatnonzero(consistent == n)
+        if index.size > size:
+            index = index[np.argpartition(key[index], size - 1)[:size]]
+        keep.append(index)
+    keep = np.sort(np.concatenate(keep)) if keep else np.zeros(0, int)
+    return rotation[keep], voxel[keep], consistent[keep], key[keep]
 
 
 def grid_restraints(restraints, voxelspacing, origin, lcenter):
