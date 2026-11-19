@@ -13,10 +13,10 @@ import shlex
 import numpy as np
 
 from disvis import DisVis, PDB, Volume, __version__
+from disvis.disvis import Complexes
 from disvis.rotations import proportional_orientations, quat_to_rotmat
 from disvis.helpers import (
     dump_args,
-    min_consistent,
     parse_interaction_selection,
     parse_restraints,
     percentage,
@@ -219,10 +219,11 @@ def parse_args():
         dest='max_complexes',
         metavar='<int>',
         type=int,
-        default=None,
+        default=50000,
         help=(
-            "With -wc, write at most this number of complexes, a random "
-            "sample of them when more are found. Default is all."
+            "With -wc, collect and write at most this number of complexes, "
+            "a random sample of them when more are found (default 50000; 0 "
+            "for all)."
         ),
     )
 
@@ -314,6 +315,7 @@ def run_disvis_instance(
     dv.occupancy_analysis = args.occupancy_analysis
     dv.collect_complexes = args.write_complexes is not None
     dv.complexes_percentage = args.write_complexes
+    dv.max_complexes = args.max_complexes or None
 
     dv.search()
 
@@ -336,13 +338,7 @@ def run_disvis_instance(
 
     if dv.complexes is not None:
         fname = joiner('complexes_{:d}.npz'.format(n))
-        rotation, translation, consistent = dv.complexes
-        np.savez(
-            fname,
-            rotation=rotation,
-            translation=translation,
-            consistent=consistent,
-        )
+        np.savez(fname, **vars(dv.complexes))
 
     queue.put(dv.accessible_complexes)
 
@@ -480,22 +476,13 @@ def mp_cpu_disvis(  # noqa: C901
     results.complexes = None
     if args.write_complexes is not None:
         fname_complexes = joiner('complexes_{:d}.npz')
-        parts = [np.load(fname_complexes.format(n)) for n in range(jobs)]
-        complexes = (
-            np.concatenate(
-                [p['rotation'] + n * nrot_per_job for n, p in enumerate(parts)]
-            ),
-            np.concatenate([p['translation'] for p in parts]),
-            np.concatenate([p['consistent'] for p in parts]),
+        parts = []
+        for n in range(jobs):
+            with np.load(fname_complexes.format(n)) as part:
+                parts.append(Complexes(**part))
+        results.complexes = Complexes.concatenate(
+            parts, [n * nrot_per_job for n in range(jobs)]
         )
-        # Each job used its own highest number of restraints
-        consistent = complexes[2]
-        if consistent.size:
-            keep = consistent >= min_consistent(
-                args.write_complexes, consistent.max()
-            )
-            complexes = tuple(a[keep] for a in complexes)
-        results.complexes = complexes
 
     # Remove the intermediate files
     write('Cleaning')
@@ -549,6 +536,7 @@ def run_disvis(
     dv.occupancy_analysis = args.occupancy_analysis
     dv.collect_complexes = args.write_complexes is not None
     dv.complexes_percentage = args.write_complexes
+    dv.max_complexes = args.max_complexes or None
     dv.interaction_restraints_cutoff = args.interaction_restraints_cutoff
 
     if not any([x is None for x in (pdb1_sel, pdb2_sel)]):
@@ -568,26 +556,21 @@ def write(line):
 def write_complexes(fname, complexes, rotmat, ligand, nrestraints, args):
     """Write complexes (see DisVis.complexes) to fname.
 
-    The header gives the search parameters, and each line the model number,
-    the rotation index, the number of consistent restraints, the position
-    of the scanning chain center (x y z, in A) and the rotation matrix R
-    row by row: the scanning chain atoms are at R (a - center) + (x, y, z).
-    With args.max_complexes, at most that number of complexes, a random
-    sample, is written.
+    The complexes written are those consistent with at least
+    args.write_complexes percent of the highest number of restraints found,
+    at most args.max_complexes of them (see Complexes.select). The header
+    gives the search parameters, and each line the model number, the
+    rotation index, the number of consistent restraints, the position of the
+    scanning chain center (x y z, in A) and the rotation matrix R row by row:
+    the scanning chain atoms are at R (a - center) + (x, y, z).
     """
-    nfound = complexes[0].size
-    most = int(complexes[2].max()) if nfound else 0
-    if args.max_complexes is not None and nfound > args.max_complexes:
-        rng = np.random.default_rng(0)
-        keep = np.sort(rng.choice(nfound, args.max_complexes, replace=False))
-        complexes = tuple(a[keep] for a in complexes)
-    rotation, translation, consistent = complexes
+    selected, threshold, nfound = complexes.select(
+        args.write_complexes, args.max_complexes
+    )
+    rotation = selected.rotation
     restraints = (
         'at least {:d} ({:g}% of the most found, {:d}, of {:d})'.format(
-            min_consistent(args.write_complexes, most),
-            args.write_complexes,
-            most,
-            nrestraints,
+            threshold, args.write_complexes, complexes.most(), nrestraints
         )
     )
     write(
@@ -614,7 +597,13 @@ def write_complexes(fname, complexes, rotmat, ligand, nrestraints, args):
         )
         line = '{:d} {:d} {:d}' + ' {:.3f}' * 3 + ' {:.6f}' * 9 + '\n'
         for model, (n, c, t) in enumerate(
-            zip(rotation, consistent, translation, strict=True), 1
+            zip(
+                rotation,
+                selected.consistent,
+                selected.translation,
+                strict=True,
+            ),
+            1,
         ):
             f.write(line.format(model, n, c, *t, *(rotmat[n].ravel() + 0.0)))
     if rotation.size > 1000:

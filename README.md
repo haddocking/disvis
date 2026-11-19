@@ -239,8 +239,10 @@ With `-wc` or `--write-complexes`, *disvis* writes *complexes.out*, the
 rotation and translation of every complex consistent with at least 75% of
 the highest number of restraints found, rounded up, or with `-wc P` with at
 least *P* percent of it (`-wc 100`: the complexes consistent with the most
-restraints; `--max-complexes M` writes at most *M* of them, a random sample
-when more are found):
+restraints). At most 50000 complexes are collected and written, a random
+sample when more are found (`--max-complexes M` sets that number, 0 for
+all); the sample is the same with any number of processes (`-p`) and on the
+GPU:
 
 ```bash
 disvis e2aP_1F3G.pdb hpr_1.pdb e2a-hpr_air.tbl -wc -d results
@@ -252,14 +254,14 @@ consistent with fewer restraints than the highest number found: in the
 the 43 restraints, the search finds complexes consistent with 32, and `-wc`
 writes the 4880 complexes consistent with at least 24 (75% of 32), the
 closest at 2.2 Å CA RMSD from the crystal structure. On the five test cases
-with a reference structure (coarse searches, with `--max-complexes 50000`
-for RNA polymerase II and PRE5-PUP2, with over 100000 complexes), 75% kept
-complexes within 2.2 Å of it, and clustering them (see below) gave cluster
-centers within 0.8 to 2.9 Å of it.
+with a reference structure (coarse searches; for RNA polymerase II and
+PRE5-PUP2, a sample of 50000 of over 100000 complexes), 75% kept complexes
+within 2.2 Å of it, and clustering them (see below) gave cluster centers
+within 1.2 to 2.9 Å of it.
 
 *disvis-complexes* then writes these complexes, the fixed and scanning chain,
-as PDB files (*complex_N.pdb*, in the directory *complexes* by default; `-n`
-limits their number):
+as PDB files (*complex_N.pdb*, in the directory *complexes* by default; at
+most 50000, `-n` sets that number, and `-n 0` writes none):
 
 ```bash
 disvis-complexes results/complexes.out e2aP_1F3G.pdb hpr_1.pdb -d results/complexes
@@ -288,7 +290,9 @@ at least about one voxel, the target must be larger than the voxel spacing.
 On the test cases with many complexes (PRE5-PUP2 and antibody-antigen,
 coarse searches), the defaults gave cluster centers within 1.4 Å and 2.2 Å
 of the reference structures, and left few complexes close to them
-unclustered.
+unclustered. The clustering time grows with the square of the number of
+complexes: it took 26 s for 50000 complexes, the default `--max-complexes`
+of *disvis*, and 147 s for 125793 (Apple M2 Pro).
 
 The PDB files keep the chain identifiers of the input files, but not their
 segment identifiers, and write HETATM records as ATOM.

@@ -19,6 +19,7 @@ from disvis.complexes import (
     tune_cutoff,
 )
 from disvis.helpers import min_consistent
+from disvis.disvis import Complexes
 from disvis.main import write_complexes
 from disvis.pdb import PDB
 from disvis.rotations import Rz
@@ -68,12 +69,15 @@ class TestComplexes(TestCase):
         )
 
     def test_max_complexes(self):
-        # A sample of 3 of 5 complexes is written, in their order, and read.
+        # The 3 of 5 complexes with the smallest keys are written, in their
+        # order, and read.
         rotmat = np.asarray([Rz(np.radians(a)) for a in range(0, 50, 10)])
-        complexes = (
+        complexes = Complexes(
             np.arange(5),
             np.arange(15.0).reshape(5, 3),
             np.full(5, 2),
+            np.asarray([4, 0, 3, 1, 2], dtype=np.uint64),
+            np.asarray([0, 0, 5]),
         )
         ligand = PDB.fromfile(join(DATA, 'single-atom.pdb'))
         args = Namespace(
@@ -91,7 +95,7 @@ class TestComplexes(TestCase):
         self.assertEqual(header['complexes'], '3 written of 5')
         self.assertEqual(models.tolist(), [1, 2, 3])
         index = translations[:, 0].astype(int) // 3
-        self.assertTrue(np.all(np.diff(index) > 0))
+        self.assertEqual(index.tolist(), [1, 3, 4])
         self.assertTrue(np.allclose(rotations, rotmat[index], atol=1e-6))
 
     def test_min_consistent(self):

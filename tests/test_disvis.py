@@ -11,7 +11,7 @@ from unittest import TestCase, main
 import numpy as np
 
 from disvis.pdb import PDB
-from disvis.disvis import DisVis
+from disvis.disvis import Complexes, DisVis
 from disvis.helpers import (
     _TblParser,
     parse_restraints,
@@ -189,38 +189,72 @@ class TestDisVis(TestCase):
         dv._cpu_init()
         dv._cpu_search()
 
+    def collect(self, rotations, **options):
+        # The complexes of a search of the test structures
+        receptor = PDB.fromfile(join(DATA, 'O14250.pdb'))
+        ligand = PDB.fromfile(join(DATA, 'Q9UT97.pdb'))
+        dv = DisVis(print_callback=False)
+        dv.receptor, dv.ligand = receptor, ligand
+        dv.distance_restraints = parse_restraints(
+            join(DATA, 'restraints.dat'), receptor, ligand
+        )
+        dv.rotations = rotations
+        dv.voxelspacing = 2
+        dv.collect_complexes = True
+        for name, value in options.items():
+            setattr(dv, name, value)
+        dv.search()
+        return dv
+
     def test_collect_complexes(self):
         # Every complex collected, placed in A, is consistent with its number
         # of restraints, the highest found or a percentage of it, and
         # they are all collected.
-        receptor = PDB.fromfile(join(DATA, 'O14250.pdb'))
-        ligand = PDB.fromfile(join(DATA, 'Q9UT97.pdb'))
-        restraints = parse_restraints(
-            join(DATA, 'restraints.dat'), receptor, ligand
-        )
-        dv = self.dv
-        dv.receptor, dv.ligand = receptor, ligand
-        dv.distance_restraints = restraints
-        dv.rotations = quat_to_rotmat(proportional_orientations(40)[0])
-        dv.voxelspacing = 2
-        dv.collect_complexes = True
-        dv.search()
-        best = dv.complexes[2].max()
-        self.assertTrue(np.all(dv.complexes[2] == best))
+        dv = self.collect(quat_to_rotmat(proportional_orientations(40)[0]))
+        best = dv.complexes.most()
+        self.assertTrue(np.all(dv.complexes.consistent == best))
         # The percentage of the highest number for best - 1 restraints
         dv.complexes_percentage = 100 * (best - 1) / best
         dv._collect_complexes()
-        rotation, translation, consistent = dv.complexes
+        c = dv.complexes
         self.assertEqual(
-            len(rotation), dv.accessible_complexes[best - 1 :].sum()
+            len(c.rotation), dv.accessible_complexes[best - 1 :].sum()
         )
-        for n, t, c in zip(rotation, translation, consistent, strict=True):
+        self.assertEqual(len(c.rotation), c.counts[best - 1 :].sum())
+        for n, t, k in zip(
+            c.rotation, c.translation, c.consistent, strict=True
+        ):
             placed = 0
-            for r, lig, mindis, maxdis in restraints:
-                placed_lig = (lig - ligand.center) @ dv.rotations[n].T + t
+            for r, lig, mindis, maxdis in dv.distance_restraints:
+                placed_lig = (lig - dv.ligand.center) @ dv.rotations[n].T + t
                 dis = np.linalg.norm(r - placed_lig, axis=1).min()
                 placed += mindis <= dis <= maxdis
-            self.assertEqual(placed, c)
+            self.assertEqual(placed, k)
+
+    def test_collect_complexes_bounded(self):
+        # With max_complexes, the collection is bounded, and the sample
+        # selected from the collections of two halves of the rotations is
+        # that of all rotations.
+        rotations = quat_to_rotmat(proportional_orientations(40)[0])
+        half = len(rotations) // 2
+        options = {'complexes_percentage': 50, 'max_complexes': 20}
+        whole = self.collect(rotations, **options).complexes
+        parts = [
+            self.collect(rotations[:half], **options).complexes,
+            self.collect(rotations[half:], **options).complexes,
+        ]
+        self.assertGreater(whole.counts.sum(), 20)
+        self.assertLessEqual(
+            len(whole.rotation), 20 * np.count_nonzero(whole.counts)
+        )
+        merged = Complexes.concatenate(parts, [0, half])
+        for complexes in (whole, merged):
+            complexes.selected = complexes.select(50, 20)
+        (a, ta, na), (b, tb, nb) = whole.selected, merged.selected
+        self.assertEqual((ta, na), (tb, nb))
+        self.assertEqual(len(a.rotation), 20)
+        self.assertTrue(np.array_equal(a.rotation, b.rotation))
+        self.assertTrue(np.array_equal(a.key, b.key))
 
 
 class TestInputChecks(TestCase):

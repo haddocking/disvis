@@ -34,9 +34,12 @@ def parse_args():
         '-n',
         '--number',
         type=int,
-        default=None,
+        default=50000,
         metavar='<int>',
-        help='Number of complexes (or clusters) to write. Default is all.',
+        help=(
+            'Largest number of complexes (or cluster centers) to write '
+            '(default 50000; 0 writes no PDB file).'
+        ),
     )
     p.add_argument(
         '-c',

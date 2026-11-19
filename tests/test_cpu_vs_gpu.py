@@ -263,11 +263,13 @@ class TestCollectComplexes(TestCase):
             dv.queue = queue
             dv.search()
             complexes.append(dv.complexes)
-        (crot, ctrans, ccons), (grot, gtrans, gcons) = complexes
-        self.assertGreater(len(crot), 0)
-        self.assertTrue(np.array_equal(ccons, gcons))
-        self.assertTrue(np.array_equal(crot, grot))
-        self.assertTrue(np.allclose(ctrans, gtrans))
+        cpu, gpu = complexes
+        self.assertGreater(len(cpu.rotation), 0)
+        for name in ('rotation', 'consistent', 'key', 'counts'):
+            self.assertTrue(
+                np.array_equal(getattr(cpu, name), getattr(gpu, name)), name
+            )
+        self.assertTrue(np.allclose(cpu.translation, gpu.translation))
 
 
 @skipIf(QUEUE is None, 'needs pyopencl, pyvkfft and a working OpenCL device')
