@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- `args.json` gives the interaction restraints cutoff used (`-ic`), also
+  when it is the default (the number of restraints minus 3), instead of
+  `null` - Issue #68
 - report.html: the table of the average interactions per complex lists the
   most contacted residues first (on the highest N), and the Z-score table
   the highest Z-scores first (the likely false positives), instead of residue

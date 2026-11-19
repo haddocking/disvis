@@ -622,7 +622,6 @@ def main():  # noqa: C901
 
     makedirs(args.directory, exist_ok=True)
     joiner = Joiner(args.directory)
-    dump_args(args, joiner('args.json'))
 
     with open(joiner('disvis.log'), 'w', encoding='utf-8') as f:
         f.write(
@@ -689,6 +688,8 @@ def main():  # noqa: C901
         args.interaction_restraints_cutoff = max(
             len(distance_restraints) - 3, 1
         )
+    # The options used, with the defaults that depend on the restraints
+    dump_args(args, joiner('args.json'))
 
     pdb1_sel = pdb2_sel = None
     if args.interaction_selection is not None:

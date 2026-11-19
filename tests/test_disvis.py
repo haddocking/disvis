@@ -4,9 +4,13 @@ Run from the repository root with python -m unittest.
 """
 
 from argparse import ArgumentTypeError
+from contextlib import redirect_stdout
+from io import StringIO
+import json
 from os.path import dirname, join
 from tempfile import TemporaryDirectory
 from unittest import TestCase, main
+from unittest.mock import patch
 
 import numpy as np
 
@@ -20,6 +24,7 @@ from disvis.helpers import (
     positive_float,
     positive_int,
 )
+from disvis.main import main as disvis_main
 from disvis.rotations import proportional_orientations, quat_to_rotmat
 from disvis.volume import radix235
 
@@ -384,6 +389,22 @@ assi (resi 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
         ):
             mask = _TblParser(sel).expression()(pdb)
             self.assertTrue(np.array_equal(mask, answer), sel)
+
+    def test_args_json(self):
+        # args.json gives the default interaction restraints cutoff used: 7
+        # restraints minus 3
+        with TemporaryDirectory() as tmp:
+            argv = [
+                'disvis',
+                *(join(DATA, f) for f in ('O14250.pdb', 'Q9UT97.pdb')),
+                join(DATA, 'restraints.dat'),
+                '-a', '60', '-vs', '3', '-np', '--no-report', '-d', tmp,
+            ]  # fmt: skip
+            with patch('sys.argv', argv), redirect_stdout(StringIO()):
+                disvis_main()
+            with open(join(tmp, 'args.json')) as f:
+                args = json.load(f)
+        self.assertEqual(args['interaction_restraints_cutoff'], 4)
 
     def test_integer_options(self):
         self.assertEqual(non_negative_int('0'), 0)
