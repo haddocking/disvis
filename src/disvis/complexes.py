@@ -120,6 +120,7 @@ class Poses:
     """
 
     def __init__(self, translations, rotations, coor):
+        self._inputs = translations, rotations, coor
         mean = coor.mean(axis=0)
         x = coor - mean
         gyration = x.T @ x / len(x)
@@ -146,11 +147,8 @@ class Poses:
 
     def subset(self, index):
         """Return the poses index, as Poses."""
-        poses = Poses.__new__(Poses)
-        for name in ('centers', 'square', 'rotations', 'rotated'):
-            setattr(poses, name, getattr(self, name)[index])
-        poses.trace2 = self.trace2
-        return poses
+        translations, rotations, coor = self._inputs
+        return Poses(translations[index], rotations[index], coor)
 
 
 def rmsd_atoms(pdb):

@@ -12,6 +12,9 @@
   cutoff chosen for clusters of about 6 Å at most) - Issue #62
 - HADDOCK restraints: keywords shortened to 4 letters, as in CNS (e.g.
   `resi`, `assi`), are accepted - Issue #62
+- HADDOCK restraints: upper distances shorter than 3.9 Å are raised to
+  3.9 Å (new `--min-maxdis` option; 0 keeps them), so that HADDOCK files can
+  be used as they are - Issue #62
 - New example test cases `antibody-antigen` and `protein-glycan`, from
   HADDOCK3 - Issue #62
 - Restraint files in the HADDOCK (CNS) format (`assign` statements), next to

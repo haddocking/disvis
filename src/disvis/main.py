@@ -185,6 +185,19 @@ def parse_args():
     )
 
     p.add_argument(
+        '--min-maxdis',
+        dest='min_maxdis',
+        metavar='<float>',
+        type=float,
+        default=3.9,
+        help=(
+            "Upper distances of HADDOCK restraints shorter than this (A) "
+            "are raised to it: HADDOCK uses shorter, r^-6-summed distances "
+            "(default 3.9, a carbon-carbon contact; 0 keeps them)."
+        ),
+    )
+
+    p.add_argument(
         '-wc',
         '--write-complexes',
         dest='write_complexes',
@@ -468,26 +481,21 @@ def mp_cpu_disvis(  # noqa: C901
     if args.write_complexes is not None:
         fname_complexes = joiner('complexes_{:d}.npz')
         parts = [np.load(fname_complexes.format(n)) for n in range(jobs)]
-        rotation, translation, consistent = (
+        complexes = (
             np.concatenate(
-                [
-                    part[key] + (n * nrot_per_job if key == 'rotation' else 0)
-                    for n, part in enumerate(parts)
-                ]
-            )
-            for key in ('rotation', 'translation', 'consistent')
+                [p['rotation'] + n * nrot_per_job for n, p in enumerate(parts)]
+            ),
+            np.concatenate([p['translation'] for p in parts]),
+            np.concatenate([p['consistent'] for p in parts]),
         )
         # Each job used its own highest number of restraints
+        consistent = complexes[2]
         if consistent.size:
             keep = consistent >= min_consistent(
                 args.write_complexes, consistent.max()
             )
-            rotation, translation, consistent = (
-                rotation[keep],
-                translation[keep],
-                consistent[keep],
-            )
-        results.complexes = (rotation, translation, consistent)
+            complexes = tuple(a[keep] for a in complexes)
+        results.complexes = complexes
 
     # Remove the intermediate files
     write('Cleaning')
@@ -557,7 +565,7 @@ def write(line):
     logging.info(line)
 
 
-def write_complexes(fname, complexes, rotmat, ligand, args):
+def write_complexes(fname, complexes, rotmat, ligand, nrestraints, args):
     """Write complexes (see DisVis.complexes) to fname.
 
     The header gives the search parameters, and each line the model number,
@@ -567,23 +575,19 @@ def write_complexes(fname, complexes, rotmat, ligand, args):
     With args.max_complexes, at most that number of complexes, a random
     sample, is written.
     """
-    rotation, translation, consistent = complexes
-    nfound = rotation.size
-    most = int(consistent.max()) if nfound else 0
+    nfound = complexes[0].size
+    most = int(complexes[2].max()) if nfound else 0
     if args.max_complexes is not None and nfound > args.max_complexes:
         rng = np.random.default_rng(0)
         keep = np.sort(rng.choice(nfound, args.max_complexes, replace=False))
-        rotation, translation, consistent = (
-            rotation[keep],
-            translation[keep],
-            consistent[keep],
-        )
+        complexes = tuple(a[keep] for a in complexes)
+    rotation, translation, consistent = complexes
     restraints = (
         'at least {:d} ({:g}% of the most found, {:d}, of {:d})'.format(
             min_consistent(args.write_complexes, most),
             args.write_complexes,
             most,
-            args.nrestraints,
+            nrestraints,
         )
     )
     write(
@@ -682,9 +686,8 @@ def main():  # noqa: C901
 
     write('Reading in restraints from file: {:s}'.format(args.restraints))
     distance_restraints = parse_restraints(
-        args.restraints, receptor, ligand, write
+        args.restraints, receptor, ligand, write, args.min_maxdis
     )
-    args.nrestraints = len(distance_restraints)
     write(
         'Number of distance restraints: {:d}'.format(len(distance_restraints))
     )
@@ -1006,7 +1009,12 @@ def main():  # noqa: C901
 
     if args.write_complexes is not None:
         write_complexes(
-            joiner('complexes.out'), dv.complexes, rotmat, ligand, args
+            joiner('complexes.out'),
+            dv.complexes,
+            rotmat,
+            ligand,
+            nrestraints,
+            args,
         )
 
     if args.report:

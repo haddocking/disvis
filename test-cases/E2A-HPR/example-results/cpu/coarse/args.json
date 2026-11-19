@@ -8,12 +8,15 @@
     "interaction_selection": null,
     "ligand": "hpr_1.pdb",
     "max_clash": 200,
+    "max_complexes": null,
     "min_interaction": 300,
+    "min_maxdis": 3.9,
     "nproc": 8,
     "occupancy_analysis": false,
     "progress": true,
     "receptor": "e2aP_1F3G.pdb",
     "report": true,
     "restraints": "e2a-hpr_air.tbl",
-    "voxelspacing": 2.0
+    "voxelspacing": 2.0,
+    "write_complexes": null
 }

@@ -81,7 +81,7 @@ assign ( resid 26  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 27  and segid A)
        (
@@ -164,7 +164,7 @@ assign ( resid 27  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 28  and segid A)
        (
@@ -247,7 +247,7 @@ assign ( resid 28  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 29  and segid A)
        (
@@ -330,7 +330,7 @@ assign ( resid 29  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 30  and segid A)
        (
@@ -413,7 +413,7 @@ assign ( resid 30  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 31  and segid A)
        (
@@ -496,7 +496,7 @@ assign ( resid 31  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 32  and segid A)
        (
@@ -579,7 +579,7 @@ assign ( resid 32  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 55  and segid A)
        (
@@ -662,7 +662,7 @@ assign ( resid 55  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 56  and segid A)
        (
@@ -745,7 +745,7 @@ assign ( resid 56  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 57  and segid A)
        (
@@ -828,7 +828,7 @@ assign ( resid 57  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 101  and segid A)
        (
@@ -911,7 +911,7 @@ assign ( resid 101  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 102  and segid A)
        (
@@ -994,7 +994,7 @@ assign ( resid 102  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 103  and segid A)
        (
@@ -1077,7 +1077,7 @@ assign ( resid 103  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 106  and segid A)
        (
@@ -1160,7 +1160,7 @@ assign ( resid 106  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 108  and segid A)
        (
@@ -1243,7 +1243,7 @@ assign ( resid 108  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 146  and segid A)
        (
@@ -1326,7 +1326,7 @@ assign ( resid 146  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 147  and segid A)
        (
@@ -1409,7 +1409,7 @@ assign ( resid 147  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 148  and segid A)
        (
@@ -1492,7 +1492,7 @@ assign ( resid 148  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 150  and segid A)
        (
@@ -1575,7 +1575,7 @@ assign ( resid 150  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 151  and segid A)
        (
@@ -1658,7 +1658,7 @@ assign ( resid 151  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 152  and segid A)
        (
@@ -1741,7 +1741,7 @@ assign ( resid 152  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 170  and segid A)
        (
@@ -1824,7 +1824,7 @@ assign ( resid 170  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 172  and segid A)
        (
@@ -1907,7 +1907,7 @@ assign ( resid 172  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 212  and segid A)
        (
@@ -1990,7 +1990,7 @@ assign ( resid 212  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 213  and segid A)
        (
@@ -2073,7 +2073,7 @@ assign ( resid 213  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 214  and segid A)
        (
@@ -2156,7 +2156,7 @@ assign ( resid 214  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 215  and segid A)
        (
@@ -2239,7 +2239,7 @@ assign ( resid 215  and segid A)
         ( resid 117  and segid B)
      or
         ( resid 118  and segid B)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 ! HADDOCK AIR restraints for 2nd partner
 !
@@ -2298,7 +2298,7 @@ assign ( resid 70  and segid B)
         ( resid 214  and segid A)
      or
         ( resid 215  and segid A)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 71  and segid B)
        (
@@ -2355,7 +2355,7 @@ assign ( resid 71  and segid B)
         ( resid 214  and segid A)
      or
         ( resid 215  and segid A)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 72  and segid B)
        (
@@ -2412,7 +2412,7 @@ assign ( resid 72  and segid B)
         ( resid 214  and segid A)
      or
         ( resid 215  and segid A)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 73  and segid B)
        (
@@ -2469,7 +2469,7 @@ assign ( resid 73  and segid B)
         ( resid 214  and segid A)
      or
         ( resid 215  and segid A)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 81  and segid B)
        (
@@ -2526,7 +2526,7 @@ assign ( resid 81  and segid B)
         ( resid 214  and segid A)
      or
         ( resid 215  and segid A)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 82  and segid B)
        (
@@ -2583,7 +2583,7 @@ assign ( resid 82  and segid B)
         ( resid 214  and segid A)
      or
         ( resid 215  and segid A)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 87  and segid B)
        (
@@ -2640,7 +2640,7 @@ assign ( resid 87  and segid B)
         ( resid 214  and segid A)
      or
         ( resid 215  and segid A)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 88  and segid B)
        (
@@ -2697,7 +2697,7 @@ assign ( resid 88  and segid B)
         ( resid 214  and segid A)
      or
         ( resid 215  and segid A)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 90  and segid B)
        (
@@ -2754,7 +2754,7 @@ assign ( resid 90  and segid B)
         ( resid 214  and segid A)
      or
         ( resid 215  and segid A)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 92  and segid B)
        (
@@ -2811,7 +2811,7 @@ assign ( resid 92  and segid B)
         ( resid 214  and segid A)
      or
         ( resid 215  and segid A)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 94  and segid B)
        (
@@ -2868,7 +2868,7 @@ assign ( resid 94  and segid B)
         ( resid 214  and segid A)
      or
         ( resid 215  and segid A)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 95  and segid B)
        (
@@ -2925,7 +2925,7 @@ assign ( resid 95  and segid B)
         ( resid 214  and segid A)
      or
         ( resid 215  and segid A)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 96  and segid B)
        (
@@ -2982,7 +2982,7 @@ assign ( resid 96  and segid B)
         ( resid 214  and segid A)
      or
         ( resid 215  and segid A)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 113  and segid B)
        (
@@ -3039,7 +3039,7 @@ assign ( resid 113  and segid B)
         ( resid 214  and segid A)
      or
         ( resid 215  and segid A)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 114  and segid B)
        (
@@ -3096,7 +3096,7 @@ assign ( resid 114  and segid B)
         ( resid 214  and segid A)
      or
         ( resid 215  and segid A)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 !
 assign ( resid 115  and segid B)
        (
@@ -3153,5 +3153,5 @@ assign ( resid 115  and segid B)
         ( resid 214  and segid A)
      or
         ( resid 215  and segid A)
-       )  3.9 3.9 0.0
+       )  2.0 2.0 0.0
 

@@ -121,7 +121,7 @@ def parse_interaction_selection(fname, pdb1, pdb2):
     return pdb1_sel, pdb2_sel
 
 
-def parse_restraints(fname, pdb1, pdb2, log=None):
+def parse_restraints(fname, pdb1, pdb2, log=None, min_maxdis=0.0):
     """Parse a restraints file, in the DisVis or the HADDOCK format.
 
     In the DisVis format, each line gives chain, residue number and atom
@@ -131,13 +131,14 @@ def parse_restraints(fname, pdb1, pdb2, log=None):
     maxdis]: a restraint is satisfied when any pair of points (rows of the
     two (npairs, 3) arrays) lies between mindis and maxdis. A DisVis
     restraint has one pair, the centers of its two selections. log, if
-    given, is called with the messages of parse_tbl.
+    given, is called with the messages of parse_tbl, and min_maxdis is
+    that of parse_tbl.
     """
     with open(fname, encoding='utf-8') as fid:
         text = fid.read()
 
     if count_tbl_restraints(text):
-        return parse_tbl(text, pdb1, pdb2, log)
+        return parse_tbl(text, pdb1, pdb2, log, min_maxdis)
 
     dist_restraints = []
 
@@ -214,7 +215,7 @@ def _cns_word(token, word):
     return token == word or (len(token) >= 4 and word.startswith(token))
 
 
-def parse_tbl(text, pdb1, pdb2, log=None):
+def parse_tbl(text, pdb1, pdb2, log=None, min_maxdis=0.0):
     """Parse restraints in the HADDOCK (CNS) format.
 
     Each restraint is assign (sel1) (sel2) d dminus dplus, optionally
@@ -227,9 +228,11 @@ def parse_tbl(text, pdb1, pdb2, log=None):
     atoms there, else the reverse for the whole restraint; a restraint with
     atoms in neither direction raises a ValueError. Every atom of sel1 is
     paired with every atom of sel2. Returns restraints as
-    parse_restraints. log, if given, is called with the number of
-    restraints read in the reverse direction and, when pdb1 and pdb2 share
-    chain identifiers, a warning.
+    parse_restraints. Upper distances shorter than min_maxdis (A) are
+    raised to it, as HADDOCK uses shorter, r^-6-summed distances. log, if
+    given, is called with the number of restraints read in the reverse
+    direction and of those raised to min_maxdis and, when pdb1 and pdb2
+    share chain identifiers, a warning.
     """
     shared = sorted(set(pdb1.chain_list) & set(pdb2.chain_list))
     if log and shared:
@@ -243,8 +246,12 @@ def parse_tbl(text, pdb1, pdb2, log=None):
     parser = _TblParser(text)
     dist_restraints = []
     nreversed = 0
+    nraised = 0
     while not parser.done():
         pairs, mindis, maxdis = parser.restraint()
+        if maxdis < min_maxdis:
+            maxdis = min_maxdis
+            nraised += 1
 
         # One direction for the whole restraint: every pair must have atoms
         masks = [(sel1(pdb1), sel2(pdb2)) for sel1, sel2 in pairs]
@@ -275,6 +282,11 @@ def parse_tbl(text, pdb1, pdb2, log=None):
             "{:d} of {:d} restraints read with the first selection in the "
             "scanning chain".format(nreversed, len(dist_restraints))
         )
+        if nraised:
+            log(
+                "{:d} of {:d} restraints with an upper distance raised to "
+                "{:g} A".format(nraised, len(dist_restraints), min_maxdis)
+            )
     return dist_restraints
 
 

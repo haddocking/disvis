@@ -504,6 +504,15 @@ class DisVis:
             self._interaction_matrix,
         )
 
+    def _rotation_interspace(self, rotmat):
+        # The number of consistent restraints of every translation of the
+        # ligand rotated by rotmat, in the interaction space
+        self._rotate_lcore(rotmat)
+        self._get_interaction_space()
+        self._get_restraints_center(rotmat)
+        self._get_restraint_space()
+        self._get_reduced_interspace()
+
     def _cpu_search(self):
 
         nrot = self.rotations.shape[0]
@@ -513,19 +522,7 @@ class DisVis:
         for n in range(nrot):
             rotmat = self.rotations[n]
             weight = self.weights[n]
-            # Rotate the ligand grid
-            self._rotate_lcore(rotmat)
-
-            self._get_interaction_space()
-
-            # Rotate the restraints
-            self._get_restraints_center(rotmat)
-
-            # Determine the consistent restraint space
-            self._get_restraint_space()
-
-            # Calculate the reduced accessible interaction
-            self._get_reduced_interspace()
+            self._rotation_interspace(rotmat)
             self._record_rotation_max(n)
 
             # Perform some statistics, such as the number of restraint
@@ -867,6 +864,13 @@ class DisVis:
             k.round(self._cl_tmp, self._cl_tmp)
             k.multiply_add2(self._cl_tmp, weight, self._cl_occ_grid[i])
 
+    def _cl_rotation_interspace(self, rotmat):
+        # As _rotation_interspace, on the GPU
+        self._cl_rotate_lcore(rotmat)
+        self._cl_get_interaction_space()
+        self._cl_get_restraints_center(rotmat)
+        self._cl_get_reduced_interspace()
+
     def _gpu_search(self):
 
         nrot = self.rotations.shape[0]
@@ -875,19 +879,7 @@ class DisVis:
         for n in range(nrot):
             rotmat = self._cl_rotations[n]
             weight = np.float32(self.weights[n])
-
-            # Rotate the ligand
-            self._cl_rotate_lcore(rotmat)
-
-            # Calculate the clashing and interaction volume for each
-            # translation
-            self._cl_get_interaction_space()
-
-            # Rotate the restraints and determine the center point
-            self._cl_get_restraints_center(rotmat)
-
-            # Check for each complex how many restraints are consistent
-            self._cl_get_reduced_interspace()
+            self._cl_rotation_interspace(rotmat)
             self._record_rotation_max(n)
 
             # Do some analysis such as counting complexes and violations
@@ -969,19 +961,10 @@ class DisVis:
         consistent = []
         for n in np.flatnonzero(self._rotation_max >= threshold):
             if self.queue is None:
-                rotmat = self.rotations[n]
-                self._rotate_lcore(rotmat)
-                self._get_interaction_space()
-                self._get_restraints_center(rotmat)
-                self._get_restraint_space()
-                self._get_reduced_interspace()
+                self._rotation_interspace(self.rotations[n])
                 red = self._red_interspace.ravel()
             else:
-                rotmat = self._cl_rotations[n]
-                self._cl_rotate_lcore(rotmat)
-                self._cl_get_interaction_space()
-                self._cl_get_restraints_center(rotmat)
-                self._cl_get_reduced_interspace()
+                self._cl_rotation_interspace(self._cl_rotations[n])
                 red = self._cl_red_interspace.get().ravel()
             ind = np.flatnonzero(red >= threshold)
             rotations.append(np.full(ind.size, n, dtype=np.int32))

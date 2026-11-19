@@ -13,14 +13,14 @@ timings on different hardware.
 `E2A-HPR` comes from the protein-protein docking example of HADDOCK3
 (`examples/docking-protein-protein/data`): E2A (PDB 1F3G) and the first
 model of the HPr NMR ensemble, without hydrogens, with the ambiguous
-interaction restraints `e2a-hpr_air.tbl`. Their upper bound is 3.9 Å, a
-carbon-carbon contact, instead of the 2 Å used by HADDOCK (see the
+interaction restraints `e2a-hpr_air.tbl`, as in HADDOCK3. DisVis raises
+their upper bound of 2 Å to 3.9 Å, a carbon-carbon contact (see the
 restraints section of the DisVis README). In the crystal structure of the
 complex (PDB 1GGR), 16 of the 20 restraints have an atom pair within 3.9 Å.
 
-Two more examples from HADDOCK3, with HADDOCK restraints whose upper bound
-was raised from 2 Å to 3.9 Å, have no reference results and are not run by
-`check_test_cases.py`:
+Two more examples from HADDOCK3, with their HADDOCK restraint files as they
+are (DisVis raises their 2 Å upper bounds to 3.9 Å, see `--min-maxdis`),
+have no reference results and are not run by `check_test_cases.py`:
 
 * `antibody-antigen` (`examples/docking-antibody-antigen`): the Fv of the
   antibody (`4G6K_fv.pdb`) and the antigen (`4I1B-matched.pdb`), with the

@@ -131,7 +131,7 @@ their `assign` statements, including ambiguous restraints:
 
 ```text
 ! active residue 18 of chain A, passive residues 27 and 30 of chain F
-assign (segid A and resid 18) ((segid F and resid 27) or (segid F and resid 30)) 3.9 3.9 0.0
+assign (segid A and resid 18) ((segid F and resid 27) or (segid F and resid 30)) 2.0 2.0 0.0
 assign (segid A and resid 22 and name CA) (segid F and resid 40:42 and name CA) 15.0 5.0 5.0
   or (segid A and resid 24 and name CA) (segid F and resid 40:42 and name CA)
 ```
@@ -158,9 +158,12 @@ of its second selection lie within the distance range. This differs from
 HADDOCK, which combines all atom pairs into an effective distance,
 (Σ r<sup>-6</sup>)<sup>-1/6</sup>, shorter than the shortest atom-atom
 distance. The upper bounds used in HADDOCK, such as 2 Å for ambiguous
-interaction restraints, are therefore too short for DisVis: use instead an
-upper bound that two atoms in contact can reach, e.g. 3.9 Å, a
-carbon-carbon contact (see the `E2A-HPR` test case). The search time
+interaction restraints, are therefore too short for DisVis, which raises
+upper bounds shorter than 3.9 Å, a carbon-carbon contact, to 3.9 Å, so that
+HADDOCK restraint files can be used as they are (`--min-maxdis` sets this
+distance, 0 keeps the upper bounds of the file; the log gives the number of
+restraints raised). Restraints in the DisVis format keep their upper bounds.
+The search time
 grows with the number of atom pairs of the restraints; selecting fewer atoms
 (e.g. `name CA`) keeps it short.
 

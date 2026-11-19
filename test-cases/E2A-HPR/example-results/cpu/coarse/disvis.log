@@ -4,31 +4,33 @@ Visualizing and quantifying the accessible interaction space of
 distance-restrained biomolecular complexes
 https://github.com/haddocking/disvis
 ======================================================================
-2026-11-18 15:41:25,078 Reading fixed model from: e2aP_1F3G.pdb
-2026-11-18 15:41:25,081 Reading scanning model from: hpr_1.pdb
-2026-11-18 15:41:25,082 Reading in rotations.
-2026-11-18 15:41:25,082 Requested rotational sampling density: 9.72
-2026-11-18 15:41:25,082 Real rotational sampling density: 9.72
-2026-11-18 15:41:25,082 Number of rotations: 7416
-2026-11-18 15:41:25,082 Reading in restraints from file: e2a-hpr_air.tbl
-2026-11-18 15:41:25,089 Number of distance restraints: 20
-2026-11-18 15:41:25,089 Voxel spacing set to: 2.00
-2026-11-18 15:41:25,089 Interaction radius set to: 3.00
-2026-11-18 15:41:25,089 Minimum required interaction volume: 300.00
-2026-11-18 15:41:25,089 Maximum allowed volume of clashes: 200.00
-2026-11-18 15:41:25,089 Number of processors used: 8
-2026-11-18 15:41:25,089 Number of rotations per job: 927
-2026-11-18 15:41:25,089 Creating jobs
-2026-11-18 15:41:25,107 Starting jobs
-2026-11-18 15:41:26,798 Waiting for jobs to finish
-2026-11-18 15:41:32,400 Searching done. Combining results
-2026-11-18 15:41:32,402 Cleaning
-2026-11-18 15:41:32,403 Writing accessible interaction space to: example-results/cpu/coarse/accessible_interaction_space.mrc
-2026-11-18 15:41:32,404 Writing number of accessible complexes to: example-results/cpu/coarse/accessible_complexes.out
-2026-11-18 15:41:32,404 Writing violations to file: example-results/cpu/coarse/violations.out
-2026-11-18 15:41:32,404 Writing z-score of each restraint to example-results/cpu/coarse/z-score.out
-2026-11-18 15:41:32,553 Writing report to: example-results/cpu/coarse/report.html
-2026-11-18 15:41:32,553 Total time passed: 0m  7s
+2026-11-19 10:52:09,652 Reading fixed model from: e2aP_1F3G.pdb
+2026-11-19 10:52:09,654 Reading scanning model from: hpr_1.pdb
+2026-11-19 10:52:09,656 Reading in rotations.
+2026-11-19 10:52:09,658 Requested rotational sampling density: 9.72
+2026-11-19 10:52:09,658 Real rotational sampling density: 9.72
+2026-11-19 10:52:09,658 Number of rotations: 7416
+2026-11-19 10:52:09,658 Reading in restraints from file: e2a-hpr_air.tbl
+2026-11-19 10:52:09,666 9 of 20 restraints read with the first selection in the scanning chain
+2026-11-19 10:52:09,666 20 of 20 restraints with an upper distance raised to 3.9 A
+2026-11-19 10:52:09,666 Number of distance restraints: 20
+2026-11-19 10:52:09,666 Voxel spacing set to: 2.00
+2026-11-19 10:52:09,666 Interaction radius set to: 3.00
+2026-11-19 10:52:09,666 Minimum required interaction volume: 300.00
+2026-11-19 10:52:09,666 Maximum allowed volume of clashes: 200.00
+2026-11-19 10:52:09,666 Number of processors used: 8
+2026-11-19 10:52:09,666 Number of rotations per job: 927
+2026-11-19 10:52:09,666 Creating jobs
+2026-11-19 10:52:09,684 Starting jobs
+2026-11-19 10:52:11,439 Waiting for jobs to finish
+2026-11-19 10:52:17,024 Searching done. Combining results
+2026-11-19 10:52:17,026 Cleaning
+2026-11-19 10:52:17,027 Writing accessible interaction space to: example-results/cpu/coarse/accessible_interaction_space.mrc
+2026-11-19 10:52:17,027 Writing number of accessible complexes to: example-results/cpu/coarse/accessible_complexes.out
+2026-11-19 10:52:17,028 Writing violations to file: example-results/cpu/coarse/violations.out
+2026-11-19 10:52:17,028 Writing z-score of each restraint to example-results/cpu/coarse/z-score.out
+2026-11-19 10:52:17,172 Writing report to: example-results/cpu/coarse/report.html
+2026-11-19 10:52:17,172 Total time passed: 0m  8s
 ======================================================================
 To view report.html, serve the output directory:
   python -m http.server -d example-results/cpu/coarse

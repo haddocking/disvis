@@ -266,6 +266,14 @@ assi (resi 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
             )
         )
         self.assertEqual((mindis, maxdis), (0.0, 2.0))
+        # Upper distances shorter than min_maxdis are raised to it
+        messages = []
+        raised = parse_tbl(tbl, pdb1, pdb2, messages.append, min_maxdis=3.9)
+        self.assertEqual([r[3] for r in raised], [23.0, 3.9])
+        self.assertIn(
+            '1 of 2 restraints with an upper distance raised to 3.9 A',
+            messages,
+        )
         # Both structures are chain A
         self.assertTrue(messages[0].startswith('WARNING'))
         self.assertEqual(
