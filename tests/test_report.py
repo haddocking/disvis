@@ -68,11 +68,11 @@ class TestReport(TestCase):
             # is shown, and no Z-score flags a false positive.
             self.assertIn('<tr><td>7</td><td>0.0000</td>', html)
             self.assertNotIn('class="high"', html)
-            # The Z-scores, highest first, and the residues, most contacted
-            # (at the highest N) first
+            # The Z-scores, highest first (highlighted rows included), and
+            # the residues, most contacted (at the highest N) first
             zscores = html.split('<h3>Z-scores')[1].split('</table>')[0]
             self.assertEqual(
-                re.findall(r'<tr><td>(\d+)</td>', zscores),
+                re.findall(r'<tr[^>]*><td>(\d+)</td>', zscores),
                 ['2', '1', '4', '3', '5', '6', '7'],
             )
             with open(join(DATA, 'output', 'ligand_interactions.txt')) as f:
