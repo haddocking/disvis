@@ -4,6 +4,7 @@ Run from the repository root with python -m unittest.
 """
 
 import json
+import re
 import os
 import shutil
 import tempfile
@@ -18,7 +19,7 @@ with warnings.catch_warnings():
     warnings.filterwarnings(
         'ignore', 'Using extra keyword arguments on `Field`'
     )
-    from disvis.report import _restraint_labels, generate_report
+    from disvis.report import _by_zscore, _restraint_labels, generate_report
 
 
 class TestReport(TestCase):
@@ -67,6 +68,26 @@ class TestReport(TestCase):
             # is shown, and no Z-score flags a false positive.
             self.assertIn('<tr><td>7</td><td>0.0000</td>', html)
             self.assertNotIn('class="high"', html)
+            # The Z-scores, highest first, and the residues, most contacted
+            # (at the highest N) first
+            zscores = html.split('<h3>Z-scores')[1].split('</table>')[0]
+            self.assertEqual(
+                re.findall(r'<tr><td>(\d+)</td>', zscores),
+                ['2', '1', '4', '3', '5', '6', '7'],
+            )
+            with open(join(DATA, 'output', 'ligand_interactions.txt')) as f:
+                values = [line.split() for line in f][1:]
+            most = max(values, key=lambda row: float(row[-1]))[0]
+            ligand = html.split('Average interactions per complex, ligand')[1]
+            self.assertTrue(
+                ligand.split('<td')[1].endswith('>' + most + '</td>')
+            )
+
+    def test_by_zscore(self):
+        rows = [
+            [str(i), '', '', '', z] for i, z in enumerate(('nan', '-1', '2'))
+        ]
+        self.assertEqual([r[0] for r in _by_zscore(rows)], ['2', '1', '0'])
 
     def test_delimiter(self):
         # The same run with --delimiter , gives the same report.
