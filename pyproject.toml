@@ -56,6 +56,7 @@ issues = "https://github.com/haddocking/disvis/issues"
 
 [project.scripts]
 disvis = "disvis.main:main"
+disvis-complexes = "disvis.complexes:main"
 
 # The compiled extensions are defined in setup.py, as they need
 # numpy.get_include() and cythonize().

@@ -18,6 +18,7 @@ from disvis.helpers import (
     parse_tbl,
     positive_float,
 )
+from disvis.rotations import proportional_orientations, quat_to_rotmat
 from disvis.volume import radix235
 
 DATA = join(dirname(__file__), 'data')
@@ -188,6 +189,39 @@ class TestDisVis(TestCase):
         dv._cpu_init()
         dv._cpu_search()
 
+    def test_collect_complexes(self):
+        # Every complex collected, placed in A, is consistent with its number
+        # of restraints, the highest found or a percentage of it, and
+        # they are all collected.
+        receptor = PDB.fromfile(join(DATA, 'O14250.pdb'))
+        ligand = PDB.fromfile(join(DATA, 'Q9UT97.pdb'))
+        restraints = parse_restraints(
+            join(DATA, 'restraints.dat'), receptor, ligand
+        )
+        dv = self.dv
+        dv.receptor, dv.ligand = receptor, ligand
+        dv.distance_restraints = restraints
+        dv.rotations = quat_to_rotmat(proportional_orientations(40)[0])
+        dv.voxelspacing = 2
+        dv.collect_complexes = True
+        dv.search()
+        best = dv.complexes[2].max()
+        self.assertTrue(np.all(dv.complexes[2] == best))
+        # The percentage of the highest number for best - 1 restraints
+        dv.complexes_percentage = 100 * (best - 1) / best
+        dv._collect_complexes()
+        rotation, translation, consistent = dv.complexes
+        self.assertEqual(
+            len(rotation), dv.accessible_complexes[best - 1 :].sum()
+        )
+        for n, t, c in zip(rotation, translation, consistent, strict=True):
+            placed = 0
+            for r, lig, mindis, maxdis in restraints:
+                placed_lig = (lig - ligand.center) @ dv.rotations[n].T + t
+                dis = np.linalg.norm(r - placed_lig, axis=1).min()
+                placed += mindis <= dis <= maxdis
+            self.assertEqual(placed, c)
+
 
 class TestInputChecks(TestCase):
     def test_radix235(self):
@@ -203,12 +237,12 @@ class TestInputChecks(TestCase):
         pdb1 = PDB.fromfile(join(DATA, 'O14250.pdb'))
         pdb2 = PDB.fromfile(join(DATA, 'Q9UT97.pdb'))
         # The first restraint is the first line of restraints.dat. Residue
-        # 3 is only in pdb1, so the second restraint is read reversed, its
-        # or pair too.
+        # 3 is only in pdb1, so the second restraint (with keywords
+        # shortened as in CNS) is read reversed, its or pair too.
         tbl = """! HADDOCK restraints
 assign (segid A and resid 27 and name CA)
        (segid A and resid 18 and name CA) 10.0 10.0 13.0
-assign (resid 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
+assi (resi 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
   or (resid 122:123 and name CA) (resid 125 and not name CA)
 """
         with TemporaryDirectory() as tmp:

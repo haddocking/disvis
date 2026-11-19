@@ -236,6 +236,41 @@ class TestCPUvsGPU(TestCase):
 
 
 @skipIf(QUEUE is None, 'needs pyopencl, pyvkfft and a working OpenCL device')
+class TestCollectComplexes(TestCase):
+    """CPU and GPU collect the same complexes."""
+
+    def test_complexes(self):
+        receptor = PDB.fromfile(join(DATA, 'O14250.pdb'))
+        ligand = PDB.fromfile(join(DATA, 'Q9UT97.pdb'))
+        restraints = parse_restraints(
+            join(DATA, 'restraints.dat'), receptor, ligand
+        )
+        complexes = []
+        for queue in (None, QUEUE):
+            dv = DisVis(print_callback=False)
+            dv.receptor, dv.ligand = receptor, ligand
+            dv.distance_restraints = restraints
+            # Identity rotation and rotation around z-axis
+            dv.rotations = np.asarray(
+                [
+                    [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+                    [[0, -1, 0], [1, 0, 0], [0, 0, 1]],
+                ],
+                dtype=np.float64,
+            )
+            dv.voxelspacing = 2.0
+            dv.collect_complexes = True
+            dv.queue = queue
+            dv.search()
+            complexes.append(dv.complexes)
+        (crot, ctrans, ccons), (grot, gtrans, gcons) = complexes
+        self.assertGreater(len(crot), 0)
+        self.assertTrue(np.array_equal(ccons, gcons))
+        self.assertTrue(np.array_equal(crot, grot))
+        self.assertTrue(np.allclose(ctrans, gtrans))
+
+
+@skipIf(QUEUE is None, 'needs pyopencl, pyvkfft and a working OpenCL device')
 class TestInteractionsCoarseGrid(TestCase):
     """CPU and GPU interaction analysis with a voxel spacing other than 1."""
 

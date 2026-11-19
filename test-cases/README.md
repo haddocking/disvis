@@ -18,6 +18,21 @@ carbon-carbon contact, instead of the 2 Å used by HADDOCK (see the
 restraints section of the DisVis README). In the crystal structure of the
 complex (PDB 1GGR), 16 of the 20 restraints have an atom pair within 3.9 Å.
 
+Two more examples from HADDOCK3, with HADDOCK restraints whose upper bound
+was raised from 2 Å to 3.9 Å, have no reference results and are not run by
+`check_test_cases.py`:
+
+* `antibody-antigen` (`examples/docking-antibody-antigen`): the Fv of the
+  antibody (`4G6K_fv.pdb`) and the antigen (`4I1B-matched.pdb`), with the
+  restraints from the CDRs and NMR chemical shift perturbations
+  (`ambig-CDR-NMR-CSP.tbl`); the crystal structure of the complex
+  (`4G6M-matched.pdb`) is consistent with 25 of the 43 restraints.
+* `protein-glycan` (`examples/docking-protein-glycan`): lysozyme
+  (`1LMQ_r_u.pdb`) and a chitotetraose without hydrogens (`1LMQ_l_u.pdb`),
+  with 15 ambiguous interaction restraints (`ambig.tbl`); the crystal
+  structure of the complex (`target.pdb`) is consistent with all of them.
+  Run it with `-vs 1 -cv 75 -iv 75`, as the glycan is small.
+
 ## Running the test cases
 
 From the test-case directory, a coarse run (9.72° rotational sampling, 7416

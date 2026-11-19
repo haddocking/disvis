@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- New `-wc [P]`/`--write-complexes [P]` option: complexes.out gives the
+  rotation and translation of the complexes consistent with at least P
+  percent (default 75) of the highest number of restraints found
+  (`--max-complexes M` writes a random sample of at most M); the new
+  `disvis-complexes` command writes them as PDB files, optionally only the
+  centers of clusters of complexes with similar poses of the scanning chain
+  (`--cluster`, on the RMSD computed from rotation and translation, with a
+  cutoff chosen for clusters of about 6 Å at most) - Issue #62
+- HADDOCK restraints: keywords shortened to 4 letters, as in CNS (e.g.
+  `resi`, `assi`), are accepted - Issue #62
+- New example test cases `antibody-antigen` and `protein-glycan`, from
+  HADDOCK3 - Issue #62
 - Restraint files in the HADDOCK (CNS) format (`assign` statements), next to
   the DisVis format, including ambiguous restraints: a restraint is
   consistent when any atom pair of its selections is within the distance

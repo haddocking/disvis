@@ -11,6 +11,14 @@ from .IO.mmcif import parse_cif
 from .elements import ELEMENTS
 
 
+# ATOM record: serial, name, altLoc, resName, chainID, resSeq, iCode, x, y,
+# z, occupancy, tempFactor, element, charge
+_ATOM_LINE = (
+    'ATOM  {:>5d} {:<4s}{:1s}{:>3s} {:1s}{:>4d}{:1s}   {:8.3f}{:8.3f}{:8.3f}'
+    '{:6.2f}{:6.2f}          {:>2s}{:2s}\n'
+)
+
+
 class PDB:
     """An atomic structure, stored as a NumPy structured array (data)."""
 
@@ -105,6 +113,41 @@ class PDB:
     def duplicate(self):
         """Return a copy of the structure."""
         return PDB(self.data.copy())
+
+    def pdb_lines(self):
+        """Return the ATOM lines of the atoms, with TER after each chain."""
+        lines = []
+        d = self.data
+        for n in range(self.natoms):
+            name = d['name'][n]
+            if len(d['element'][n]) == 1 and len(name) < 4:
+                name = ' ' + name
+            lines.append(
+                _ATOM_LINE.format(
+                    d['atom_id'][n],
+                    name,
+                    d['alt_loc'][n],
+                    d['resn'][n],
+                    d['chain'][n],
+                    d['resi'][n],
+                    d['i_code'][n],
+                    d['x'][n],
+                    d['y'][n],
+                    d['z'][n],
+                    d['occupancy'][n],
+                    d['bfactor'][n],
+                    d['element'][n],
+                    d['charge'][n],
+                )
+            )
+            if n + 1 == self.natoms or d['chain'][n + 1] != d['chain'][n]:
+                lines.append('TER\n')
+        return lines
+
+    def tofile(self, fname):
+        """Write the atoms to the PDB file fname."""
+        with open(fname, 'w', encoding='utf-8') as f:
+            f.writelines(self.pdb_lines() + ['END\n'])
 
     def rmsd(self, pdb):
         """Return the RMSD to pdb, which must have the same atom order."""

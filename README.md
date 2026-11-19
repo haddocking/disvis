@@ -141,7 +141,8 @@ Each restraint `assign (sel1) (sel2) d dminus dplus` should be between
 pairs to the restraint, and `!` starts a comment. Selections can use `segid`
 (matched against the chain identifier), `resid` (a number or a range such as
 `40:42`), `name` and `resname` (`*` is a wildcard), `all`, `not`, `and`, `or`
-and parentheses. The first selection of each pair is taken in the fixed
+and parentheses; as in CNS, keywords can be shortened to 4 letters (e.g.
+`resi`, `assi`). The first selection of each pair is taken in the fixed
 chain and the second in the scanning chain; when one of the selections of
 a restraint has no atoms there, the whole restraint is read the other way
 round, so restraints can be given in both directions, as in the AIR files
@@ -229,6 +230,66 @@ ones. A simple example for the selection-file
 This will select residue numbers 1, 2, 3, and 4 for the receptor, and 101, 302,
 and 888 for the ligand.
 
+#### Writing complexes
+
+With `-wc` or `--write-complexes`, *disvis* writes *complexes.out*, the
+rotation and translation of every complex consistent with at least 75% of
+the highest number of restraints found, rounded up, or with `-wc P` with at
+least *P* percent of it (`-wc 100`: the complexes consistent with the most
+restraints; `--max-complexes M` writes at most *M* of them, a random sample
+when more are found):
+
+```bash
+disvis e2aP_1F3G.pdb hpr_1.pdb e2a-hpr_air.tbl -wc -d results
+```
+
+When the restraints include false positives, the correct complex can be
+consistent with fewer restraints than the highest number found: in the
+`antibody-antigen` test case, the crystal structure is consistent with 25 of
+the 43 restraints, the search finds complexes consistent with 32, and `-wc`
+writes the 4880 complexes consistent with at least 24 (75% of 32), the
+closest at 2.2 Å CA RMSD from the crystal structure. On the five test cases
+with a reference structure (coarse searches, with `--max-complexes 50000`
+for RNA polymerase II and PRE5-PUP2, with over 100000 complexes), 75% kept
+complexes within 2.2 Å of it, and clustering them (see below) gave cluster
+centers within 0.8 to 2.9 Å of it.
+
+*disvis-complexes* then writes these complexes, the fixed and scanning chain,
+as PDB files (*complex_N.pdb*, in the directory *complexes* by default; `-n`
+limits their number):
+
+```bash
+disvis-complexes results/complexes.out e2aP_1F3G.pdb hpr_1.pdb -d results/complexes
+```
+
+As there can be many complexes, `--cluster` groups similar ones, e.g. to
+start a HADDOCK refinement from a set of different complexes, and writes the
+center of each cluster (*cluster_N.pdb*, largest cluster first) and the
+models of each cluster to *clusters.out*:
+
+```bash
+disvis-complexes results/complexes.out e2aP_1F3G.pdb hpr_1.pdb --cluster -d results/clusters
+```
+
+The complexes are compared by the RMSD of the scanning chain (its CA and P
+atoms, or all its heavy atoms when it has none), computed from their
+rotations and translations. As in the clustering of HADDOCK, the complex
+with the most neighbors within the RMSD cutoff is the center of the first
+cluster, with these neighbors, and so on, while clusters have at least
+`--min-population` complexes (default 2); the other complexes are not
+clustered. The cutoff (`--cluster-rmsd`) is by default chosen on a random
+subset of the complexes so that no two complexes of a cluster are more than
+`--cluster-target` apart (default 6 Å; on all complexes, denser than the
+subset, clusters can be somewhat wider). As neighboring complexes differ by
+at least about one voxel, the target must be larger than the voxel spacing.
+On the test cases with many complexes (PRE5-PUP2 and antibody-antigen,
+coarse searches), the defaults gave cluster centers within 1.4 Å and 2.2 Å
+of the reference structures, and left few complexes close to them
+unclustered.
+
+The PDB files keep the chain identifiers of the input files, but not their
+segment identifiers, and write HETATM records as ATOM.
+
 *disvis* also writes an HTML report of the results, with a Mol* view of the
 accessible interaction space (and of the occupancy grids with `-oa`); see
 [Viewing the report](#viewing-the-report).
@@ -239,7 +300,12 @@ accessible interaction space (and of the occupancy grids with `-oa`); see
 Standard *disvis* outputs 5 files:
 
 * *accessible_complexes.out*: a text file containing the number of complexes
-  consistent with a number of restraints. 
+  consistent with a number of restraints. The rotations of a set do not
+  sample the rotation space perfectly evenly, so each rotation has a weight
+  (on average 1) for the part of the rotation space it covers, and each
+  complex is counted with the weight of its rotation: the numbers are those
+  of evenly sampled rotations, and need not be whole numbers (the file gives
+  their integer part).
 * *violations.out*: a text file showing how often a specific restraint is
   violated for each number of consistent restraints. This helps in identifying
   which restraint is most likely a false-positive if any.
@@ -267,6 +333,21 @@ outputs the following files:
   number of interactions per complex each selected residue made, for both the
   receptor and ligand molecule. Each column denotes the minimal number of
   consistent restraints of each complex for which interactions were counted.
+
+With `-wc`, *disvis* also writes:
+
+* *complexes.out*: the complexes consistent with at least 75% (or *P*
+  percent) of the highest number of restraints found. The header gives that number, the input
+  files and the search parameters; each line gives a model number, the index
+  of the rotation, the number of consistent restraints, the position (x, y,
+  z, in Å) of the scanning chain center and the rotation matrix R (row by
+  row). The atoms *a* of the scanning chain are then at
+  R (*a* − center) + (x, y, z), with the center given in the header.
+  It lists the complexes one by one, without the weights of their rotations,
+  so their number can differ from that of *accessible_complexes.out*: for
+  the E2A-HPR test case (coarse search), *complexes.out* lists 18 complexes
+  consistent with all 20 restraints, whose rotation weights sum to 21.7, the
+  21 complexes of *accessible_complexes.out*.
 
 *disvis* also writes *report.html* and *state.mvsj* (the MolViewSpec state of
 the Mol* view), and copies the input files into the output directory, so the

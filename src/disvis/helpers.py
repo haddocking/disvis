@@ -3,7 +3,7 @@
 from argparse import ArgumentTypeError
 from fnmatch import fnmatchcase
 import json
-from math import isfinite
+from math import ceil, isfinite
 import re
 
 import numpy as np
@@ -49,6 +49,20 @@ def positive_float(value):
     if number is None or not isfinite(number) or number <= 0:
         raise ArgumentTypeError("{:s} is not a positive number".format(value))
     return number
+
+
+def percentage(value):
+    """Return value as a float; an argparse type for percentages (0, 100]."""
+    number = positive_float(value)
+    if number > 100:
+        raise ArgumentTypeError("{:s} is not a percentage".format(value))
+    return number
+
+
+def min_consistent(percent, nrestraints):
+    """Return the number of restraints that is at least percent of them."""
+    # Round first, so that e.g. 50% of 20 restraints are 10, not 11
+    return ceil(round(percent * nrestraints / 100, 6))
 
 
 def parse_interactions(f):
@@ -183,11 +197,21 @@ def parse_restraints(fname, pdb1, pdb2, log=None):
 def count_tbl_restraints(text):
     """Return the number of restraints of a HADDOCK restraints file, or 0.
 
-    A HADDOCK restraints file has a line starting with assign.
+    A HADDOCK restraints file has a line starting with assign (or assi,
+    as CNS accepts keywords shortened to at least 4 letters).
     """
-    if not re.search(r'^\s*assign\b', text, re.IGNORECASE | re.MULTILINE):
+    if not re.search(r'^\s*assi(g|gn)?\b', text, re.IGNORECASE | re.MULTILINE):
         return 0
-    return sum(t.lower() == 'assign' for t in _TblParser(text).tokens)
+    return sum(_cns_word(t, 'assign') for t in _TblParser(text).tokens)
+
+
+def _cns_word(token, word):
+    """Return whether token is the CNS keyword word.
+
+    As in CNS, a keyword can be shortened to its first 4 letters or more.
+    """
+    token = token.lower()
+    return token == word or (len(token) >= 4 and word.startswith(token))
 
 
 def parse_tbl(text, pdb1, pdb2, log=None):
@@ -197,11 +221,12 @@ def parse_tbl(text, pdb1, pdb2, log=None):
     followed by or (sel3) (sel4) ..., for distances between d - dminus and
     d + dplus; ! starts a comment. Selections combine segid (matched
     against the chain), resid (a number or a range first:last), name and
-    resname (* is a wildcard), all, not, and, or and parentheses. sel1 is
-    taken in pdb1 and sel2 in pdb2 when every selection pair of the
-    restraint has atoms there, else the reverse for the whole restraint; a
-    restraint with atoms in neither direction raises a ValueError. Every
-    atom of sel1 is paired with every atom of sel2. Returns restraints as
+    resname (* is a wildcard), all, not, and, or and parentheses; as in
+    CNS, keywords can be shortened to 4 letters, e.g. resi. sel1 is taken
+    in pdb1 and sel2 in pdb2 when every selection pair of the restraint has
+    atoms there, else the reverse for the whole restraint; a restraint with
+    atoms in neither direction raises a ValueError. Every atom of sel1 is
+    paired with every atom of sel2. Returns restraints as
     parse_restraints. log, if given, is called with the number of
     restraints read in the reverse direction and, when pdb1 and pdb2 share
     chain identifiers, a warning.
@@ -286,7 +311,7 @@ class _TblParser:
             raise ValueError("Restraints file ends in a restraint.")
         token = self.tokens[self.pos]
         self.pos += 1
-        if expected is not None and token.lower() != expected:
+        if expected is not None and not _cns_word(token, expected):
             raise ValueError(
                 "Expected '{:s}' instead of '{:s}' in restraint:\n{:s}".format(
                     expected, token, self.current()
@@ -331,6 +356,9 @@ class _TblParser:
         if keyword == 'all':
             return lambda pdb: np.ones(pdb.natoms, bool)
         value = self.take()
+        for word in ('segid', 'resid', 'resname', 'name'):
+            if _cns_word(keyword, word):
+                keyword = word
         if keyword == 'segid':
             return lambda pdb: pdb.data['chain'] == value
         if keyword == 'resid':

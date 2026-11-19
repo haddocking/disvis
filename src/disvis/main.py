@@ -16,8 +16,10 @@ from disvis import DisVis, PDB, Volume, __version__
 from disvis.rotations import proportional_orientations, quat_to_rotmat
 from disvis.helpers import (
     dump_args,
+    min_consistent,
     parse_interaction_selection,
     parse_restraints,
+    percentage,
     positive_float,
 )
 
@@ -183,6 +185,35 @@ def parse_args():
     )
 
     p.add_argument(
+        '-wc',
+        '--write-complexes',
+        dest='write_complexes',
+        metavar='<percent>',
+        nargs='?',
+        type=percentage,
+        const=75.0,
+        default=None,
+        help=(
+            "Write complexes.out, the rotation and translation of the "
+            "complexes consistent with at least this percentage of the "
+            "highest number of restraints found (default 75), from which "
+            "disvis-complexes builds the models."
+        ),
+    )
+
+    p.add_argument(
+        '--max-complexes',
+        dest='max_complexes',
+        metavar='<int>',
+        type=int,
+        default=None,
+        help=(
+            "With -wc, write at most this number of complexes, a random "
+            "sample of them when more are found. Default is all."
+        ),
+    )
+
+    p.add_argument(
         '--delimiter',
         dest='delimiter',
         metavar='<str>',
@@ -268,6 +299,8 @@ def run_disvis_instance(
         dv.receptor_interaction_selection = pdb1_sel
         dv.ligand_interaction_selection = pdb2_sel
     dv.occupancy_analysis = args.occupancy_analysis
+    dv.collect_complexes = args.write_complexes is not None
+    dv.complexes_percentage = args.write_complexes
 
     dv.search()
 
@@ -287,6 +320,16 @@ def run_disvis_instance(
         for key, value in dv.occupancy_grids.items():
             fname = joiner('occupancy_{:d}_{:d}.mrc'.format(key, n))
             value.tofile(fname)
+
+    if dv.complexes is not None:
+        fname = joiner('complexes_{:d}.npz'.format(n))
+        rotation, translation, consistent = dv.complexes
+        np.savez(
+            fname,
+            rotation=rotation,
+            translation=translation,
+            consistent=consistent,
+        )
 
     queue.put(dv.accessible_complexes)
 
@@ -420,6 +463,32 @@ def mp_cpu_disvis(  # noqa: C901
             interaction_matrix += np.load(fname_intermat.format(n))
         results.interaction_matrix = interaction_matrix
 
+    # Combine the complexes, with the rotation indices of all jobs
+    results.complexes = None
+    if args.write_complexes is not None:
+        fname_complexes = joiner('complexes_{:d}.npz')
+        parts = [np.load(fname_complexes.format(n)) for n in range(jobs)]
+        rotation, translation, consistent = (
+            np.concatenate(
+                [
+                    part[key] + (n * nrot_per_job if key == 'rotation' else 0)
+                    for n, part in enumerate(parts)
+                ]
+            )
+            for key in ('rotation', 'translation', 'consistent')
+        )
+        # Each job used its own highest number of restraints
+        if consistent.size:
+            keep = consistent >= min_consistent(
+                args.write_complexes, consistent.max()
+            )
+            rotation, translation, consistent = (
+                rotation[keep],
+                translation[keep],
+                consistent[keep],
+            )
+        results.complexes = (rotation, translation, consistent)
+
     # Remove the intermediate files
     write('Cleaning')
     for n in range(jobs):
@@ -427,6 +496,8 @@ def mp_cpu_disvis(  # noqa: C901
         remove(fname_violations.format(n))
         if args.interaction_selection is not None:
             remove(fname_intermat.format(n))
+        if args.write_complexes is not None:
+            remove(fname_complexes.format(n))
         if args.occupancy_analysis:
             for consistent_restraints in range(
                 args.interaction_restraints_cutoff,
@@ -468,6 +539,8 @@ def run_disvis(
     dv.min_interaction = args.min_interaction
     dv.queue = queue
     dv.occupancy_analysis = args.occupancy_analysis
+    dv.collect_complexes = args.write_complexes is not None
+    dv.complexes_percentage = args.write_complexes
     dv.interaction_restraints_cutoff = args.interaction_restraints_cutoff
 
     if not any([x is None for x in (pdb1_sel, pdb2_sel)]):
@@ -482,6 +555,71 @@ def write(line):
     """Print line and write it to the log."""
     print(line)
     logging.info(line)
+
+
+def write_complexes(fname, complexes, rotmat, ligand, args):
+    """Write complexes (see DisVis.complexes) to fname.
+
+    The header gives the search parameters, and each line the model number,
+    the rotation index, the number of consistent restraints, the position
+    of the scanning chain center (x y z, in A) and the rotation matrix R
+    row by row: the scanning chain atoms are at R (a - center) + (x, y, z).
+    With args.max_complexes, at most that number of complexes, a random
+    sample, is written.
+    """
+    rotation, translation, consistent = complexes
+    nfound = rotation.size
+    most = int(consistent.max()) if nfound else 0
+    if args.max_complexes is not None and nfound > args.max_complexes:
+        rng = np.random.default_rng(0)
+        keep = np.sort(rng.choice(nfound, args.max_complexes, replace=False))
+        rotation, translation, consistent = (
+            rotation[keep],
+            translation[keep],
+            consistent[keep],
+        )
+    restraints = (
+        'at least {:d} ({:g}% of the most found, {:d}, of {:d})'.format(
+            min_consistent(args.write_complexes, most),
+            args.write_complexes,
+            most,
+            args.nrestraints,
+        )
+    )
+    write(
+        'Writing {:d} of the {:d} complexes consistent with {:s} restraints '
+        'to {:s}'.format(rotation.size, nfound, restraints, fname)
+    )
+    with open(fname, 'w', encoding='utf-8') as f:
+        f.write('# consistent restraints: {:s}\n'.format(restraints))
+        f.write(
+            '# complexes: {:d} written of {:d}\n'.format(rotation.size, nfound)
+        )
+        f.write('# fixed chain: {:s}\n'.format(args.receptor))
+        f.write('# scanning chain: {:s}\n'.format(args.ligand))
+        f.write(
+            '# scanning chain center: {:.3f} {:.3f} {:.3f}\n'.format(
+                *ligand.center
+            )
+        )
+        f.write('# voxel spacing: {:g}\n'.format(args.voxelspacing))
+        f.write('# rotational sampling: {:g}\n'.format(args.angle))
+        f.write(
+            '# model rotation restraints x y z '
+            'r11 r12 r13 r21 r22 r23 r31 r32 r33\n'
+        )
+        line = '{:d} {:d} {:d}' + ' {:.3f}' * 3 + ' {:.6f}' * 9 + '\n'
+        for model, (n, c, t) in enumerate(
+            zip(rotation, consistent, translation, strict=True), 1
+        ):
+            f.write(line.format(model, n, c, *t, *(rotmat[n].ravel() + 0.0)))
+    if rotation.size > 1000:
+        write(
+            'Build models of clusters of them with: disvis-complexes '
+            '{:s} {:s} {:s} --cluster'.format(
+                fname, args.receptor, args.ligand
+            )
+        )
 
 
 def main():  # noqa: C901
@@ -546,6 +684,7 @@ def main():  # noqa: C901
     distance_restraints = parse_restraints(
         args.restraints, receptor, ligand, write
     )
+    args.nrestraints = len(distance_restraints)
     write(
         'Number of distance restraints: {:d}'.format(len(distance_restraints))
     )
@@ -864,6 +1003,11 @@ def main():  # noqa: C901
                         relative_interactions = 0
                     f.write(' {:6.3f}'.format(relative_interactions))
                 f.write('\n')
+
+    if args.write_complexes is not None:
+        write_complexes(
+            joiner('complexes.out'), dv.complexes, rotmat, ligand, args
+        )
 
     if args.report:
         from disvis.report import generate_report
