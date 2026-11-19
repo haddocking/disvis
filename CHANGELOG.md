@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- report.html: the table of the average interactions per complex lists the
+  most contacted residues first (on the highest N), and the Z-score table
+  the highest Z-scores first (the likely false positives), instead of residue
+  and restraint order; the tables can still be sorted by clicking a header
+  - Issue #58
 - New `-wc [P]`/`--write-complexes [P]` option: complexes.out gives the
   rotation and translation of the complexes consistent with at least P
   percent (default 75) of the highest number of restraints found

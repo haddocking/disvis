@@ -9,6 +9,7 @@ import csv
 import shutil
 from functools import partial
 from html import escape
+from math import isnan
 from os.path import basename, exists, join, samefile
 from string import Template
 
@@ -183,6 +184,19 @@ def _table(title, header, rows, highlight=(), sortable=True, shade=None):
     return ''.join(html)
 
 
+def _by_zscore(rows):
+    """Return the Z-score table rows, the highest Z-score (row[4]) first.
+
+    Z-scores that are not a number (e.g. with a single restraint) come last.
+    """
+
+    def key(row):
+        z = float(row[4])
+        return (isnan(z), -z if not isnan(z) else 0)
+
+    return sorted(rows, key=key)
+
+
 def _receptor_colors(interactions):
     """Return the colors of the receptor residues for each N, and the maximum.
 
@@ -221,10 +235,14 @@ def _interaction_tables(chain, interactions):
             zip(interactions[n], residues, strict=True), key=lambda p: -p[0]
         )[:TOP]
         top.append([n, ', '.join(str(r) for x, r in ranked if x > 0)])
-    rows = [
-        [resi] + ['{:.3f}'.format(interactions[n][i]) for n in ns]
-        for i, resi in enumerate(residues)
-    ]
+    # The most contacted residues (at the highest N) first
+    rows = sorted(
+        (
+            [resi] + ['{:.3f}'.format(interactions[n][i]) for n in ns]
+            for i, resi in enumerate(residues)
+        ),
+        key=lambda row: -float(row[-1]),
+    )
     return [
         _table(
             'Most contacted {} residues (top {:d}, most first)'.format(
@@ -416,12 +434,12 @@ def generate_report(
             violations,
         )
     )
-    zscores = [
+    zscores = _by_zscore(
         [row[0], label] + row[1:]
         for row, label in zip(
             _read_rows(joiner('z-score.out'), delimiter), labels, strict=True
         )
-    ]
+    )
     # The Z-scores are relative: one is above 1 even when all restraints
     # are consistent, which leaves no false positive to flag.
     consistent = nrestraints in accessible
