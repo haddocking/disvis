@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 3.2.0
 
 - `args.json` gives the interaction restraints cutoff used (`-ic`), also
   when it is the default (the number of restraints minus 3), instead of
