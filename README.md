@@ -132,8 +132,6 @@ their `assign` statements, including ambiguous restraints:
 ```text
 ! active residue 18 of chain A, passive residues 27 and 30 of chain F
 assign (segid A and resid 18) ((segid F and resid 27) or (segid F and resid 30)) 2.0 2.0 0.0
-assign (segid A and resid 22 and name CA) (segid F and resid 40:42 and name CA) 15.0 5.0 5.0
-  or (segid A and resid 24 and name CA) (segid F and resid 40:42 and name CA)
 ```
 
 Each restraint `assign (sel1) (sel2) d dminus dplus` should be between
