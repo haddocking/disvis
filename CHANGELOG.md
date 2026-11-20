@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 3.3.0
 
 - `disvis.complexes.Poses` accepts poses of several models of the scanning
   chain with the same atoms (e.g. an ensemble): `coor` of shape
