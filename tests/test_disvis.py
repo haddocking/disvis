@@ -7,6 +7,7 @@ from argparse import ArgumentTypeError
 from contextlib import redirect_stdout
 from io import StringIO
 import json
+import logging
 from os.path import dirname, join
 from tempfile import TemporaryDirectory
 from unittest import TestCase, main
@@ -24,7 +25,7 @@ from disvis.helpers import (
     positive_float,
     positive_int,
 )
-from disvis.main import main as disvis_main
+from disvis.main import main as disvis_main, write
 from disvis.rotations import proportional_orientations, quat_to_rotmat
 from disvis.volume import radix235
 
@@ -389,6 +390,18 @@ assi (resi 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
         ):
             mask = _TblParser(sel).expression()(pdb)
             self.assertTrue(np.array_equal(mask, answer), sel)
+
+    def test_write_library(self):
+        # Used as a library, the messages go to the disvis logger only:
+        # nothing is printed and the root logger is not configured (#70)
+        handlers = list(logging.root.handlers)
+        with redirect_stdout(StringIO()) as out:
+            write('Searching')
+        self.assertEqual(out.getvalue(), '')
+        self.assertEqual(logging.root.handlers, handlers)
+        with self.assertLogs('disvis') as logs:
+            write('Searching')
+        self.assertEqual(logs.output, ['INFO:disvis:Searching'])
 
     def test_args_json(self):
         # args.json gives the default interaction restraints cutoff used: 7
