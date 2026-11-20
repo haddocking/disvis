@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.3.0
+
+- `disvis.complexes.Poses` accepts poses of several models of the scanning
+  chain with the same atoms (e.g. an ensemble): `coor` of shape
+  `(nmodels, natoms, 3)` and the `model` of each pose; the RMSD is that of
+  the placed atoms of each model, so that the complexes of several searches
+  can be clustered together. Results with one model are unchanged - Issue #71
+
 ## 3.2.0
 
 - `args.json` gives the interaction restraints cutoff used (`-ic`), also
