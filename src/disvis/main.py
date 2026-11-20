@@ -9,6 +9,7 @@ import multiprocessing as mp
 from argparse import ArgumentParser
 import logging
 import shlex
+import sys
 
 import numpy as np
 
@@ -23,6 +24,8 @@ from disvis.helpers import (
     percentage,
     positive_float,
 )
+
+logger = logging.getLogger('disvis')
 
 
 def parse_args():
@@ -549,9 +552,13 @@ def run_disvis(
 
 
 def write(line):
-    """Print line and write it to the log."""
-    print(line)
-    logging.info(line)
+    """Log line on the disvis logger.
+
+    The disvis command prints the messages and writes them to disvis.log
+    (see main); a program using DisVis as a library sees them only when it
+    configures logging.
+    """
+    logger.info(line)
 
 
 def write_complexes(fname, complexes, rotmat, ligand, nrestraints, args):
@@ -632,14 +639,15 @@ def main():  # noqa: C901
                 '=' * 70, __version__
             )
         )
-    # force: an imported library may already have configured the root logger.
-    logging.basicConfig(
-        filename=joiner('disvis.log'),
-        filemode='a',
-        level=logging.INFO,
-        format='%(asctime)s %(message)s',
-        force=True,
-    )
+    # The messages, on the disvis logger only, go to the terminal and to
+    # disvis.log
+    log_file = logging.FileHandler(joiner('disvis.log'), encoding='utf-8')
+    log_file.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
+    handlers = [logging.StreamHandler(sys.stdout), log_file]
+    for handler in handlers:
+        logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
 
     time0 = time()
 
@@ -1028,9 +1036,11 @@ def main():  # noqa: C901
     write('Total time passed: {:d}m {:2d}s'.format(m, s))
     # Close disvis.log, so the footer below is its only writer (and Windows
     # can remove the file, e.g. in the tests).
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
+    for handler in handlers:
+        logger.removeHandler(handler)
         handler.close()
+    logger.setLevel(logging.NOTSET)
+    logger.propagate = True
 
     if args.report:
         # Browsers do not let a report opened from disk load its files.

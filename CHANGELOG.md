@@ -2,6 +2,11 @@
 
 ## 3.3.0
 
+- Used as a library (e.g. `disvis.main.mp_cpu_disvis`), DisVis logs its
+  messages on the `disvis` logger instead of printing them and logging them
+  on the root logger, which configured it and duplicated the output of the
+  calling program; the `disvis` command still prints them and writes them to
+  disvis.log - Issue #70
 - `disvis.complexes.Poses` accepts poses of several models of the scanning
   chain with the same atoms (e.g. an ensemble): `coor` of shape
   `(nmodels, natoms, 3)` and the `model` of each pose; the RMSD is that of
