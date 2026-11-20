@@ -120,18 +120,39 @@ class Poses:
     translations t: with the RMSD atoms at R x + t, their centers c = R m + t
     and G the covariance of x - m,
     RMSD^2 = |c1 - c2|^2 + 2 tr(G) - 2 tr(R1 G R2^T).
+
+    coor gives the RMSD atoms x of the scanning chain, (natoms, 3), or of
+    several models of it with the same atoms in the same order (e.g. an
+    ensemble), (nmodels, natoms, 3), with model the model of each pose.
+    Between the poses of models k and l, G is replaced by the covariance of
+    their atoms, C_kl = (x_k - m_k)^T (x_l - m_l) / natoms, and 2 tr(G) by
+    tr(C_kk) + tr(C_ll): the RMSD of the placed atoms, conformational
+    differences included.
     """
 
-    def __init__(self, translations, rotations, coor):
-        self._inputs = translations, rotations, coor
-        mean = coor.mean(axis=0)
-        x = coor - mean
-        gyration = x.T @ x / len(x)
-        self.centers = rotations @ mean + translations
+    def __init__(self, translations, rotations, coor, model=None):
+        self._inputs = translations, rotations, coor, model
+        coor = np.asarray(coor, dtype=np.float64)
+        if coor.ndim == 2:
+            coor = coor[None]
+        if model is None:
+            model = np.zeros(len(translations), dtype=np.intp)
+        self.model = np.asarray(model, dtype=np.intp)
+        mean = coor.mean(axis=1)
+        x = coor - mean[:, None]
+        # covariance[k, l] = C_kl, the gyration tensors on the diagonal
+        covariance = np.einsum('kai,laj->klij', x, x) / coor.shape[1]
+        self.centers = (rotations @ mean[self.model][..., None])[..., 0]
+        self.centers += translations
         self.square = (self.centers**2).sum(axis=1)
         self.rotations = rotations.reshape(-1, 9)
-        self.rotated = (rotations @ gyration).reshape(-1, 9)
-        self.trace2 = 2 * np.trace(gyration)
+        # rotated[m][i] = R_i C_km, for pose i of model k and the poses of
+        # model m
+        self.rotated = [
+            (rotations @ covariance[self.model, m]).reshape(-1, 9)
+            for m in range(len(coor))
+        ]
+        self.trace = np.einsum('kkii->k', covariance)
 
     def __len__(self):
         """Return the number of poses."""
@@ -143,15 +164,26 @@ class Poses:
             self.square[index, None]
             + self.square[other]
             - 2 * self.centers[index] @ self.centers[other].T
-            + self.trace2
-            - 2 * self.rotated[index] @ self.rotations[other].T
+            + self.trace[self.model[index], None]
+            + self.trace[self.model[other]]
         )
+        if len(self.rotated) == 1:
+            d2 -= 2 * self.rotated[0][index] @ self.rotations[other].T
+        else:
+            other = np.arange(len(self))[other]
+            for m, rotated in enumerate(self.rotated):
+                columns = np.flatnonzero(self.model[other] == m)
+                d2[:, columns] -= (
+                    2 * rotated[index] @ self.rotations[other[columns]].T
+                )
         return np.maximum(d2, 0)
 
     def subset(self, index):
         """Return the poses index, as Poses."""
-        translations, rotations, coor = self._inputs
-        return Poses(translations[index], rotations[index], coor)
+        translations, rotations, coor, model = self._inputs
+        if model is not None:
+            model = np.asarray(model)[index]
+        return Poses(translations[index], rotations[index], coor, model)
 
 
 def rmsd_atoms(pdb):

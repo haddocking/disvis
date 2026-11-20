@@ -38,6 +38,30 @@ class TestComplexes(TestCase):
         poses = Poses(translations, rotations, coor)
         self.assertAlmostEqual(np.sqrt(poses.rmsd2([0], [1])[0, 0]), rmsd)
 
+    def test_pose_rmsd_models(self):
+        # With poses of two models (a distorted copy), the RMSDs equal those
+        # of the placed atoms of each model, also in a subset
+        first = PDB.fromfile(join(DATA, 'O14250.pdb')).coor[:50]
+        rng = np.random.default_rng(0)
+        coor = np.stack([first, first + rng.normal(0, 1, first.shape)])
+        model = np.asarray([0, 1, 1, 0])
+        rotations = np.asarray([Rz(np.radians(a)) for a in (10, -35, 80, 0)])
+        translations = np.asarray(
+            [[1.0, 2, 3], [-4, 0, 2], [0, 5, -1], [2, 2, 2]]
+        )
+        placed = (
+            coor[model] @ rotations.transpose(0, 2, 1) + translations[:, None]
+        )
+        rmsd = np.sqrt(
+            ((placed[:, None] - placed[None]) ** 2).sum(axis=3).mean(axis=2)
+        )
+        poses = Poses(translations, rotations, coor, model)
+        np.testing.assert_allclose(np.sqrt(poses.rmsd2(np.arange(4))), rmsd)
+        subset = poses.subset([1, 3])
+        np.testing.assert_allclose(
+            np.sqrt(subset.rmsd2([0], [1])), rmsd[[1]][:, [3]]
+        )
+
     def test_cluster(self):
         # Complex 1 is the neighbor of 0 and 2, and the center of their
         # cluster; complex 3 is too far, and complex 4 rotated too much.
