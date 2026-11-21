@@ -626,7 +626,7 @@ def write_complexes(fname, complexes, rotmat, ligand, nrestraints, args):
 def write_results(  # noqa: C901
     dv, rotmat, ligand, nrestraints, pdb1_sel, pdb2_sel, args
 ):
-    """Write the result files of a search to args.directory.
+    """Write the result files of a search to args.directory, created if needed.
 
     dv holds the results of the search (a DisVis instance, or those combined
     by mp_cpu_disvis) of the nrestraints restraints, with the rotations
@@ -635,8 +635,11 @@ def write_results(  # noqa: C901
     command: accessible_interaction_space.mrc, accessible_complexes.out,
     violations.out and z-score.out, with the options of args (as parsed by
     parse_args) the occupancy grids, the residue interactions and
-    complexes.out. Possible false-positive restraints are logged.
+    complexes.out. The files written and the possible false-positive
+    restraints are logged on the disvis logger, which this function does not
+    configure (main does, for the disvis command).
     """
+    makedirs(args.directory, exist_ok=True)
     joiner = Joiner(args.directory)
 
     # write out accessible interaction space

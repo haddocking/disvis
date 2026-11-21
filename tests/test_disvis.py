@@ -8,7 +8,7 @@ from contextlib import redirect_stdout
 from io import StringIO
 import json
 import logging
-from os import makedirs
+from os import listdir
 from os.path import dirname, join
 from tempfile import TemporaryDirectory
 from unittest import TestCase, main
@@ -20,6 +20,7 @@ from disvis.pdb import PDB
 from disvis.disvis import Complexes, DisVis
 from disvis.helpers import (
     _TblParser,
+    parse_interaction_selection,
     parse_restraints,
     non_negative_int,
     parse_tbl,
@@ -407,14 +408,14 @@ assi (resi 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
 
     def test_write_results(self):
         # After a search through the Python API, write_results writes the
-        # same files as the disvis command (#74)
+        # same files as the disvis command, also the optional ones (#74)
         with TemporaryDirectory() as tmp:
             argv = [
                 'disvis',
                 *(join(DATA, f) for f in ('O14250.pdb', 'Q9UT97.pdb')),
                 join(DATA, 'restraints.dat'),
-                '-a', '60', '-vs', '3', '-np', '--no-report',
-                '-d', join(tmp, 'command'),
+                '-a', '60', '-vs', '3', '-np', '--no-report', '-oa', '-wc',
+                '-is', join(DATA, 'selection.res'), '-d', join(tmp, 'command'),
             ]  # fmt: skip
             with patch('sys.argv', argv), redirect_stdout(StringIO()):
                 disvis_main()
@@ -426,22 +427,24 @@ assi (resi 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
                 args.restraints, receptor, ligand, None, args.min_maxdis
             )
             args.interaction_restraints_cutoff = max(len(restraints) - 3, 1)
+            selections = parse_interaction_selection(
+                args.interaction_selection, receptor, ligand
+            )
             q, weights, _ = proportional_orientations(args.angle)
             rotmat = quat_to_rotmat(q)
             dv = run_disvis(
-                None, receptor, ligand, rotmat, weights, restraints, None,
-                None, args,
+                None, receptor, ligand, rotmat, weights, restraints,
+                *selections, args,
             )  # fmt: skip
-            makedirs(args.directory)
             write_results(
-                dv, rotmat, ligand, len(restraints), None, None, args
+                dv, rotmat, ligand, len(restraints), *selections, args
             )
-            for fname in (
-                'accessible_interaction_space.mrc',
-                'accessible_complexes.out',
-                'violations.out',
-                'z-score.out',
-            ):
+            fnames = set(listdir(join(tmp, 'command'))) - {
+                'args.json',
+                'disvis.log',
+            }
+            self.assertEqual(set(listdir(join(tmp, 'api'))), fnames)
+            for fname in fnames:
                 with open(join(tmp, 'command', fname), 'rb') as f:
                     command = f.read()
                 with open(join(tmp, 'api', fname), 'rb') as f:
