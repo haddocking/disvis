@@ -242,6 +242,20 @@ class TestDisVis(TestCase):
                 placed += mindis <= dis <= maxdis
             self.assertEqual(placed, k)
 
+    def test_no_complexes(self):
+        # A search without accessible complexes (e.g. a small scanning chain
+        # with the default minimum interaction volume, or a job of
+        # mp_cpu_disvis) collects none with max_complexes, and
+        # write_results says so (#76)
+        dv = self.collect(
+            quat_to_rotmat(proportional_orientations(40)[0]),
+            min_interaction=1e9,
+            max_complexes=20,
+        )
+        self.assertEqual(dv.complexes.rotation.size, 0)
+        with self.assertRaisesRegex(ValueError, 'No accessible complexes'):
+            write_results(dv, dv.rotations, dv.ligand, 7, None, None, None)
+
     def test_collect_complexes_bounded(self):
         # With max_complexes, the collection is bounded, and the sample
         # selected from the collections of two halves of the rotations is
