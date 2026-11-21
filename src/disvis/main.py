@@ -27,6 +27,13 @@ from disvis.helpers import (
 
 logger = logging.getLogger('disvis')
 
+NO_COMPLEXES = (
+    'No accessible complexes found: no pose of the scanning chain interacts '
+    'with the fixed chain (--min-interaction, in A^3) without clashing '
+    '(--max-clash); a lower --min-interaction may be needed for small '
+    'molecules.'
+)
+
 
 def parse_args():
     """Parse the command-line arguments."""
@@ -637,8 +644,11 @@ def write_results(  # noqa: C901
     parse_args) the occupancy grids, the residue interactions and
     complexes.out. The files written and the possible false-positive
     restraints are logged on the disvis logger, which this function does not
-    configure (main does, for the disvis command).
+    configure (main does, for the disvis command). Raises a ValueError when
+    no complex is accessible.
     """
+    if not np.any(dv.accessible_complexes):
+        raise ValueError(NO_COMPLEXES)
     makedirs(args.directory, exist_ok=True)
     joiner = Joiner(args.directory)
 
@@ -1035,6 +1045,9 @@ def main():  # noqa: C901
             args,
         )
 
+    if not np.any(dv.accessible_complexes):
+        write('ERROR: ' + NO_COMPLEXES)
+        exit(1)
     write_results(
         dv, rotmat, ligand, len(distance_restraints), pdb1_sel, pdb2_sel, args
     )

@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.4.1
+
+- A search without complexes no longer crashes: a job of `-p N` without any
+  complex consistent with a restraint collects none with `-wc`, instead of
+  failing in the bounded collection, and without any accessible complex
+  (e.g. a small scanning chain with the default `--min-interaction`) disvis
+  stops with a clear error instead of an IndexError - Issue #76
+
 ## 3.4.0
 
 - New `disvis.main.write_results`: the result files of the `disvis`

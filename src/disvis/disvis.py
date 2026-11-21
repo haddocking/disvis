@@ -986,7 +986,8 @@ class DisVis:
             if self.max_complexes and nkept > 2 * self.max_complexes:
                 parts = [_smallest_keys(parts, self.max_complexes)]
                 nkept = parts[0][0].size
-        if self.max_complexes:
+        # No parts without any complex consistent with a restraint
+        if self.max_complexes and parts:
             parts = [_smallest_keys(parts, self.max_complexes)]
         rotation, voxel, consistent, key = (
             np.concatenate(
