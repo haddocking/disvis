@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.4.0
+
+- New `disvis.main.write_results`: the result files of the `disvis`
+  command (accessible_interaction_space.mrc, accessible_complexes.out,
+  violations.out, z-score.out and the optional ones) can be written after a
+  search through the Python API; the output of the command is unchanged -
+  Issue #74
+
 ## 3.3.0
 
 - Used as a library (e.g. `disvis.main.mp_cpu_disvis`), DisVis logs its
