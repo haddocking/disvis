@@ -8,6 +8,7 @@ from contextlib import redirect_stdout
 from io import StringIO
 import json
 import logging
+from os import makedirs
 from os.path import dirname, join
 from tempfile import TemporaryDirectory
 from unittest import TestCase, main
@@ -25,7 +26,8 @@ from disvis.helpers import (
     positive_float,
     positive_int,
 )
-from disvis.main import main as disvis_main, write
+from disvis.main import main as disvis_main
+from disvis.main import parse_args, run_disvis, write, write_results
 from disvis.rotations import proportional_orientations, quat_to_rotmat
 from disvis.volume import radix235
 
@@ -402,6 +404,48 @@ assi (resi 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
         with self.assertLogs('disvis') as logs:
             write('Searching')
         self.assertEqual(logs.output, ['INFO:disvis:Searching'])
+
+    def test_write_results(self):
+        # After a search through the Python API, write_results writes the
+        # same files as the disvis command (#74)
+        with TemporaryDirectory() as tmp:
+            argv = [
+                'disvis',
+                *(join(DATA, f) for f in ('O14250.pdb', 'Q9UT97.pdb')),
+                join(DATA, 'restraints.dat'),
+                '-a', '60', '-vs', '3', '-np', '--no-report',
+                '-d', join(tmp, 'command'),
+            ]  # fmt: skip
+            with patch('sys.argv', argv), redirect_stdout(StringIO()):
+                disvis_main()
+            with patch('sys.argv', argv[:-1] + [join(tmp, 'api')]):
+                args = parse_args()
+            receptor = PDB.fromfile(args.receptor)
+            ligand = PDB.fromfile(args.ligand)
+            restraints = parse_restraints(
+                args.restraints, receptor, ligand, None, args.min_maxdis
+            )
+            args.interaction_restraints_cutoff = max(len(restraints) - 3, 1)
+            q, weights, _ = proportional_orientations(args.angle)
+            rotmat = quat_to_rotmat(q)
+            dv = run_disvis(
+                None, receptor, ligand, rotmat, weights, restraints, None,
+                None, args,
+            )  # fmt: skip
+            makedirs(args.directory)
+            write_results(
+                dv, rotmat, ligand, len(restraints), None, None, args
+            )
+            for fname in (
+                'accessible_interaction_space.mrc',
+                'accessible_complexes.out',
+                'violations.out',
+                'z-score.out',
+            ):
+                with open(join(tmp, 'command', fname), 'rb') as f:
+                    command = f.read()
+                with open(join(tmp, 'api', fname), 'rb') as f:
+                    self.assertEqual(f.read(), command, fname)
 
     def test_args_json(self):
         # args.json gives the default interaction restraints cutoff used: 7

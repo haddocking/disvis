@@ -623,154 +623,21 @@ def write_complexes(fname, complexes, rotmat, ligand, nrestraints, args):
         )
 
 
-def main():  # noqa: C901
-    """Run disvis from the command line and write the results."""
-    args = parse_args()
+def write_results(  # noqa: C901
+    dv, rotmat, ligand, nrestraints, pdb1_sel, pdb2_sel, args
+):
+    """Write the result files of a search to args.directory.
 
-    makedirs(args.directory, exist_ok=True)
+    dv holds the results of the search (a DisVis instance, or those combined
+    by mp_cpu_disvis) of the nrestraints restraints, with the rotations
+    rotmat of the scanning chain ligand; pdb1_sel and pdb2_sel are the
+    interaction selections, or None. The files are those of the disvis
+    command: accessible_interaction_space.mrc, accessible_complexes.out,
+    violations.out and z-score.out, with the options of args (as parsed by
+    parse_args) the occupancy grids, the residue interactions and
+    complexes.out. Possible false-positive restraints are logged.
+    """
     joiner = Joiner(args.directory)
-
-    with open(joiner('disvis.log'), 'w', encoding='utf-8') as f:
-        f.write(
-            '{0:s}\nDisVis {1:s}\n'
-            'Visualizing and quantifying the accessible interaction space of\n'
-            'distance-restrained biomolecular complexes\n'
-            'https://github.com/haddocking/disvis\n{0:s}\n'.format(
-                '=' * 70, __version__
-            )
-        )
-    # The messages, on the disvis logger only, go to the terminal and to
-    # disvis.log
-    log_file = logging.FileHandler(joiner('disvis.log'), encoding='utf-8')
-    log_file.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
-    handlers = [logging.StreamHandler(sys.stdout), log_file]
-    for handler in handlers:
-        logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
-    logger.propagate = False
-
-    time0 = time()
-
-    queue = None
-    if args.gpu:
-        from disvis.disvis import PYOPENCL
-
-        if not PYOPENCL:
-            exit(
-                'ERROR: GPU acceleration requires pyopencl and pyvkfft. '
-                'See INSTALLATION.md.'
-            )
-        from disvis.helpers import get_queue
-
-        # Without an OpenCL GPU, use any other OpenCL device, e.g. pocl.
-        queue = get_queue() or get_queue('all')
-        if queue is None:
-            exit('ERROR: no OpenCL device was found.')
-
-    if queue is not None:
-        write('OpenCL device: {:s}'.format(queue.device.name))
-    write('Reading fixed model from: {:s}'.format(args.receptor))
-    receptor = PDB.fromfile(args.receptor)
-    write('Reading scanning model from: {:s}'.format(args.ligand))
-    ligand = PDB.fromfile(args.ligand)
-
-    write('Reading in rotations.')
-    q, weights, a = proportional_orientations(args.angle)
-    rotmat = quat_to_rotmat(q)
-    write('Requested rotational sampling density: {:.2f}'.format(args.angle))
-    write('Real rotational sampling density: {:.2f}'.format(a))
-    write('Number of rotations: {:d}'.format(rotmat.shape[0]))
-
-    write('Reading in restraints from file: {:s}'.format(args.restraints))
-    distance_restraints = parse_restraints(
-        args.restraints, receptor, ligand, write, args.min_maxdis
-    )
-    write(
-        'Number of distance restraints: {:d}'.format(len(distance_restraints))
-    )
-
-    # If the interaction restraints cutoff is not specified, only calculate
-    # the interactions and occupancy grids for complexes consistent with at
-    # least 1 restraints or more, with a limit of three.
-    if args.interaction_restraints_cutoff is None:
-        args.interaction_restraints_cutoff = max(
-            len(distance_restraints) - 3, 1
-        )
-    # The options used, with the defaults that depend on the restraints
-    dump_args(args, joiner('args.json'))
-
-    pdb1_sel = pdb2_sel = None
-    if args.interaction_selection is not None:
-        write(
-            'Reading in interaction selection from file: {:s}'.format(
-                args.interaction_selection
-            )
-        )
-        pdb1_sel, pdb2_sel = parse_interaction_selection(
-            args.interaction_selection, receptor, ligand
-        )
-
-        write('Number of receptor residues: {:d}'.format(pdb1_sel.natoms))
-        write('Number of ligand residues: {:d}'.format(pdb2_sel.natoms))
-
-    write('Voxel spacing set to: {:.2f}'.format(args.voxelspacing))
-    write('Interaction radius set to: {:.2f}'.format(args.interaction_radius))
-    write(
-        'Minimum required interaction volume: {:.2f}'.format(
-            args.min_interaction
-        )
-    )
-    write('Maximum allowed volume of clashes: {:.2f}'.format(args.max_clash))
-    if args.occupancy_analysis:
-        write('Performing occupancy analysis')
-
-    if queue is None:
-        # CPU-version
-        if args.nproc > 1:
-            try:
-                dv = mp_cpu_disvis(
-                    receptor,
-                    ligand,
-                    rotmat,
-                    weights,
-                    distance_restraints,
-                    pdb1_sel,
-                    pdb2_sel,
-                    args,
-                )
-            except Empty:
-                msg = (
-                    'ERROR: Queue.Empty exception raised while processing '
-                    'job, stopping execution ...'
-                )
-                write(msg)
-                exit(-1)
-        else:
-            dv = run_disvis(
-                queue,
-                receptor,
-                ligand,
-                rotmat,
-                weights,
-                distance_restraints,
-                pdb1_sel,
-                pdb2_sel,
-                args,
-            )
-    else:
-        # GPU-version
-        write('Using GPU accelerated search.')
-        dv = run_disvis(
-            queue,
-            receptor,
-            ligand,
-            rotmat,
-            weights,
-            distance_restraints,
-            pdb1_sel,
-            pdb2_sel,
-            args,
-        )
 
     # write out accessible interaction space
     fname = joiner('accessible_interaction_space.mrc')
@@ -861,7 +728,6 @@ def main():  # noqa: C901
 
     # Give user indication for false positives.
     # Determine minimum number of false positives.
-    nrestraints = len(distance_restraints)
     n = 1
     while accessible_complexes[-n] == 0:
         n += 1
@@ -1015,6 +881,160 @@ def main():  # noqa: C901
             nrestraints,
             args,
         )
+
+
+def main():  # noqa: C901
+    """Run disvis from the command line and write the results."""
+    args = parse_args()
+
+    makedirs(args.directory, exist_ok=True)
+    joiner = Joiner(args.directory)
+
+    with open(joiner('disvis.log'), 'w', encoding='utf-8') as f:
+        f.write(
+            '{0:s}\nDisVis {1:s}\n'
+            'Visualizing and quantifying the accessible interaction space of\n'
+            'distance-restrained biomolecular complexes\n'
+            'https://github.com/haddocking/disvis\n{0:s}\n'.format(
+                '=' * 70, __version__
+            )
+        )
+    # The messages, on the disvis logger only, go to the terminal and to
+    # disvis.log
+    log_file = logging.FileHandler(joiner('disvis.log'), encoding='utf-8')
+    log_file.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
+    handlers = [logging.StreamHandler(sys.stdout), log_file]
+    for handler in handlers:
+        logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+
+    time0 = time()
+
+    queue = None
+    if args.gpu:
+        from disvis.disvis import PYOPENCL
+
+        if not PYOPENCL:
+            exit(
+                'ERROR: GPU acceleration requires pyopencl and pyvkfft. '
+                'See INSTALLATION.md.'
+            )
+        from disvis.helpers import get_queue
+
+        # Without an OpenCL GPU, use any other OpenCL device, e.g. pocl.
+        queue = get_queue() or get_queue('all')
+        if queue is None:
+            exit('ERROR: no OpenCL device was found.')
+
+    if queue is not None:
+        write('OpenCL device: {:s}'.format(queue.device.name))
+    write('Reading fixed model from: {:s}'.format(args.receptor))
+    receptor = PDB.fromfile(args.receptor)
+    write('Reading scanning model from: {:s}'.format(args.ligand))
+    ligand = PDB.fromfile(args.ligand)
+
+    write('Reading in rotations.')
+    q, weights, a = proportional_orientations(args.angle)
+    rotmat = quat_to_rotmat(q)
+    write('Requested rotational sampling density: {:.2f}'.format(args.angle))
+    write('Real rotational sampling density: {:.2f}'.format(a))
+    write('Number of rotations: {:d}'.format(rotmat.shape[0]))
+
+    write('Reading in restraints from file: {:s}'.format(args.restraints))
+    distance_restraints = parse_restraints(
+        args.restraints, receptor, ligand, write, args.min_maxdis
+    )
+    write(
+        'Number of distance restraints: {:d}'.format(len(distance_restraints))
+    )
+
+    # If the interaction restraints cutoff is not specified, only calculate
+    # the interactions and occupancy grids for complexes consistent with at
+    # least 1 restraints or more, with a limit of three.
+    if args.interaction_restraints_cutoff is None:
+        args.interaction_restraints_cutoff = max(
+            len(distance_restraints) - 3, 1
+        )
+    # The options used, with the defaults that depend on the restraints
+    dump_args(args, joiner('args.json'))
+
+    pdb1_sel = pdb2_sel = None
+    if args.interaction_selection is not None:
+        write(
+            'Reading in interaction selection from file: {:s}'.format(
+                args.interaction_selection
+            )
+        )
+        pdb1_sel, pdb2_sel = parse_interaction_selection(
+            args.interaction_selection, receptor, ligand
+        )
+
+        write('Number of receptor residues: {:d}'.format(pdb1_sel.natoms))
+        write('Number of ligand residues: {:d}'.format(pdb2_sel.natoms))
+
+    write('Voxel spacing set to: {:.2f}'.format(args.voxelspacing))
+    write('Interaction radius set to: {:.2f}'.format(args.interaction_radius))
+    write(
+        'Minimum required interaction volume: {:.2f}'.format(
+            args.min_interaction
+        )
+    )
+    write('Maximum allowed volume of clashes: {:.2f}'.format(args.max_clash))
+    if args.occupancy_analysis:
+        write('Performing occupancy analysis')
+
+    if queue is None:
+        # CPU-version
+        if args.nproc > 1:
+            try:
+                dv = mp_cpu_disvis(
+                    receptor,
+                    ligand,
+                    rotmat,
+                    weights,
+                    distance_restraints,
+                    pdb1_sel,
+                    pdb2_sel,
+                    args,
+                )
+            except Empty:
+                msg = (
+                    'ERROR: Queue.Empty exception raised while processing '
+                    'job, stopping execution ...'
+                )
+                write(msg)
+                exit(-1)
+        else:
+            dv = run_disvis(
+                queue,
+                receptor,
+                ligand,
+                rotmat,
+                weights,
+                distance_restraints,
+                pdb1_sel,
+                pdb2_sel,
+                args,
+            )
+    else:
+        # GPU-version
+        write('Using GPU accelerated search.')
+        dv = run_disvis(
+            queue,
+            receptor,
+            ligand,
+            rotmat,
+            weights,
+            distance_restraints,
+            pdb1_sel,
+            pdb2_sel,
+            args,
+        )
+
+    write_results(
+        dv, rotmat, ligand, len(distance_restraints), pdb1_sel, pdb2_sel, args
+    )
 
     if args.report:
         from disvis.report import generate_report
