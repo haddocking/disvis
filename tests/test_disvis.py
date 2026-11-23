@@ -361,8 +361,16 @@ assi (resi 30 and name CA) (resid 3 and name C*) 2.0 2.5 0.0 ! comment
                 'scanning chain'
             ],
         )
-        # Residue 3 is not in pdb2: in neither direction for both pairs
+        # Residue 3 is not in pdb2: in neither direction for both pairs, so
+        # the restraint is skipped, and an error when all are
         mixed = 'assign (resid 3) (resid 30) 2 2 0 or (resid 30) (resid 3)'
+        messages, skipped = [], []
+        kept = parse_tbl(
+            forward + '\n' + mixed, pdb1, pdb2b, messages.append, 0, skipped
+        )
+        self.assertEqual(len(kept), 1)
+        self.assertEqual(skipped, [2])
+        self.assertTrue(messages[0].startswith('WARNING: restraint 2 skipped'))
         with self.assertRaises(ValueError):
             parse_tbl(mixed, pdb1, pdb2)
 

@@ -955,8 +955,9 @@ def main():  # noqa: C901
     write('Number of rotations: {:d}'.format(rotmat.shape[0]))
 
     write('Reading in restraints from file: {:s}'.format(args.restraints))
+    skipped = []
     distance_restraints = parse_restraints(
-        args.restraints, receptor, ligand, write, args.min_maxdis
+        args.restraints, receptor, ligand, write, args.min_maxdis, skipped
     )
     write(
         'Number of distance restraints: {:d}'.format(len(distance_restraints))
@@ -1063,6 +1064,7 @@ def main():  # noqa: C901
             vars(args),
             args.interaction_selection,
             args.delimiter,
+            skipped,
         )
         write('Writing report to: {:s}'.format(fname))
 
