@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.4.2
+
+- HADDOCK restraints: a restraint whose selections are not found in the
+  fixed and scanning chains, in either direction (e.g. on a residue missing
+  from an unbound structure), is skipped with a warning in the log, as by
+  CNS, instead of stopping DisVis; DisVis stops only when all are, and the
+  report keeps the numbers of the restraints in the file - Issue #78
+
 ## 3.4.1
 
 - A search without complexes no longer crashes: a job of `-p N` without any
