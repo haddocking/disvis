@@ -344,6 +344,7 @@ def generate_report(
     options,
     selection=None,
     delimiter=None,
+    skipped=(),
 ):
     """Write report.html and state.mvsj in the DisVis output directory.
 
@@ -351,14 +352,19 @@ def generate_report(
     the optional interaction selection are the input files: they are copied
     to the directory, where the report links them and loads the receptor.
     options are the command-line options shown in the report, delimiter
-    that of the .out files (None: fixed width). Returns the path of
+    that of the .out files (None: fixed width), skipped the numbers of the
+    restraints skipped (see helpers.parse_tbl). Returns the path of
     report.html.
     """
     joiner = partial(join, directory)
     inputs = _copy_inputs(directory, (receptor, ligand, restraints, selection))
     receptor_name = inputs[0]
 
-    labels = _restraint_labels(restraints)
+    labels = [
+        label
+        for n, label in enumerate(_restraint_labels(restraints), 1)
+        if n not in skipped
+    ]
     nrestraints = len(labels)
 
     # Accessible complexes, up to the first N without any; the percentages

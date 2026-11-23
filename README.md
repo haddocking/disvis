@@ -145,8 +145,10 @@ chain and the second in the scanning chain; when one of the selections of
 a restraint has no atoms there, the whole restraint is read the other way
 round, so restraints can be given in both directions, as in the AIR files
 of HADDOCK. A restraint whose pairs are not all found in the same
-direction is an error. DisVis reports in the log how many restraints were
-read the other way round. Different chain identifiers for the two chains
+direction (e.g. on a residue missing from a structure) is skipped, as by
+CNS, with a warning in the log; the report numbers the restraints as in the
+file. DisVis reports in the log how many restraints were read the other way
+round. Different chain identifiers for the two chains
 are recommended: when they share one, `segid` cannot tell them apart, and a
 residue missing from one of them can make DisVis read a restraint in the
 wrong direction (DisVis then writes a warning to the log).

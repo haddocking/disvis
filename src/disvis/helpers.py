@@ -140,7 +140,9 @@ def parse_interaction_selection(fname, pdb1, pdb2):
     return pdb1_sel, pdb2_sel
 
 
-def parse_restraints(fname, pdb1, pdb2, log=None, min_maxdis=0.0):
+def parse_restraints(
+    fname, pdb1, pdb2, log=None, min_maxdis=0.0, skipped=None
+):
     """Parse a restraints file, in the DisVis or the HADDOCK format.
 
     In the DisVis format, each line gives chain, residue number and atom
@@ -150,14 +152,14 @@ def parse_restraints(fname, pdb1, pdb2, log=None, min_maxdis=0.0):
     maxdis]: a restraint is satisfied when any pair of points (rows of the
     two (npairs, 3) arrays) lies between mindis and maxdis. A DisVis
     restraint has one pair, the centers of its two selections. log, if
-    given, is called with the messages of parse_tbl, and min_maxdis is
-    that of parse_tbl.
+    given, is called with the messages of parse_tbl, and min_maxdis and
+    skipped are those of parse_tbl.
     """
     with open(fname, encoding='utf-8') as fid:
         text = fid.read()
 
     if count_tbl_restraints(text):
-        return parse_tbl(text, pdb1, pdb2, log, min_maxdis)
+        return parse_tbl(text, pdb1, pdb2, log, min_maxdis, skipped)
 
     dist_restraints = []
 
@@ -234,7 +236,7 @@ def _cns_word(token, word):
     return token == word or (len(token) >= 4 and word.startswith(token))
 
 
-def parse_tbl(text, pdb1, pdb2, log=None, min_maxdis=0.0):
+def parse_tbl(text, pdb1, pdb2, log=None, min_maxdis=0.0, skipped=None):
     """Parse restraints in the HADDOCK (CNS) format.
 
     Each restraint is assign (sel1) (sel2) d dminus dplus, optionally
@@ -244,9 +246,12 @@ def parse_tbl(text, pdb1, pdb2, log=None, min_maxdis=0.0):
     resname (* is a wildcard), all, not, and, or and parentheses; as in
     CNS, keywords can be shortened to 4 letters, e.g. resi. sel1 is taken
     in pdb1 and sel2 in pdb2 when every selection pair of the restraint has
-    atoms there, else the reverse for the whole restraint; a restraint with
-    atoms in neither direction raises a ValueError. Every atom of sel1 is
-    paired with every atom of sel2. Returns restraints as
+    atoms there, else the reverse for the whole restraint. A restraint with
+    atoms in neither direction (e.g. on a residue missing from the
+    structures) is skipped, as by CNS, with a warning given to log, and its
+    number (from 1) appended to skipped if given; a ValueError is raised
+    when all are. Every atom of sel1 is paired with every atom of sel2.
+    Returns restraints as
     parse_restraints. Upper distances shorter than min_maxdis (A) are
     raised to it, as HADDOCK uses shorter, r^-6-summed distances. log, if
     given, is called with the number of restraints read in the reverse
@@ -266,23 +271,25 @@ def parse_tbl(text, pdb1, pdb2, log=None, min_maxdis=0.0):
     dist_restraints = []
     nreversed = 0
     nraised = 0
+    nread = 0
+    skipped = [] if skipped is None else skipped
     while not parser.done():
         pairs, mindis, maxdis = parser.restraint()
+        nread += 1
+
+        masks, reversed_ = _restraint_masks(pairs, pdb1, pdb2)
+        if masks is None:
+            if log:
+                log(
+                    "WARNING: restraint {:d} skipped, its selections were not "
+                    "found in the fixed and scanning chains, in either "
+                    "direction:\n{:s}".format(nread, parser.current())
+                )
+            skipped.append(nread)
+            continue
         if maxdis < min_maxdis:
             maxdis = min_maxdis
             nraised += 1
-
-        # One direction for the whole restraint: every pair must have atoms
-        masks = [(sel1(pdb1), sel2(pdb2)) for sel1, sel2 in pairs]
-        reversed_ = not all(m1.any() and m2.any() for m1, m2 in masks)
-        if reversed_:
-            masks = [(sel2(pdb1), sel1(pdb2)) for sel1, sel2 in pairs]
-            if not all(m1.any() and m2.any() for m1, m2 in masks):
-                raise ValueError(
-                    "The selections of a restraint were not found in the "
-                    "fixed and scanning chains, in either direction, in "
-                    "restraint:\n{:s}".format(parser.current())
-                )
 
         coor1 = []
         coor2 = []
@@ -296,6 +303,11 @@ def parse_tbl(text, pdb1, pdb2, log=None, min_maxdis=0.0):
         )
         nreversed += reversed_
 
+    if not dist_restraints:
+        raise ValueError(
+            "The selections of all {:d} restraints were not found in the "
+            "fixed and scanning chains, in either direction".format(nread)
+        )
     if log:
         log(
             "{:d} of {:d} restraints read with the first selection in the "
@@ -307,6 +319,23 @@ def parse_tbl(text, pdb1, pdb2, log=None, min_maxdis=0.0):
                 "{:g} A".format(nraised, len(dist_restraints), min_maxdis)
             )
     return dist_restraints
+
+
+def _restraint_masks(pairs, pdb1, pdb2):
+    """Return the atom masks of the selection pairs of a restraint.
+
+    One direction for the whole restraint: every pair must have atoms, the
+    first selection in pdb1, else in pdb2 (reversed). Returns the masks and
+    whether they are reversed, or None and None in neither direction.
+    """
+    for reversed_ in (False, True):
+        masks = [
+            (sel2(pdb1), sel1(pdb2)) if reversed_ else (sel1(pdb1), sel2(pdb2))
+            for sel1, sel2 in pairs
+        ]
+        if all(m1.any() and m2.any() for m1, m2 in masks):
+            return masks, reversed_
+    return None, None
 
 
 def _fnmatch(values, pattern):
